@@ -60,6 +60,8 @@
     <Content Include="game_notes.txt" />
     <Content Include="images\bg.jpg" />
     <Content Include="css\default.css" />
+    <Content Include="images\icon.png" />
+    <Content Include="images\splash.png" />
     <Content Include="js\game.js" />
     <Content Include="js\generation.js" />
     <Content Include="js\graphics.js" />

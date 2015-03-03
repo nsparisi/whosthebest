@@ -15,8 +15,8 @@
   </Resources>
   <Applications>
     <Application Id="App" StartPage="game.html">
-      <m2:VisualElements DisplayName="WebGame" Description="WebGame" ForegroundText="light" BackgroundColor="#464646" Square150x150Logo="images\Logo.png" Square30x30Logo="images\SmallLogo.png">
-        <m2:SplashScreen Image="images\splashscreen.png" />
+      <m2:VisualElements DisplayName="WebGame" Description="WebGame" ForegroundText="light" BackgroundColor="#464646" Square150x150Logo="images\icon.png" Square30x30Logo="images\SmallLogo.png">
+        <m2:SplashScreen Image="images\splash.png" />
       </m2:VisualElements>
     </Application>
   </Applications>
