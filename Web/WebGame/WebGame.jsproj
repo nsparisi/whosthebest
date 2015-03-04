@@ -55,7 +55,6 @@
     <AppxManifest Include="package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
-    <Content Include="default.html" />
     <Content Include="game.html" />
     <Content Include="game_notes.txt" />
     <Content Include="images\bg.jpg" />

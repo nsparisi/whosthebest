@@ -131,9 +131,7 @@ function GameEngine()
         this.tiles = [];
         this.boardSpaces = [];
         this.lastRowOfTileTypes = [];
-        this.tileCheckList = [];
         this.tileKillList = [];
-        this.tileFallList = [];
 
         this.lastTileId = 0;
 
@@ -197,17 +195,110 @@ function GameEngine()
                 tile.update();
             });
 
-            // run checks for combos and such
-            self.checkTilesForChanges();
+            // run a pass through all tiles
+            self.scanAllTilesForChanges();
 
-            // delete found tiles
+            // delete combo'd out tiles
             self.checkForTilesToKill();
-
-            // fall down found tiles
-            self.checkForTilesToFall();
 
             // update swap delay
             self.updateSwapDelay();
+        }
+
+        this.scanAllTilesForChanges = function()
+        {
+            // find falling tiles
+            for(var i = 0; i < self.boardSpaces.length; i++)
+            {
+                for(var j = 0; j < self.boardSpaces[i].length; j++)
+                {
+                    var tile = self.getTileAtSpace(j, i);
+
+                    // ignore these tiles
+                    if(!tile || tile.y == 0 || !tile.canMove())
+                    {
+                        continue;
+                    }
+
+                    // should be falling?
+                    var belowTile = self.getTileAtSpace(tile.x, tile.y - 1);
+                    var shouldBeFalling = !belowTile && tile.y > 1 && tile.canMove();
+
+                    // just landed
+                    if(tile.isFalling && !shouldBeFalling)
+                    {
+                        tile.isFalling = false;
+                    }
+
+                    // fall
+                    else if(shouldBeFalling)
+                    {
+                        tile.isFalling = true;
+                        var space = self.getBoardSpace(tile.x, tile.y);
+                        space.removeTile(tile);
+
+                        tile.y--;
+                        space = self.getBoardSpace(tile.x, tile.y);
+                        space.addTile(tile);
+                    }
+                }
+            }
+
+            var lastRow = [];
+            var currentRow = [];
+            var allComboTiles = [];
+
+            // find comboing tiles
+            for(var i = 0; i < self.boardSpaces.length; i++)
+            {
+                for(var j = 0; j < self.boardSpaces[i].length; j++)
+                {
+                    var tile = self.getTileAtSpace(j, i);
+
+                    // ignore these tiles
+                    if(!tile || tile.y == 0 || !tile.canMove() || tile.isFalling)
+                    {
+                        // mark this row as a 0
+                        lastRow[j] = currentRow[j];
+                        currentRow[j] = 0;
+                    }
+                    else
+                    {
+                        // combo left and leftx2
+                        if(j >= 2 && tile.type == currentRow[j - 1] && tile.type == currentRow[j - 2])
+                        {
+                            var left = self.getTileAtSpace(j - 1, i);
+                            var leftleft = self.getTileAtSpace(j - 2, i);
+                            allComboTiles[leftleft.id] = leftleft;
+                            allComboTiles[left.id] = left;
+                            allComboTiles[tile.id] = tile;
+                        }
+
+                        // combo down and downx2
+                        if(i >= 3 && tile.type == currentRow[j] && tile.type == lastRow[j])
+                        {
+                            var down = self.getTileAtSpace(j, i - 1);
+                            var downdown = self.getTileAtSpace(j, i - 2);
+                            allComboTiles[downdown.id] = downdown;
+                            allComboTiles[down.id] = down;
+                            allComboTiles[tile.id] = tile;
+                        }
+
+                        // remember last 2 rows
+                        lastRow[j] = currentRow[j];
+                        currentRow[j] = tile.type;
+                    }
+                }
+            }
+
+            // trigger combo start
+            var keys = Object.keys(allComboTiles);
+            keys.forEach(
+                function(key)
+                {
+                    var tile = allComboTiles[key];
+                    tile.comboStart();
+                });
         }
 
         this.updateSwapDelay = function()
@@ -231,19 +322,6 @@ function GameEngine()
                     boardSpace.removeTile(tile);
                 });
 
-            // notify all adjacent tiles above
-            self.tileKillList.forEach(
-                function(tile)
-                {
-                    var aboveTile = self.getTileAtSpace(tile.x, tile.y + 1);
-
-                    if(aboveTile)
-                    {
-                        console.log("adding to checklist " + aboveTile.id);
-                        self.addTileToFallList(aboveTile);
-                    }
-                });
-
             // delete these tiles by constructing a new list
             var newListOfTiles = [];
             self.tiles.forEach(
@@ -260,179 +338,6 @@ function GameEngine()
             console.log("old count: " + self.tiles.length + ", new count: " + newListOfTiles.length);
             self.tiles = newListOfTiles;
             self.tileKillList = [];
-        }
-
-        this.checkForTilesToFall = function()
-        {
-            if(self.tileFallList.length == 0)
-            {
-                return;
-            }
-
-            // reset list
-            var tilesToFall = self.tileFallList;
-            self.tileFallList = [];
-
-            // check for tiles to start falling
-            tilesToFall.forEach(
-                function(tile)
-                {
-                    console.log("checking for falls!");
-                    tile.isFalling = false;
-
-                    if(self.shouldStartFalling(tile))
-                    {
-                        console.log("tile should fall. " + tile.id);
-                        var oldSpace = self.getBoardSpace(tile.x, tile.y);
-                        var newSpace = self.getBoardSpace(tile.x, tile.y - 1);
-
-                        if(oldSpace && newSpace)
-                        {
-                            // move tile down
-                            oldSpace.removeTile(tile);
-                            newSpace.addTile(tile);
-                            tile.y--;
-
-                            // keep falling
-                            tile.isFalling = true;
-                            self.addTileToFallList(tile);
-                        }
-                    }
-
-                    // tile hit something
-                    if(!tile.isFalling)
-                    {
-                        self.addTileToCheckList(tile);
-                    }
-                });
-        }
-
-        this.shouldStartFalling = function(tile)
-        {
-            var belowTile = self.getTileAtSpace(tile.x, tile.y - 1);
-            return !belowTile && tile.y > 1 && tile.canMove();
-        }
-
-        this.checkTilesForChanges = function()
-        {
-            if(self.tileCheckList.length == 0)
-            {
-                return;
-            }
-
-            // check for tiles to start falling
-            self.tileCheckList.forEach(
-                function(tile)
-                {
-                    if(self.shouldStartFalling(tile))
-                    {
-                        self.addTileToFallList(tile);
-                    }
-                });
-
-            // check for tiles to start comboing
-            var allComboTiles = [];
-            self.tileCheckList.forEach(
-                function(tile)
-                {
-                    // no interest in bottom row
-                    if(tile.y == 0)
-                    {
-                        return;
-                    }
-
-                    // no interest in tiles already part of an action (not falling)
-                    if(!tile.canMove())
-                    {
-                        return;
-                    }
-
-                    console.log("checking for combos!");
-                    var left1 = self.getTileAtSpace(tile.x - 1, tile.y);
-                    var left2 = self.getTileAtSpace(tile.x - 2, tile.y);
-
-                    var right1 = self.getTileAtSpace(tile.x + 1, tile.y);
-                    var right2 = self.getTileAtSpace(tile.x + 2, tile.y);
-
-                    var up1 = self.getTileAtSpace(tile.x, tile.y + 1);
-                    var up2 = self.getTileAtSpace(tile.x, tile.y + 2);
-
-                    // don't consider bottom (0th) row.
-                    var down1 = null;
-                    var down2 = null;
-                    if(tile.y > 2)
-                    {
-                        var down2 = self.getTileAtSpace(tile.x, tile.y - 2);
-                    }
-                    if(tile.y > 1)
-                    {
-                        var down1 = self.getTileAtSpace(tile.x, tile.y - 1);
-                    }
-
-                    var safeCheckTypeEquality = function(tile1, tile2, tile3)
-                    {
-                        return tile1 && tile2 && tile3 &&
-                            !tile.isFalling && !tile2.isFalling && !tile3.isFalling &&
-                            tile.canMove() && tile2.canMove() && tile3.canMove() &&
-                            tile1.type == tile2.type && tile1.type == tile3.type;
-                    }
-
-                    if(safeCheckTypeEquality(tile, left1, left2))
-                    {
-                        // great!
-                        allComboTiles[left1.id] = left1;
-                        allComboTiles[left2.id] = left2;
-                        allComboTiles[tile.id] = tile;
-                    }
-
-                    if(safeCheckTypeEquality(tile, right1, right2))
-                    {
-                        allComboTiles[right1.id] = right1;
-                        allComboTiles[right2.id] = right2;
-                        allComboTiles[tile.id] = tile;
-                    }
-
-                    if(safeCheckTypeEquality(tile, up1, up2))
-                    {
-                        allComboTiles[up1.id] = up1;
-                        allComboTiles[up2.id] = up2;
-                        allComboTiles[tile.id] = tile;
-                    }
-
-                    if(safeCheckTypeEquality(tile, down1, down2))
-                    {
-                        allComboTiles[down1.id] = down1;
-                        allComboTiles[down2.id] = down2;
-                        allComboTiles[tile.id] = tile;
-                    }
-
-                    if(safeCheckTypeEquality(tile, left1, right1))
-                    {
-                        allComboTiles[left1.id] = left1;
-                        allComboTiles[right1.id] = right1;
-                        allComboTiles[tile.id] = tile;
-                    }
-
-                    if(safeCheckTypeEquality(tile, down1, up1))
-                    {
-                        allComboTiles[down1.id] = down1;
-                        allComboTiles[up1.id] = up1;
-                        allComboTiles[tile.id] = tile;
-                    }
-                });
-
-            self.tileCheckList = [];
-            
-            // trigger combo start
-            var keys = Object.keys(allComboTiles);
-            console.log("found tiles to combo: " + keys.length);
-            keys.forEach(
-                function(key)
-                {
-                    var tile = allComboTiles[key];
-                    console.log("combo start: " + tile.id);
-                    tile.comboStart();
-                });
         }
 
         this.updateYOffset = function()
@@ -544,12 +449,6 @@ function GameEngine()
                 self.getBoardSpace(tile.x, tile.y).addTile(tile);
             }
 
-            // send checks for 1st row
-            for(var j = 0; j < gameEngine.colCount; j++)
-            {
-                self.addTileToCheckList(self.getTileAtSpace(j, 1));
-            }
-
             self.cursor.y++;
         }
 
@@ -584,7 +483,7 @@ function GameEngine()
             // physically move left tile
             if(leftTile != null)
             {
-                leftSpace.removeTile(leftTile);
+                // will occupy both adjacent spaces for now
                 rightSpace.addTile(leftTile);
                 leftTile.swapStart(1);
                 self.swapDelayCount = self.swapDelayReset;
@@ -593,7 +492,7 @@ function GameEngine()
             // physically move right tile
             if(rightTile != null)
             {
-                rightSpace.removeTile(rightTile);
+                // will occupy both adjacent spaces for now
                 leftSpace.addTile(rightTile);
                 rightTile.swapStart(-1);
                 self.swapDelayCount = self.swapDelayReset;
@@ -637,35 +536,7 @@ function GameEngine()
 
             self.tileKillList.push(tile);
         }
-
-        this.addTileToCheckList = function(tile)
-        {
-            if(!tile)
-            {
-                return;
-            }
-
-            self.tileCheckList.push(tile);
-        }
-
-        this.addTileToFallList = function(tile)
-        {
-            if(!tile)
-            {
-                return;
-            }
-
-            tile.isFalling = true;
-
-            // if I go down, I'm taking you with me!
-            var currentTile = tile;
-            while(currentTile)
-            {
-                self.tileFallList.push(currentTile);
-                currentTile = self.getTileAtSpace(currentTile.x, currentTile.y + 1);
-            }
-        }
-
+        
         this.incrementTileId = function()
         {
             self.lastTileId++;
@@ -719,10 +590,12 @@ function GameEngine()
                 // just finished swapping, check for combos
                 if(self.swappingFrameCount == 0)
                 {
-                    board.addTileToFallList( board.getTileAtSpace(self.x, self.y + 1) );
+                    // used to be occupying two spaces, now remove old occupancy
+                    var oldSpace = board.getBoardSpace(self.x, self.y);
+                    oldSpace.removeTile(self);
+
                     self.x += self.xShift;
                     self.xShift = 0;
-                    board.addTileToCheckList(self);
                 }
 
                 // combo --

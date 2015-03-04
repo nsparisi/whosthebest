@@ -100,6 +100,17 @@ function GenerationEngine()
         {
             self.isPaused = !self.isPaused;
         }
+
+        if(self.justPressed("k")) // +
+        {
+            self.frameRate = Math.min(self.frameRate + 3, 60);
+            self.threshold = 1000 / self.frameRate;
+        }
+        if(self.justPressed("m")) // -
+        {
+            self.frameRate = Math.max(self.frameRate - 3, 1);
+            self.threshold = 1000 / self.frameRate;
+        }
     }
     
     this.justPressed = function(key)
