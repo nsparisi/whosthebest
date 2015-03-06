@@ -132,7 +132,6 @@ function GameEngine()
         this.boardSpaces = [];
         this.lastRowOfTileTypes = [];
         this.tileKillList = [];
-        this.tileFallList = [];
 
         this.lastTileId = 0;
 
@@ -613,16 +612,6 @@ function GameEngine()
             }
 
             self.tileKillList.push(tile);
-        }
-
-        this.addTileToFallList = function(tile)
-        {
-            if(!tile)
-            {
-                return;
-            }
-
-            self.tileFallList.push(tile);
         }
         
         this.incrementTileId = function()
