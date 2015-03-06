@@ -132,6 +132,7 @@ function GameEngine()
         this.boardSpaces = [];
         this.lastRowOfTileTypes = [];
         this.tileKillList = [];
+        this.tileFallList = [];
 
         this.lastTileId = 0;
 
@@ -143,6 +144,20 @@ function GameEngine()
         this.swapDelayReset = 2; //todo frames
         this.swapDelayCount = -1;
         this.queuedUpSwapAction = false;
+
+        // how long a combo lasts
+        // todo, make tile 'popping' a different counter
+        this.comboDelayReset = 22;
+
+        // how long to hang in the air before falling
+        this.fallDelayReset = 4; // roughly 2x swap delay
+
+        // the elevate command will advance the height until a new row is added
+        this.fastElevateHeightPerFrame = 4;
+        this.fastElevate = false;
+
+        // some actions will stop the board from progressing
+        this.stopBoardFromGrowing = false;
 
         this.cursor =
         {
@@ -184,7 +199,7 @@ function GameEngine()
         this.update = function(inputs)
         {
             // tiles are moving upwards
-            self.updateYOffset();
+            self.updateBoardHeight();
 
             // act on player inputs
             self.readInputs(inputs);
@@ -207,6 +222,9 @@ function GameEngine()
 
         this.scanAllTilesForChanges = function()
         {
+            // update this value if anything exciting is happening
+            self.stopBoardFromGrowing = false;
+
             // find falling tiles
             for(var i = 0; i < self.boardSpaces.length; i++)
             {
@@ -224,14 +242,21 @@ function GameEngine()
                     var belowTile = self.getTileAtSpace(tile.x, tile.y - 1);
                     var shouldBeFalling = !belowTile && tile.y > 1 && tile.canMove();
 
+                    // if I'm resting on a hovering tile, copy the hover attribute
+                    if(belowTile && belowTile.isHovering)
+                    {
+                        tile.isHovering = belowTile.isHovering;
+                        tile.hoverFrameCount = belowTile.hoverFrameCount;
+                    }
+
                     // just landed
                     if(tile.isFalling && !shouldBeFalling)
                     {
                         tile.isFalling = false;
                     }
 
-                    // fall
-                    else if(shouldBeFalling)
+                    // continue to fall
+                    else if(tile.isFalling && shouldBeFalling)
                     {
                         tile.isFalling = true;
                         var space = self.getBoardSpace(tile.x, tile.y);
@@ -240,6 +265,12 @@ function GameEngine()
                         tile.y--;
                         space = self.getBoardSpace(tile.x, tile.y);
                         space.addTile(tile);
+                    }
+
+                    // just started to hover
+                    else if(!tile.isFalling && shouldBeFalling)
+                    {
+                        tile.hoverStart();
                     }
                 }
             }
@@ -254,6 +285,10 @@ function GameEngine()
                 for(var j = 0; j < self.boardSpaces[i].length; j++)
                 {
                     var tile = self.getTileAtSpace(j, i);
+
+                    // any of these exciting things happening?
+                    self.stopBoardFromGrowing = self.stopBoardFromGrowing |
+                        (tile && (tile.isHovering || tile.isFalling || tile.comboFrameCount > 0))
 
                     // ignore these tiles
                     if(!tile || tile.y == 0 || !tile.canMove() || tile.isFalling)
@@ -298,6 +333,8 @@ function GameEngine()
                 {
                     var tile = allComboTiles[key];
                     tile.comboStart();
+
+                    self.stopBoardFromGrowing = true;
                 });
         }
 
@@ -338,25 +375,6 @@ function GameEngine()
             console.log("old count: " + self.tiles.length + ", new count: " + newListOfTiles.length);
             self.tiles = newListOfTiles;
             self.tileKillList = [];
-        }
-
-        this.updateYOffset = function()
-        {
-            // if so many frames pass
-            // shift all tiles up a bit
-            self.yOffsetFrameCount--;
-            if(self.yOffsetFrameCount <= 0)
-            {
-                self.yOffsetFrameCount = self.yOffsetFrameReset;
-                self.yOffset++;
-
-                // a new row has formed
-                if(self.yOffset % self.yOffsetMax == 0)
-                {
-                    self.yOffset = 0;
-                    self.updateBoardNewHeight();
-                }
-            }
         }
 
         this.getBoardSpace = function(x, y)
@@ -420,33 +438,76 @@ function GameEngine()
             return row;
         }
 
+
+        this.updateBoardHeight = function()
+        {
+            if(self.stopBoardFromGrowing)
+            {
+                return;
+            }
+
+            if(self.fastElevate)
+            {
+                // reset the frame count
+                self.yOffsetFrameCount = self.yOffsetFrameReset;
+
+                // move up a notch
+                self.yOffset += self.fastElevateHeightPerFrame;
+
+                // a new row has formed, cancel elevate
+                if(self.yOffset >= self.yOffsetMax)
+                {
+                    self.yOffset = 0;
+                    self.fastElevate = false;
+                    self.updateBoardNewHeight();
+                }
+            }
+            else
+            {
+                // if so many frames pass
+                // shift all tiles up a bit
+                self.yOffsetFrameCount--;
+                if(self.yOffsetFrameCount <= 0)
+                {
+                    self.yOffsetFrameCount = self.yOffsetFrameReset;
+                    self.yOffset++;
+
+                    // a new row has formed
+                    if(self.yOffset >= self.yOffsetMax)
+                    {
+                        self.yOffset = 0;
+                        self.updateBoardNewHeight();
+                    }
+                }
+            }
+        }
+
         this.updateBoardNewHeight = function()
         {
-            //clear all previous BoardSpace knowledge
-            for(var i = 0; i < gameEngine.rowCount; i++)
+            //copy the contents of the space below
+            for(var i = gameEngine.rowCount - 1; i > 0; i--)
             {
                 for(var j = 0; j < gameEngine.colCount; j++)
                 {
-                    self.boardSpaces[i][j].clear();
+                    self.boardSpaces[i][j].contents = self.boardSpaces[i-1][j].contents;
                 }
             }
 
-            // send all tiles up a notch and add to BoardSpaces
+            // send all tiles up a notch
             for(var i = 0; i < self.tiles.length; i++)
             {
-                var tile = self.tiles[i];
-                tile.y++;
-
-                self.getBoardSpace(tile.x, tile.y).addTile(tile);
+                self.tiles[i].y++;
             }
-
-            // add a new bottom row
+            
+            // clear previous row and add a new bottom row
             var newRow = self.generateRow(0);
             self.tiles = self.tiles.concat(newRow);
             for(var i = 0; i < newRow.length; i++)
             {
                 var tile = newRow[i];
-                self.getBoardSpace(tile.x, tile.y).addTile(tile);
+                var boardSpace = self.getBoardSpace(tile.x, tile.y)
+                boardSpace.clear();
+                boardSpace.addTile(tile);
             }
 
             self.cursor.y++;
@@ -467,16 +528,29 @@ function GameEngine()
             var rightSpace = self.getBoardSpace(self.cursor.x + 1, self.cursor.y);
             var leftTile = leftSpace.getTile();
             var rightTile = rightSpace.getTile();
+            
+            var leftUpTile = self.getTileAtSpace(self.cursor.x, self.cursor.y + 1);
+            var rightUpTile = self.getTileAtSpace(self.cursor.x + 1, self.cursor.y + 1);
 
+            // can't swap unmovable tiles
+            // ignore input
             if(leftTile != null && !leftTile.canMove())
             {
-                // ignore input
+                return;
+            }
+            if(rightTile != null && !rightTile.canMove())
+            {
                 return;
             }
 
-            if(rightTile != null && !rightTile.canMove())
+            // can't swap when a tile is hovering right above you!
+            // ignore input
+            if(leftUpTile != null && leftUpTile.isHovering)
             {
-                // ignore input
+                return;
+            }
+            if(rightUpTile != null && rightUpTile.isHovering)
+            {
                 return;
             }
 
@@ -524,9 +598,13 @@ function GameEngine()
                 {
                     self.swapAction();
                 }
+                if(inputs.indexOf(gameEngine.inputTypes.Elevate) != -1)
+                {
+                    self.fastElevate = true;
+                }
             }
         }
-        
+
         this.addTileToKillList = function(tile)
         {
             if(!tile)
@@ -535,6 +613,16 @@ function GameEngine()
             }
 
             self.tileKillList.push(tile);
+        }
+
+        this.addTileToFallList = function(tile)
+        {
+            if(!tile)
+            {
+                return;
+            }
+
+            self.tileFallList.push(tile);
         }
         
         this.incrementTileId = function()
@@ -555,19 +643,23 @@ function GameEngine()
             this.board = board;
             this.id = board.incrementTileId();
             this.isFalling = false;
+            this.isHovering = false;
             this.xShift = 0;
 
             this.swappingFrameCount = 0;
             this.swappingFrameReset = board.swapDelayReset;
 
             this.comboFrameCount = 0;
-            this.comboFrameReset = 32;
+            this.comboFrameReset = board.comboDelayReset;
+
+            this.hoverFrameCount = 0;
+            this.hoverFrameReset = board.fallDelayReset;
             
             var self = this;
 
             this.canMove = function()
             {
-                return !(self.comboFrameCount > 0 || self.swappingFrameCount > 0);
+                return !(self.comboFrameCount > 0 || self.swappingFrameCount > 0 || self.isHovering);
             }
 
             this.swapStart = function(xShift)
@@ -580,6 +672,12 @@ function GameEngine()
             this.comboStart = function()
             {
                 self.comboFrameCount = self.comboFrameReset;
+            }
+
+            this.hoverStart = function()
+            {
+                self.hoverFrameCount = self.hoverFrameReset;
+                self.isHovering = true;
             }
 
             this.update = function()
@@ -601,10 +699,20 @@ function GameEngine()
                 // combo --
                 self.comboFrameCount = Math.max(-1, self.comboFrameCount - 1);
 
-                // just finished swapping, check for combos
+                // just finished comboing, time to die
                 if(self.comboFrameCount == 0)
                 {
                     board.addTileToKillList(self);
+                }
+
+                // hover --
+                self.hoverFrameCount = Math.max(-1, self.hoverFrameCount - 1);
+
+                // just finished hovering, time to fall
+                if(self.hoverFrameCount == 0)
+                {
+                    self.isFalling = true;
+                    self.isHovering = false;
                 }
             }
         }
