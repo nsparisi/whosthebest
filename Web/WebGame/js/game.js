@@ -131,7 +131,6 @@ function GameEngine()
         this.tiles = [];
         this.boardSpaces = [];
         this.lastRowOfTileTypes = [];
-        this.tileKillList = [];
 
         this.lastTileId = 0;
 
@@ -157,6 +156,9 @@ function GameEngine()
 
         // some actions will stop the board from progressing
         this.stopBoardFromGrowing = false;
+
+        // chains
+        this.globalChainCounter = 1;
 
         this.cursor =
         {
@@ -212,19 +214,53 @@ function GameEngine()
             // run a pass through all tiles
             self.scanAllTilesForChanges();
 
-            // delete combo'd out tiles
-            self.checkForTilesToKill();
-
             // update swap delay
             self.updateSwapDelay();
         }
 
         this.scanAllTilesForChanges = function()
         {
+            var tileKillList = [];
+            var tilesToEndChain = [];
+
             // update this value if anything exciting is happening
             self.stopBoardFromGrowing = false;
 
+            // ---------------------------------
+            // find dying tiles
+            // ---------------------------------
+            for(var i = 0; i < self.boardSpaces.length; i++)
+            {
+                for(var j = 0; j < self.boardSpaces[i].length; j++)
+                {
+                    var tile = self.getTileAtSpace(j, i);
+
+                    if(!tile || tile.y == 0)
+                    {
+                        continue;
+                    }
+
+                    if(tile.isComboJustFinished)
+                    {
+                        // kill the tile later
+                        tileKillList.push(tile);
+
+                        // is there a tile resting on me?
+                        var aboveTile = self.getTileAtSpace(tile.x, tile.y + 1);
+                        if(aboveTile)
+                        {
+                            // this tile is now "chaining"
+                            aboveTile.isChaining = true;
+                        }
+                    }
+                }
+            }
+
+            self.killTiles(tileKillList);
+
+            // ---------------------------------
             // find falling tiles
+            // ---------------------------------
             for(var i = 0; i < self.boardSpaces.length; i++)
             {
                 for(var j = 0; j < self.boardSpaces[i].length; j++)
@@ -246,6 +282,26 @@ function GameEngine()
                     {
                         tile.isHovering = belowTile.isHovering;
                         tile.hoverFrameCount = belowTile.hoverFrameCount;
+
+                        // hovering always maintains chaining
+                        tile.isChaining = belowTile.isChaining || tile.isChaining;
+                    }
+
+                    // resting ontop a tile
+                    if(!shouldBeFalling && !tile.isHovering)
+                    {
+                        // queue this tile to stop chaining, 
+                        // but only if we're not swapping underneath
+                        if(tile.isChaining && !belowTile.isSwapping)
+                        {
+                            //and only if we're not chaining underneath
+                            var andWillStillBeChaining = tilesToEndChain.indexOf(belowTile) == -1;
+
+                            if(!belowTile.isChaining || !andWillStillBeChaining)
+                            {
+                                tilesToEndChain.push(tile);
+                            }
+                        }
                     }
 
                     // just landed
@@ -278,7 +334,9 @@ function GameEngine()
             var currentRow = [];
             var allComboTiles = [];
 
+            // ---------------------------------
             // find comboing tiles
+            // ---------------------------------
             for(var i = 0; i < self.boardSpaces.length; i++)
             {
                 for(var j = 0; j < self.boardSpaces[i].length; j++)
@@ -287,7 +345,7 @@ function GameEngine()
 
                     // any of these exciting things happening?
                     self.stopBoardFromGrowing = self.stopBoardFromGrowing |
-                        (tile && (tile.isHovering || tile.isFalling || tile.comboFrameCount > 0))
+                        (tile && (tile.isHovering || tile.isFalling || tile.isComboing))
 
                     // ignore these tiles
                     if(!tile || tile.y == 0 || !tile.canMove() || tile.isFalling)
@@ -325,16 +383,61 @@ function GameEngine()
                 }
             }
 
-            // trigger combo start
+            // ---------------------------------
+            // Resolve any Chains and Combos for this frame
+            // ---------------------------------
+
+            // Create a 'combo' of all of these tiles
+            var wasChainFormedThisFrame = false;
             var keys = Object.keys(allComboTiles);
             keys.forEach(
                 function(key)
                 {
                     var tile = allComboTiles[key];
                     tile.comboStart();
+                    wasChainFormedThisFrame |= tile.isChaining;
 
+                    // hacky, stop growing for one frame
                     self.stopBoardFromGrowing = true;
                 });
+
+            // Tiles that just landed should not be chaining anymore, unless....
+            tilesToEndChain.forEach(
+                function(tile)
+                {
+                    tile.isChaining = false;
+                });
+
+            // If a chain was formed this frame, The whole combo is now 'chaining'
+            // therefore tiles that just landed, can be chaining again!
+            if(wasChainFormedThisFrame)
+            {
+                self.globalChainCounter++;
+                console.log("Marvelous! Chain x" + self.globalChainCounter);
+
+                keys.forEach(
+                    function(key)
+                    {
+                        allComboTiles[key].isChaining = true;
+                    });
+            }
+
+            // chain ends if no tiles are chaining
+            if(self.globalChainCounter > 1)
+            {
+                var isStillChaining = false;
+                self.tiles.forEach(
+                    function(tile)
+                    {
+                        isStillChaining |= tile.isChaining;
+                    });
+
+                if(!isStillChaining)
+                {
+                    console.log("Fanfare! x" + self.globalChainCounter);
+                    self.globalChainCounter = 1;
+                }
+            }
         }
 
         this.updateSwapDelay = function()
@@ -342,15 +445,15 @@ function GameEngine()
             self.swapDelayCount = Math.max(-1, self.swapDelayCount - 1);
         }
 
-        this.checkForTilesToKill = function()
+        this.killTiles = function(tilesToKill)
         {
-            if(self.tileKillList.length == 0)
+            if(!tilesToKill || tilesToKill.length == 0)
             {
                 return;
             }
             
             // remove from board spaces
-            self.tileKillList.forEach(
+            tilesToKill.forEach(
                 function(tile)
                 {
                     console.log("deleting tile " + tile.id);
@@ -365,7 +468,7 @@ function GameEngine()
                 {
                     // if we are not killing the tile
                     // save in new list
-                    if(self.tileKillList.indexOf(tile) == -1)
+                    if(tilesToKill.indexOf(tile) == -1)
                     {
                         newListOfTiles.push(tile);
                     }
@@ -373,7 +476,6 @@ function GameEngine()
             
             console.log("old count: " + self.tiles.length + ", new count: " + newListOfTiles.length);
             self.tiles = newListOfTiles;
-            self.tileKillList = [];
         }
 
         this.getBoardSpace = function(x, y)
@@ -603,16 +705,6 @@ function GameEngine()
                 }
             }
         }
-
-        this.addTileToKillList = function(tile)
-        {
-            if(!tile)
-            {
-                return;
-            }
-
-            self.tileKillList.push(tile);
-        }
         
         this.incrementTileId = function()
         {
@@ -631,16 +723,20 @@ function GameEngine()
             this.type = type;
             this.board = board;
             this.id = board.incrementTileId();
-            this.isFalling = false;
-            this.isHovering = false;
             this.xShift = 0;
 
+            this.isSwapping = false;
             this.swappingFrameCount = 0;
             this.swappingFrameReset = board.swapDelayReset;
 
+            this.isComboing = false;
+            this.isComboJustFinished = false;
+            this.isChaining = false;
             this.comboFrameCount = 0;
             this.comboFrameReset = board.comboDelayReset;
 
+            this.isFalling = false;
+            this.isHovering = false;
             this.hoverFrameCount = 0;
             this.hoverFrameReset = board.fallDelayReset;
             
@@ -648,7 +744,7 @@ function GameEngine()
 
             this.canMove = function()
             {
-                return !(self.comboFrameCount > 0 || self.swappingFrameCount > 0 || self.isHovering);
+                return !(self.isComboing || self.isSwapping || self.isHovering);
             }
 
             this.swapStart = function(xShift)
@@ -656,11 +752,13 @@ function GameEngine()
                 // some frames to wait
                 self.xShift = xShift;
                 self.swappingFrameCount = self.swappingFrameReset;
+                self.isSwapping = true;
             }
 
             this.comboStart = function()
             {
                 self.comboFrameCount = self.comboFrameReset;
+                self.isComboing = true;
             }
 
             this.hoverStart = function()
@@ -683,6 +781,7 @@ function GameEngine()
 
                     self.x += self.xShift;
                     self.xShift = 0;
+                    self.isSwapping = false;
                 }
 
                 // combo --
@@ -691,7 +790,8 @@ function GameEngine()
                 // just finished comboing, time to die
                 if(self.comboFrameCount == 0)
                 {
-                    board.addTileToKillList(self);
+                    self.isComboJustFinished = true;
+                    self.isComboing = false;
                 }
 
                 // hover --

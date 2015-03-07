@@ -167,6 +167,12 @@ function GraphicsEngine()
                         fillStyle = graphicsEngine.comboFlashStyle;
                     }
 
+                    // debug, tile is chaining
+                    if(tile.isChaining)
+                    {
+                        //fillStyle = "#AAAAAA"
+                    }
+
                     canvasContext.fillStyle = fillStyle;
 
                     // ===============
