@@ -55,6 +55,8 @@
     <AppxManifest Include="package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
+    <Content Include="audio\chain_intense.mp3" />
+    <Content Include="audio\chain_mild.mp3" />
     <Content Include="game.html" />
     <Content Include="game_notes.txt" />
     <Content Include="images\bg.jpg" />

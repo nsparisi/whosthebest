@@ -4,7 +4,7 @@ function GraphicsEngine()
         {
             gameBackgound : "images/bg.jpg"
         }
-
+    
     //tesing 123
     this.colors = ["#FFABAB", "#FFDAAB", "#DDFFAB", "#ABE4FF", "#D9ABFF"];
     this.comboFlashStyle = "#EEEEEE";
@@ -27,7 +27,13 @@ function GraphicsEngine()
 
     var self = this;
     this.initialize = function()
-    {        
+    {
+        self.audios =
+            {
+                chain_intense: new SoundClip("audio/chain_intense.mp3"),
+                chain_mild: new SoundClip("audio/chain_mild.mp3")
+            }
+
         // border (not needed)
         var gameBorder = new Sprite(
             canvasElement.width, 
@@ -327,6 +333,15 @@ function GraphicsEngine()
 
             self.comboPopups.push(
                 new ComboPopup(realX, realY, number, self.removeComboPopup, falseComboTrueChain));
+
+            if(falseComboTrueChain && number <= 3)
+            {
+                graphicsEngine.audios.chain_mild.play();
+            }
+            else if(falseComboTrueChain && number > 3)
+            {
+                graphicsEngine.audios.chain_intense.play();
+            }
         }
 
         this.removeComboPopup = function(popup)
@@ -439,6 +454,27 @@ function GraphicsEngine()
         };
     };
     
+    var SoundClip = function(audioPath)
+    {
+        this.audioObj = new Audio();
+        var self = this;
+
+        this.audioObj.onloadeddata = function()
+        {
+            self.play = function()
+            {
+                self.audioObj.play();
+            }
+        }
+
+        // load the sound
+        this.audioObj.src = audioPath;
+        this.audioObj.load();
+
+        // can't play sound unless loaded
+        this.play = function(){}
+    }
+
     // a texture that loads an image safely and draws it at
     // x,y with width,height
     var Texture = function(width, height, imgPath)
