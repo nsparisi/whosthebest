@@ -26,17 +26,28 @@ function GameEngine()
         Elevate: 6, // if this exceeds 9, might be an issue with string.indexOf
     }
 
+    this.gameStateTypes =
+    {
+        Starting: 0,
+        Playing: 1,
+        Ended: 2,
+    }
+    this.currentGameState = this.gameStateTypes.Starting;
+
     // board references
     this.boards = [];
+    this.numberOfPlayers = 2;
     
     // a reference to itself
     var self = this;
     this.initialize = function()
     {
+        self.boards = [];
+        self.currentGameState = self.gameStateTypes.Starting;
+
         // board to initialize 
-        var numberOfPlayers = 2;
         var seed = Math.random();
-        for(var i = 0; i < numberOfPlayers; i++)
+        for(var i = 0; i < self.numberOfPlayers; i++)
         {
             var rng = new Math.seedrandom(seed);
             self.boards.push(new Board(rng));
@@ -55,10 +66,55 @@ function GameEngine()
         // parse frame packet data into a set of inputs for each board
         var frameData = self.parseFrameData(data);
 
-        // update each board, using it's specified inputs
-        for(var i = 0; i < self.boards.length; i++)
+        if(self.currentGameState == self.gameStateTypes.Starting)
         {
-            self.boards[i].update(frameData.inputs[i]);
+            // start immediately, todo wait 3 seconds
+            console.log("Starting new game!");
+            self.currentGameState = self.gameStateTypes.Playing;
+        }
+
+        else if(self.currentGameState == self.gameStateTypes.Playing)
+        {
+            // update each board, using it's specified inputs
+            var numberOfPlayersAlive = self.boards.length;
+            for(var i = 0; i < self.boards.length; i++)
+            {
+                if(!self.boards[i].isGameOver)
+                {
+                    self.boards[i].update(frameData.inputs[i]);
+                }
+                else
+                {
+                    numberOfPlayersAlive--;
+                }
+            }
+
+            // the game has ended, this player has won
+            if(numberOfPlayersAlive == 1)
+            {
+                for(var i = 0; i < self.boards.length; i++)
+                {
+                    if(!self.boards[i].isGameOver)
+                    {
+                        self.gameHasEnded(i);
+                    }
+                }
+            }
+
+            // the game has ended in a tie
+            else if(numberOfPlayersAlive == 0)
+            {
+                self.gameHasEnded(-1);
+            }
+        }
+
+        else if(self.currentGameState == self.gameStateTypes.Ended)
+        {
+            // wait for "play again" option
+            if(self.pressedRestartButton(frameData.inputs[0]))
+            {
+                self.initialize();
+            }
         }
     }
     
@@ -84,6 +140,25 @@ function GameEngine()
         }
         
         return frameData;
+    }
+
+    this.gameHasEnded = function(winnerIndex)
+    {
+        if(winnerIndex >= 0)
+        {
+            console.log("Congratulations player " + winnerIndex);
+        }
+        else if(winnerIndex == -1)
+        {
+            console.log("You both lose!");
+        }
+
+        self.currentGameState = self.gameStateTypes.Ended;
+    }
+
+    this.pressedRestartButton = function(inputs)
+    {
+        return inputs && inputs.indexOf(gameEngine.inputTypes.Swap) != -1;
     }
 
     // ************************************************
@@ -141,11 +216,17 @@ function GameEngine()
     // ************************************************
     var Board = function(randomNumberGenerator)
     {
+        this.cursor =
+        {
+            x: 1,
+            y: 1
+        }
+
         this.randomNumberGenerator = randomNumberGenerator;
         this.tiles = [];
         this.boardSpaces = [];
         this.lastRowOfTileTypes = [];
-
+        
         this.lastTileId = 0;
 
         this.yOffset = 0; 
@@ -174,16 +255,15 @@ function GameEngine()
         // chains
         this.globalChainCounter = 1;
 
-        this.cursor =
-        {
-            x: 1,
-            y: 1
-        }
+        // game over
+        this.isGameOver = false;
 
         var self = this;
 
         this.initialize = function()
         {
+            self.isGameOver = false;
+
             // make board spaces
             // these are static boxes at fixed coordinates
             for(var i = 0; i < gameEngine.rowCount; i++)
@@ -230,6 +310,25 @@ function GameEngine()
 
             // update swap delay
             self.updateSwapDelay();
+
+            // did we lose?
+            self.checkGameOverConditions();
+        }
+
+        this.checkGameOverConditions = function()
+        {
+            // todo, use a different metric. 
+            // Internal safety clock -- some leeway in vs mode.
+            if(!self.stopBoardFromGrowing)
+            {
+                self.tiles.forEach(function(tile)
+                {
+                    if(tile.y >= gameEngine.rowCountInBounds)
+                    {
+                        self.isGameOver = true;
+                    }
+                });
+            }
         }
 
         this.scanAllTilesForChanges = function()

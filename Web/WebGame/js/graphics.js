@@ -16,6 +16,9 @@ function GraphicsEngine()
     this.fpsText = null;
     this.frameCount = 0;
     this.lapsed = 0;
+
+    // boards
+    this.graphicsBoards = [];
     
     // canvasContext
     // canvasElement
@@ -24,12 +27,7 @@ function GraphicsEngine()
 
     var self = this;
     this.initialize = function()
-    {
-        var random = function(min, max) 
-        {
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        }
-        
+    {        
         // border (not needed)
         var gameBorder = new Sprite(
             canvasElement.width, 
@@ -46,28 +44,6 @@ function GraphicsEngine()
             textures.gameBackgound)
         self.sprites.push(gameBackground);
 
-        // game board 
-        // todo add more boards
-
-        // player 1
-        var board = new Board(gameEngine.boards[0]);
-        board.x = canvasElement.width / 4;
-        board.y = canvasElement.height / 2;
-        board.x -= gameEngine.colCount * this.tileWidth / 2;
-        board.y -= gameEngine.rowCountInBounds * this.tileHeight / 2;
-        self.sprites.push(board);
-        
-        // player 2
-        if(gameEngine.boards.length > 1)
-        {
-            var board = new Board(gameEngine.boards[1]);
-            board.x = canvasElement.width * 3 / 4;
-            board.y = canvasElement.height / 2
-            board.x -= gameEngine.colCount * this.tileWidth / 2;
-            board.y -= gameEngine.rowCountInBounds * this.tileHeight / 2;
-            self.sprites.push(board);
-        }
-
         // fps
         self.fpsText = new Text(
             5, 
@@ -77,10 +53,40 @@ function GraphicsEngine()
             );
         self.fpsText.text = "Hello World";
         self.sprites.push(self.fpsText);
+
+        // player 1
+        var board = new GraphicsBoard(gameEngine.boards[0]);
+        board.x = canvasElement.width / 4;
+        board.y = canvasElement.height / 2;
+        board.x -= gameEngine.colCount * this.tileWidth / 2;
+        board.y -= gameEngine.rowCountInBounds * this.tileHeight / 2;
+        self.sprites.push(board);
+        self.graphicsBoards.push(board);
+
+        // player 2
+        if(gameEngine.boards.length > 1)
+        {
+            var board = new GraphicsBoard(gameEngine.boards[1]);
+            board.x = canvasElement.width * 3 / 4;
+            board.y = canvasElement.height / 2
+            board.x -= gameEngine.colCount * this.tileWidth / 2;
+            board.y -= gameEngine.rowCountInBounds * this.tileHeight / 2;
+            self.sprites.push(board);
+            self.graphicsBoards.push(board);
+        }
     }
     
     this.update = function()
     {
+        // check game state
+        if(gameEngine.currentGameState == gameEngine.gameStateTypes.Starting)
+        {
+            for(var i = 0; i < self.graphicsBoards.length; i++)
+            {
+                self.graphicsBoards[i].gameEngineBoard = gameEngine.boards[i];
+            }
+        }
+
         canvasContext.clearRect(0,0, canvasElement.width, canvasElement.height);
         self.sprites.forEach(
             function(sprite)
@@ -101,7 +107,7 @@ function GraphicsEngine()
         }
     }
         
-    var Board = function(gameEngineBoard)
+    var GraphicsBoard = function(gameEngineBoard)
     {
         this.gameEngineBoard = gameEngineBoard;
         this.x = canvasElement.width / 2;
@@ -315,8 +321,6 @@ function GraphicsEngine()
 
         this.addComboPopup = function(tileX, tileY, number, falseComboTrueChain)
         {
-            console.log("adding combo at" + tileX + ", " + tileY + " : " + number);
-
             var realX = tileX * graphicsEngine.tileWidth;
             var realY = self.height - tileY * graphicsEngine.tileHeight -
                 self.yOffsetAsHeight * self.gameEngineBoard.yOffset;
@@ -328,7 +332,6 @@ function GraphicsEngine()
         this.removeComboPopup = function(popup)
         {
             var index = self.comboPopups.indexOf(popup);
-            console.log("trying to removeComboPopup " + index);
             if(index != -1)
             {
                 self.comboPopups.splice(index, 1);

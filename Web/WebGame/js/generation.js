@@ -45,7 +45,8 @@ function GenerationEngine()
             self.frameCount,
             [
                 self.currentInput,
-                self.currentInput//[gameEngine.inputTypes.None]
+                Math.max(0, Math.floor(Math.random() * (6 + 20)) - 20) // does nothing x20 chance
+                //[gameEngine.inputTypes.None] or self.currentInput or  Math.floor(Math.random() * 6),
             ]);
 
         // console.log("sending packet: " + packet);
