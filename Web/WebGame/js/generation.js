@@ -1,6 +1,6 @@
 function GenerationEngine()
 {
-    this.frameRate = 15;
+    this.frameRate = 20;
     this.elapsed = 0;
     this.threshold = 1000 / this.frameRate;
     this.frameCount = 0;
@@ -45,7 +45,7 @@ function GenerationEngine()
             self.frameCount,
             [
                 self.currentInput,
-                [gameEngine.inputTypes.None]
+                self.currentInput//[gameEngine.inputTypes.None]
             ]);
 
         // console.log("sending packet: " + packet);

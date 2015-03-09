@@ -48,12 +48,25 @@ function GraphicsEngine()
 
         // game board 
         // todo add more boards
-        var board = new Board(gameEngine.board);
-        board.x = canvasElement.width / 2;
-        board.y = canvasElement.height / 2 
+
+        // player 1
+        var board = new Board(gameEngine.boards[0]);
+        board.x = canvasElement.width / 4;
+        board.y = canvasElement.height / 2;
         board.x -= gameEngine.colCount * this.tileWidth / 2;
         board.y -= gameEngine.rowCountInBounds * this.tileHeight / 2;
-        self.sprites.push(board);    
+        self.sprites.push(board);
+        
+        // player 2
+        if(gameEngine.boards.length > 1)
+        {
+            var board = new Board(gameEngine.boards[1]);
+            board.x = canvasElement.width * 3 / 4;
+            board.y = canvasElement.height / 2
+            board.x -= gameEngine.colCount * this.tileWidth / 2;
+            board.y -= gameEngine.rowCountInBounds * this.tileHeight / 2;
+            self.sprites.push(board);
+        }
 
         // fps
         self.fpsText = new Text(
@@ -98,7 +111,9 @@ function GraphicsEngine()
         this.width = gameEngine.colCount * graphicsEngine.tileWidth;
         this.height = gameEngine.rowCountInBounds * graphicsEngine.tileHeight;
         this.yOffsetAsHeight = graphicsEngine.tileHeight / gameEngineBoard.yOffsetMax;
-        
+
+        this.comboPopups = [];
+                
         this.border = new Sprite(
             this.width + 4, 
             this.height + 4, 
@@ -140,18 +155,20 @@ function GraphicsEngine()
             
         var self = this;
         this.render = function() 
-        {   
+        {
+            self.updateCombos();
+
             canvasContext.translate(self.x, self.y);
         
             // faded lightbox behind tiles
             self.lightbox.render();
             
             // tiles ticking upwards
-            var yOffsetCurrentHeight = self.yOffsetAsHeight * gameEngineBoard.yOffset;
+            var yOffsetCurrentHeight = self.yOffsetAsHeight * self.gameEngineBoard.yOffset;
             
             canvasContext.lineWidth = 1;
             canvasContext.strokeStyle = "black";
-            gameEngineBoard.tiles.forEach(
+            self.gameEngineBoard.tiles.forEach(
                 function(tile)
                 {
                     canvasContext.save();
@@ -195,8 +212,8 @@ function GraphicsEngine()
                 });
                 
             // cursor overtop tiles
-            self.cursor1.x = gameEngineBoard.cursor.x * graphicsEngine.tileWidth;
-            self.cursor1.y = self.height - gameEngineBoard.cursor.y * graphicsEngine.tileHeight - yOffsetCurrentHeight;
+            self.cursor1.x = self.gameEngineBoard.cursor.x * graphicsEngine.tileWidth;
+            self.cursor1.y = self.height - self.gameEngineBoard.cursor.y * graphicsEngine.tileHeight - yOffsetCurrentHeight;
             self.cursor1.render();
             self.cursor2.x = self.cursor1.x + graphicsEngine.tileWidth;
             self.cursor2.y = self.cursor1.y;
@@ -205,9 +222,188 @@ function GraphicsEngine()
             // border around tiles
             self.border.render();
             self.bottom.render();
+            
+            // render popups
+            self.comboPopups.forEach(
+                function(popup)
+                {
+                    popup.render();
+                });
+        }
+
+        this.combos = [];
+        this.newCombo = [];
+        this.updateCombos = function()
+        {
+            self.removeOldCombos();
+            self.checkForNewCombos();
+        }
+
+        this.checkForNewCombos = function()
+        {
+            for(var i = self.gameEngineBoard.boardSpaces.length - 1; i >= 0 ; i--)
+            {
+                for(var j = 0; j < self.gameEngineBoard.boardSpaces[i].length; j++)
+                {
+                    var tile = self.gameEngineBoard.getTileAtSpace(j, i);
+
+                    if(tile && tile.isComboing && !self.isTileAlreadyInCombo(tile))
+                    {
+                        self.newCombo.push(tile);
+                    }
+                }
+            }
+
+            // show combo popup
+            if(self.newCombo.length > 0)
+            {
+                self.combos.push(self.newCombo);
+
+                if(self.newCombo.length > 3)
+                {
+                    // popup visually!
+                    self.addComboPopup(
+                        self.newCombo[0].x,
+                        self.newCombo[0].y,
+                        self.newCombo.length,
+                        false);
+                }
+
+                if(self.newCombo[0].isChaining)
+                {
+                    var tileY = self.newCombo.length > 3 ? self.newCombo[0].y + 1 : self.newCombo[0].y;
+
+                    // popup visually!
+                    self.addComboPopup(
+                        self.newCombo[0].x,
+                        tileY,
+                        self.gameEngineBoard.globalChainCounter,
+                        true);
+                }
+
+                self.newCombo = [];
+            }
+        }
+
+        this.removeOldCombos = function()
+        {
+            for(var i = self.combos.length -1; i >= 0; i--)
+            {
+                for(var j = 0; j < self.combos[i].length; j++)
+                {
+                    if(!self.combos[i][j].isComboing)
+                    {
+                        self.combos.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+        }
+
+        this.isTileAlreadyInCombo = function(tile)
+        {
+            for(var i = 0; i < self.combos.length; i++)
+            {
+                if(self.combos[i].indexOf(tile) != -1)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        this.addComboPopup = function(tileX, tileY, number, falseComboTrueChain)
+        {
+            console.log("adding combo at" + tileX + ", " + tileY + " : " + number);
+
+            var realX = tileX * graphicsEngine.tileWidth;
+            var realY = self.height - tileY * graphicsEngine.tileHeight -
+                self.yOffsetAsHeight * self.gameEngineBoard.yOffset;
+
+            self.comboPopups.push(
+                new ComboPopup(realX, realY, number, self.removeComboPopup, falseComboTrueChain));
+        }
+
+        this.removeComboPopup = function(popup)
+        {
+            var index = self.comboPopups.indexOf(popup);
+            console.log("trying to removeComboPopup " + index);
+            if(index != -1)
+            {
+                self.comboPopups.splice(index, 1);
+            }
         }
     }
-    
+
+    var ComboPopup = function(realX, realY, number, removeCallback, falseComboTrueChain)
+    {
+        var bgColor = "rgb(214,16,0)";
+        var bgBorder = "rgb(255,255,255)";
+        var textColor = "rgb(255, 240, 0)";
+
+        if(falseComboTrueChain)
+        {
+            bgColor = "rgb(0,146,0)";
+
+            this.text = new Text(
+                graphicsEngine.tileWidth,
+                graphicsEngine.tileHeight,
+                'bold 15pt Arial',
+                textColor);
+            this.text.text = "x" + number;
+            this.text.x = realX + graphicsEngine.tileWidth * 0.1;
+            this.text.y = realY + graphicsEngine.tileHeight * 0.9;
+        }
+        else
+        {
+            this.text = new Text(
+                graphicsEngine.tileWidth,
+                graphicsEngine.tileHeight,
+                'bold 22pt Arial',
+                textColor);
+
+            this.text.text = number;
+            this.text.x = realX + graphicsEngine.tileWidth * 0.2;
+            this.text.y = realY + graphicsEngine.tileHeight * 0.9;
+        }
+
+
+        this.background = new Sprite(
+            graphicsEngine.tileWidth,
+            graphicsEngine.tileHeight,
+            bgColor,
+            bgBorder,
+            2);
+        this.background.x = realX;
+        this.background.y = realY;
+
+        this.durationMs = 1000;
+        this.ageMs = 0;
+        var destinationY = graphicsEngine.tileHeight * -0.75;
+
+
+        var self = this;
+        this.render = function()
+        {
+            canvasContext.save();
+            canvasContext.scale(0.95, 0.95);
+
+            var t = self.ageMs / self.durationMs;
+            canvasContext.translate(0, t * destinationY);
+
+            self.background.render();
+            self.text.render();
+            canvasContext.restore();
+
+            self.ageMs += deltaTimeMs;
+            if(self.ageMs >= self.durationMs)
+            {
+                removeCallback(self);
+            }
+        }
+    }
+
     // Sprite object right now represents a square
     // with a width, height, stroke and fill style and rect line width
     var Sprite = function(width, height, fillStyle, strokeStyle, lineWidth) 
@@ -257,6 +453,7 @@ function GraphicsEngine()
             self.fillStyle = pattern;
             self.render = function()
             {
+                canvasContext.save();
                 canvasContext.translate(
                     self.x,
                     self.y
@@ -264,6 +461,7 @@ function GraphicsEngine()
                 canvasContext.fillStyle = self.fillStyle;
                 canvasContext.rect(0, 0, self.width, self.height);
                 canvasContext.fill();
+                canvasContext.restore();
             }
         };
         
@@ -274,20 +472,25 @@ function GraphicsEngine()
         this.render = function(){}
     }
     
-    var Text = function(width, height, font, fillStyle)
+    var Text = function(x, y, font, fillStyle)
     {
         this.text = "";
         this.font = font;
         this.fillStyle = fillStyle;
-        this.width = width;
-        this.height = height;
+        this.x = x;
+        this.y = y;
+        this.scaleX = 1;
+        this.scaleY = 1;
         
         var self = this;
         this.render = function()
         {
+            canvasContext.save();
             canvasContext.fillStyle = self.fillStyle;
             canvasContext.font = self.font;
-            canvasContext.fillText(self.text, self.width, self.height);
+            canvasContext.scale(self.scaleX, self.scaleY);
+            canvasContext.fillText(self.text, self.x, self.y);
+            canvasContext.restore();
         }
     }
 }

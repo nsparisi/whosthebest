@@ -9,7 +9,7 @@ function GameEngine()
     this.rowCount = 20;
     this.colCount = 6;
     this.rowCountInBounds = 12;
-    this.basicTileTypeCount = 5
+    this.basicTileTypeCount = 5; // normal 5, hard 6
 
     // Packet information
     this.gameId = 0;
@@ -27,16 +27,26 @@ function GameEngine()
     }
 
     // board references
-    this.board = null;
+    this.boards = [];
     
     // a reference to itself
     var self = this;
     this.initialize = function()
     {
         // board to initialize 
-        // todo have 2 boards in the future
-        self.board = new Board();
-        self.board.initialize();
+        var numberOfPlayers = 2;
+        var seed = Math.random();
+        for(var i = 0; i < numberOfPlayers; i++)
+        {
+            var rng = new Math.seedrandom(seed);
+            self.boards.push(new Board(rng));
+        }
+
+        self.boards.forEach(
+            function(board)
+            {
+                board.initialize();
+            });
     }
     
     // updates the engine by one frame
@@ -44,9 +54,12 @@ function GameEngine()
     {
         // parse frame packet data into a set of inputs for each board
         var frameData = self.parseFrameData(data);
-        
-        // todo update all boards
-        self.board.update(frameData.inputs[0]);
+
+        // update each board, using it's specified inputs
+        for(var i = 0; i < self.boards.length; i++)
+        {
+            self.boards[i].update(frameData.inputs[i]);
+        }
     }
     
     this.parseFrameData = function(data)
@@ -126,8 +139,9 @@ function GameEngine()
     // Board object.
     // A player's board. Contains all board-related operations.
     // ************************************************
-    var Board = function()
+    var Board = function(randomNumberGenerator)
     {
+        this.randomNumberGenerator = randomNumberGenerator;
         this.tiles = [];
         this.boardSpaces = [];
         this.lastRowOfTileTypes = [];
@@ -136,22 +150,22 @@ function GameEngine()
 
         this.yOffset = 0; 
         this.yOffsetMax = 16;
-        this.yOffsetFrameCount = 15; //todo frames
-        this.yOffsetFrameReset = 15;
+        this.yOffsetFrameCount = 20; //todo frames
+        this.yOffsetFrameReset = 20;
 
         this.swapDelayReset = 2; //todo frames
         this.swapDelayCount = -1;
         this.queuedUpSwapAction = false;
 
-        // how long a combo lasts
-        // todo, make tile 'popping' a different counter
-        this.comboDelayReset = 22;
+        // how long a combo lasts (44 + 25 - 9) / 60fps
+        this.comboDelayReset = 20;
+        this.comboDelayResetPerTile = 3;
 
         // how long to hang in the air before falling
         this.fallDelayReset = 4; // roughly 2x swap delay
 
         // the elevate command will advance the height until a new row is added
-        this.fastElevateHeightPerFrame = 4;
+        this.fastElevateHeightPerFrame = 3;
         this.fastElevate = false;
 
         // some actions will stop the board from progressing
@@ -288,20 +302,13 @@ function GameEngine()
                     }
 
                     // resting ontop a tile
-                    if(!shouldBeFalling && !tile.isHovering)
+                    // queue this tile to stop chaining, 
+                    // but only if we're not swapping underneath
+                    if( (!shouldBeFalling && !tile.isHovering) &&
+                        (tile.isChaining && !belowTile.isSwapping) && 
+                        (!belowTile.isChaining || tilesToEndChain.indexOf(belowTile) != -1))
                     {
-                        // queue this tile to stop chaining, 
-                        // but only if we're not swapping underneath
-                        if(tile.isChaining && !belowTile.isSwapping)
-                        {
-                            //and only if we're not chaining underneath
-                            var andWillStillBeChaining = tilesToEndChain.indexOf(belowTile) == -1;
-
-                            if(!belowTile.isChaining || !andWillStillBeChaining)
-                            {
-                                tilesToEndChain.push(tile);
-                            }
-                        }
+                        tilesToEndChain.push(tile);
                     }
 
                     // just landed
@@ -390,11 +397,12 @@ function GameEngine()
             // Create a 'combo' of all of these tiles
             var wasChainFormedThisFrame = false;
             var keys = Object.keys(allComboTiles);
+            var totalComboDelay = keys.length * self.comboDelayResetPerTile + self.comboDelayReset;
             keys.forEach(
                 function(key)
                 {
                     var tile = allComboTiles[key];
-                    tile.comboStart();
+                    tile.comboStart(totalComboDelay);
                     wasChainFormedThisFrame |= tile.isChaining;
 
                     // hacky, stop growing for one frame
@@ -456,7 +464,6 @@ function GameEngine()
             tilesToKill.forEach(
                 function(tile)
                 {
-                    console.log("deleting tile " + tile.id);
                     var boardSpace = self.getBoardSpace(tile.x, tile.y);
                     boardSpace.removeTile(tile);
                 });
@@ -474,7 +481,6 @@ function GameEngine()
                     }
                 });
             
-            console.log("old count: " + self.tiles.length + ", new count: " + newListOfTiles.length);
             self.tiles = newListOfTiles;
         }
 
@@ -506,7 +512,7 @@ function GameEngine()
         {
             while(true)
             {
-                var type = 3 + Math.floor(Math.random() * gameEngine.basicTileTypeCount);
+                var type = 3 + Math.floor(self.randomNumberGenerator() * gameEngine.basicTileTypeCount);
                 if(!ignoreList || ignoreList.indexOf(type) == -1)
                 {
                     return type;
@@ -733,7 +739,6 @@ function GameEngine()
             this.isComboJustFinished = false;
             this.isChaining = false;
             this.comboFrameCount = 0;
-            this.comboFrameReset = board.comboDelayReset;
 
             this.isFalling = false;
             this.isHovering = false;
@@ -755,9 +760,9 @@ function GameEngine()
                 self.isSwapping = true;
             }
 
-            this.comboStart = function()
+            this.comboStart = function(totalDelay)
             {
-                self.comboFrameCount = self.comboFrameReset;
+                self.comboFrameCount = totalDelay;
                 self.isComboing = true;
             }
 
