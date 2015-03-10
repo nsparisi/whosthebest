@@ -6,10 +6,13 @@ function GameEngine()
     // 2 = enemy metal
     // 3-10 basic types
     // 10+ = enemy dropped blocks
+    this.basicTileTypeCount = 5; // normal 5, hard 6
+    this.basicTileTypeStartIndex = 3;
+    this.attackBlockTypeStartIndex = 10;
+
     this.rowCount = 20;
     this.colCount = 6;
     this.rowCountInBounds = 12;
-    this.basicTileTypeCount = 5; // normal 5, hard 6
 
     // Packet information
     this.gameId = 0;
@@ -37,6 +40,10 @@ function GameEngine()
     // board references
     this.boards = [];
     this.numberOfPlayers = 2;
+
+    // need to start keeping global timing values here
+    this.attackBlockDelay = 24 // about 70ish frames in 60fps
+    this.comboAttackPatterns = [[0], [0], [0], [0], [3], [4], [5], [6], [3, 4], [4, 4], [5, 5], [6, 6]];
     
     // a reference to itself
     var self = this;
@@ -50,7 +57,7 @@ function GameEngine()
         for(var i = 0; i < self.numberOfPlayers; i++)
         {
             var rng = new Math.seedrandom(seed);
-            self.boards.push(new Board(rng));
+            self.boards.push(new Board(rng, i, gameEngine.attackBlockTypeStartIndex));
         }
 
         self.boards.forEach(
@@ -161,6 +168,14 @@ function GameEngine()
         return inputs && inputs.indexOf(gameEngine.inputTypes.Swap) != -1;
     }
 
+    this.attackOtherPlayer = function(fromBoardIndex, attackBlock)
+    {
+        // todo make round robin
+        var targetBoardIndex = (fromBoardIndex + 1) % gameEngine.numberOfPlayers;
+        gameEngine.boards[targetBoardIndex].wasAttackedByOtherPlayer(attackBlock);
+        console.log("Player " + fromBoardIndex + " has attacked Player " + targetBoardIndex);
+    }
+
     // ************************************************
     // FrameData object.
     // Represents the frame string in a readable data format
@@ -214,7 +229,7 @@ function GameEngine()
     // Board object.
     // A player's board. Contains all board-related operations.
     // ************************************************
-    var Board = function(randomNumberGenerator)
+    var Board = function(randomNumberGenerator, playerIndex, attackBlockType)
     {
         this.cursor =
         {
@@ -222,7 +237,10 @@ function GameEngine()
             y: 1
         }
 
+        this.playerIndex = playerIndex;
         this.randomNumberGenerator = randomNumberGenerator;
+        this.attackBlockType = attackBlockType;
+
         this.tiles = [];
         this.boardSpaces = [];
         this.lastRowOfTileTypes = [];
@@ -520,8 +538,6 @@ function GameEngine()
             if(wasChainFormedThisFrame)
             {
                 self.globalChainCounter++;
-                console.log("Marvelous! Chain x" + self.globalChainCounter);
-
                 keys.forEach(
                     function(key)
                     {
@@ -541,10 +557,14 @@ function GameEngine()
 
                 if(!isStillChaining)
                 {
-                    console.log("Fanfare! x" + self.globalChainCounter);
+                    // attack other player -- chains are strong!
+                    self.sendChainAttack(self.globalChainCounter);
                     self.globalChainCounter = 1;
                 }
             }
+
+            // attack other player -- weak combos will be ignored
+            self.sendComboAttack(keys.length);
         }
 
         this.updateSwapDelay = function()
@@ -607,11 +627,45 @@ function GameEngine()
             return null;
         }
 
+        this.wasAttackedByOtherPlayer = function(attackTile)
+        {
+            // todo queue tile for falling
+        }
+
+        this.sendComboAttack = function(comboSize)
+        {
+            if(comboSize >= 4)
+            {
+                // combo patterns are predetermined i.e:
+                // an 8-combo will always generate a size-3 block and a size-4 block.
+                var comboIndex = Math.min(comboSize, gameEngine.comboAttackPatterns.length - 1);
+                var comboPattern = gameEngine.comboAttackPatterns[comboIndex];
+
+                // multiple blocks can be generated from one combo.
+                for(var i = 0; i < comboPattern.length; i++)
+                {
+                    gameEngine.attackOtherPlayer(
+                        self.playerIndex, 
+                        new AttackBlock(comboPattern[i], 1, self.attackBlockType));
+                }
+            }
+        }
+
+        this.sendChainAttack = function(chainSize)
+        {
+            // chain attacks are always the width of the board
+            // the height grows as the chain grows
+            gameEngine.attackOtherPlayer(
+                self.playerIndex,
+                new AttackBlock(gameEngine.colCount, chainSize - 1, self.attackBlockType));
+        }
+
         this.getNextRandomTile = function(ignoreList)
         {
             while(true)
             {
-                var type = 3 + Math.floor(self.randomNumberGenerator() * gameEngine.basicTileTypeCount);
+                var type = gameEngine.basicTileTypeStartIndex + 
+                    Math.floor(self.randomNumberGenerator() * gameEngine.basicTileTypeCount);
                 if(!ignoreList || ignoreList.indexOf(type) == -1)
                 {
                     return type;
@@ -815,6 +869,18 @@ function GameEngine()
         {
             self.lastTileId++;
             return "id:" + self.lastTileId;
+        }
+
+        // ************************************************
+        // AttackBlock object.
+        // Represents an attack block that is waiting to fall
+        // ************************************************
+        var AttackBlock = function(tilesWide, tilesHigh, attackType)
+        {
+            this.tilesWide = tilesWide;
+            this.tilesHigh = tilesHigh;
+            this.attackType = attackType;
+            var framesLeftUntilDrop = gameEngine.attackBlockDelay;
         }
 
         // ************************************************

@@ -28,6 +28,7 @@ function GraphicsEngine()
     var self = this;
     this.initialize = function()
     {
+        self.sfxVolume = 0;
         self.audios =
             {
                 chain_intense: new SoundClip("audio/chain_intense.mp3"),
@@ -463,6 +464,7 @@ function GraphicsEngine()
         {
             self.play = function()
             {
+                self.audioObj.volume = graphicsEngine.sfxVolume;
                 self.audioObj.play();
             }
         }
