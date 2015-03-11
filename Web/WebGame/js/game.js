@@ -244,6 +244,7 @@ function GameEngine()
         this.tiles = [];
         this.boardSpaces = [];
         this.lastRowOfTileTypes = [];
+        this.attackBlocksInWait = [];
         
         this.lastTileId = 0;
 
@@ -322,6 +323,9 @@ function GameEngine()
             {
                 tile.update();
             });
+
+            // see if any blocks should fall
+            self.updateWaitingAttackBlocks();
 
             // run a pass through all tiles
             self.scanAllTilesForChanges();
@@ -627,11 +631,42 @@ function GameEngine()
             return null;
         }
 
-        this.wasAttackedByOtherPlayer = function(attackTile)
+        this.wasAttackedByOtherPlayer = function(attackBlock)
         {
-            // todo queue tile for falling
+            self.attackBlocksInWait.push(attackBlock);
         }
 
+        this.releaseAttackBlockIntoBoard = function(attackBlock)
+        {
+            // todo handle... stacks too tall for the board
+            // todo handle 2 blocks on the same frame
+            for(var i = 0; i < attackBlock.tilesHigh; i++)
+            {
+                for(var j = 0; j < attackBlock.tilesWide; j++)
+                {
+                    var tile = new Tile(j, gameEngine.rowCount - 1 - i, attackBlock.attackType, self);
+                    var boardSpace = self.getBoardSpace(tile.x, tile.y);
+                    boardSpace.addTile(tile);
+                    self.tiles.push(tile);
+                }
+            }
+        }
+
+        this.updateWaitingAttackBlocks = function()
+        {
+            for(var i = self.attackBlocksInWait.length - 1; i >= 0; i--)
+            {
+                var attackBlock = self.attackBlocksInWait[i];
+                attackBlock.framesLeftUntilDrop--;
+                if(attackBlock.framesLeftUntilDrop <= 0 && !self.stopBoardFromGrowing)
+                {
+                    self.releaseAttackBlockIntoBoard(attackBlock);
+                    self.attackBlocksInWait.splice(i, 1);
+                }
+            }
+        }
+
+        // todo - see if combos are queued up alongside chains, and if they are all sent at once
         this.sendComboAttack = function(comboSize)
         {
             if(comboSize >= 4)
@@ -880,7 +915,7 @@ function GameEngine()
             this.tilesWide = tilesWide;
             this.tilesHigh = tilesHigh;
             this.attackType = attackType;
-            var framesLeftUntilDrop = gameEngine.attackBlockDelay;
+            this.framesLeftUntilDrop = gameEngine.attackBlockDelay;
         }
 
         // ************************************************

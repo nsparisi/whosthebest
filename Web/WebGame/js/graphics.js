@@ -188,7 +188,16 @@ function GraphicsEngine()
 
                     // ==============
                     // fill color style
-                    var fillStyle = graphicsEngine.colors[tile.type - 3];
+                    var fillStyle = "#FF00FF";
+
+                    if(tile.type >= gameEngine.attackBlockTypeStartIndex)
+                    {
+                        var fillStyle = "#FF00FF";
+                    }
+                    else if(tile.type >= gameEngine.basicTileTypeStartIndex)
+                    {
+                        var fillStyle = graphicsEngine.colors[tile.type - gameEngine.basicTileTypeStartIndex];
+                    }
 
                     // tile is being combo'd
                     if(tile.comboFrameCount > 0 &&
