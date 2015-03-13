@@ -164,7 +164,11 @@ function GraphicsEngine()
             graphicsEngine.tileHeight,
             'rgba(0,0,0,0.0)',
             'black', 
-            3);        
+            3);
+
+        // gameover countdown
+        this.gameOverCounter = new Text(
+            0, 0, "14pt arial", "#000");
             
         var self = this;
         this.render = function() 
@@ -251,6 +255,10 @@ function GraphicsEngine()
                 {
                     popup.render();
                 });
+
+            // gameover counter
+            self.gameOverCounter.text = self.gameEngineBoard.gameOverLeewayCount;
+            self.gameOverCounter.render();
         }
 
         this.combos = [];
@@ -269,7 +277,7 @@ function GraphicsEngine()
                 {
                     var tile = self.gameEngineBoard.getTileAtSpace(j, i);
 
-                    if(tile && tile.isComboing && !self.isTileAlreadyInCombo(tile))
+                    if(tile && !tile.isAttackBlock && tile.isComboing && !self.isTileAlreadyInCombo(tile))
                     {
                         self.newCombo.push(tile);
                     }

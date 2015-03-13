@@ -13,6 +13,7 @@ function GameEngine()
     this.rowCount = 20;
     this.colCount = 6;
     this.rowCountInBounds = 12;
+    this.attackBlockAllowedHeight = 11;
 
     // Packet information
     this.gameId = 0;
@@ -276,6 +277,10 @@ function GameEngine()
 
         // game over
         this.isGameOver = false;
+        this.gameOverLeewayReset = 40; // todo frames
+        this.gameOverLeewayCount = 40; // how long until we really die
+
+        this.highestTileHeight = 0;
 
         var self = this;
 
@@ -343,13 +348,19 @@ function GameEngine()
             // Internal safety clock -- some leeway in vs mode.
             if(!self.stopBoardFromGrowing)
             {
-                self.tiles.forEach(function(tile)
+                if(self.highestTileHeight >= gameEngine.rowCountInBounds)
                 {
-                    if(tile.y >= gameEngine.rowCountInBounds)
+                    self.gameOverLeewayCount--;
+
+                    if(self.gameOverLeewayCount == 0)
                     {
                         self.isGameOver = true;
                     }
-                });
+                }
+                else 
+                {
+                    self.gameOverLeewayCount = self.gameOverLeewayReset;
+                }
             }
         }
 
@@ -360,6 +371,9 @@ function GameEngine()
 
             // update this value if anything exciting is happening
             self.stopBoardFromGrowing = false;
+
+            // what's the highest tile?
+            self.highestTileHeight = 0;
 
             // ---------------------------------
             // find dying tiles
@@ -374,6 +388,9 @@ function GameEngine()
                     {
                         continue;
                     }
+
+                    // highest tile
+                    self.highestTileHeight = Math.max(self.highestTileHeight, tile.y);
 
                     if(tile.isComboJustFinished)
                     {
@@ -408,52 +425,137 @@ function GameEngine()
                         continue;
                     }
 
-                    // should be falling?
-                    var belowTile = self.getTileAtSpace(tile.x, tile.y - 1);
-                    var shouldBeFalling = !belowTile && tile.y > 1 && tile.canMove();
-
-                    // if I'm resting on a hovering tile, copy the hover attribute
-                    if(belowTile && belowTile.isHovering)
+                    if(tile.isAttackBlock)
                     {
-                        tile.isHovering = belowTile.isHovering;
-                        tile.hoverFrameCount = belowTile.hoverFrameCount;
+                        var isBelowRowHovering = false;
+                        var shouldRowBeFalling = true;
+                        var hoverFrameCount = 0;
+                        var totalTilesInRow = 1;
 
-                        // hovering always maintains chaining
-                        tile.isChaining = belowTile.isChaining || tile.isChaining;
+                        // scan to the right
+                        var currentTile = tile;
+                        while(currentTile)
+                        {
+                            var belowTile = self.getTileAtSpace(currentTile.x, currentTile.y - 1);
+
+                            // todo test landing on an already hovering tile
+                            isBelowRowHovering =
+                                (isBelowRowHovering && !belowTile) ||
+                                ((shouldRowBeFalling || isBelowRowHovering) && belowTile && belowTile.isHovering);
+                            shouldRowBeFalling &= !belowTile && currentTile.y > 1 && currentTile.canMove();
+
+                            if(isBelowRowHovering && belowTile)
+                            {
+                                hoverFrameCount = Math.max(hoverFrameCount, belowTile.hoverFrameCount);
+                            }
+
+                            // this was the last tile
+                            if(!currentTile.isConnectedRight)
+                            {
+                                break;
+                            }
+
+                            totalTilesInRow++;
+                            currentTile = self.getTileAtSpace(currentTile.x + 1, currentTile.y);
+                        }
+
+                        var currentTile = tile;
+                        while(currentTile)
+                        {
+                            // remember the right tile, we may shift down this frame
+                            var nextTile = null;
+                            if(currentTile.isConnectedRight)
+                            {
+                                nextTile = self.getTileAtSpace(currentTile.x + 1, currentTile.y);
+                            }
+
+                            if(isBelowRowHovering)
+                            {
+                                currentTile.hoverFrameCount = hoverFrameCount;
+                                currentTile.isHovering = true;
+                            }
+
+                            // just landed
+                            if(currentTile.isFalling && !shouldRowBeFalling)
+                            {
+                                currentTile.isFalling = false;
+                            }
+
+                            // continue to fall
+                            else if(currentTile.isFalling && shouldRowBeFalling)
+                            {
+                                currentTile.isFalling = true;
+                                var space = self.getBoardSpace(currentTile.x, currentTile.y);
+                                space.removeTile(currentTile);
+
+                                currentTile.y--;
+                                space = self.getBoardSpace(currentTile.x, currentTile.y);
+                                space.addTile(currentTile);
+                            }
+
+                            // just started to hover
+                            else if(!currentTile.isFalling && shouldRowBeFalling)
+                            {
+                                currentTile.hoverStart();
+                            }
+
+                            currentTile = nextTile;
+                        }
+
+                        // already processed these tiles
+                        j += totalTilesInRow - 1;
                     }
 
-                    // resting ontop a tile
-                    // queue this tile to stop chaining, 
-                    // but only if we're not swapping underneath
-                    if( (!shouldBeFalling && !tile.isHovering) &&
-                        (tile.isChaining && !belowTile.isSwapping) && 
-                        (!belowTile.isChaining || tilesToEndChain.indexOf(belowTile) != -1))
+                    // basic blocks
+                    else
                     {
-                        tilesToEndChain.push(tile);
-                    }
+                        // should be falling?
+                        var belowTile = self.getTileAtSpace(tile.x, tile.y - 1);
+                        var shouldBeFalling = !belowTile && tile.y > 1 && tile.canMove();
 
-                    // just landed
-                    if(tile.isFalling && !shouldBeFalling)
-                    {
-                        tile.isFalling = false;
-                    }
+                        // if I'm resting on a hovering tile, copy the hover attribute
+                        if(belowTile && belowTile.isHovering)
+                        {
+                            tile.isHovering = true;
+                            tile.hoverFrameCount = belowTile.hoverFrameCount;
 
-                    // continue to fall
-                    else if(tile.isFalling && shouldBeFalling)
-                    {
-                        tile.isFalling = true;
-                        var space = self.getBoardSpace(tile.x, tile.y);
-                        space.removeTile(tile);
+                            // hovering always maintains chaining
+                            tile.isChaining = belowTile.isChaining || tile.isChaining;
+                        }
 
-                        tile.y--;
-                        space = self.getBoardSpace(tile.x, tile.y);
-                        space.addTile(tile);
-                    }
+                        // resting ontop a tile
+                        // queue this tile to stop chaining, 
+                        // but only if we're not swapping underneath
+                        if((!shouldBeFalling && !tile.isHovering) &&
+                            (tile.isChaining && !belowTile.isSwapping) &&
+                            (!belowTile.isChaining || tilesToEndChain.indexOf(belowTile) != -1))
+                        {
+                            tilesToEndChain.push(tile);
+                        }
 
-                    // just started to hover
-                    else if(!tile.isFalling && shouldBeFalling)
-                    {
-                        tile.hoverStart();
+                        // just landed
+                        if(tile.isFalling && !shouldBeFalling)
+                        {
+                            tile.isFalling = false;
+                        }
+
+                            // continue to fall
+                        else if(tile.isFalling && shouldBeFalling)
+                        {
+                            tile.isFalling = true;
+                            var space = self.getBoardSpace(tile.x, tile.y);
+                            space.removeTile(tile);
+
+                            tile.y--;
+                            space = self.getBoardSpace(tile.x, tile.y);
+                            space.addTile(tile);
+                        }
+
+                            // just started to hover
+                        else if(!tile.isFalling && shouldBeFalling)
+                        {
+                            tile.hoverStart();
+                        }
                     }
                 }
             }
@@ -481,6 +583,12 @@ function GameEngine()
                         // mark this row as a 0
                         lastRow[j] = currentRow[j];
                         currentRow[j] = 0;
+                    }
+                    else if(tile.isAttackBlock)
+                    {
+                        // don't combo
+                        lastRow[j] = currentRow[j];
+                        currentRow[j] = tile.type;
                     }
                     else
                     {
@@ -514,6 +622,29 @@ function GameEngine()
             // ---------------------------------
             // Resolve any Chains and Combos for this frame
             // ---------------------------------
+            var allAttackBlocksCombod = [];
+            var hurtAttackBlock = function(tile)
+            {
+                if(tile && tile.isAttackBlock)
+                {
+                    if(allAttackBlocksCombod.indexOf(tile) == -1)
+                    {
+                        allAttackBlocksCombod.push(tile);
+                        hurtAttackBlock(self.getTileAtSpace(tile.x + 1, tile.y));
+                        hurtAttackBlock(self.getTileAtSpace(tile.x - 1, tile.y));
+                        hurtAttackBlock(self.getTileAtSpace(tile.x, tile.y + 1));
+                        hurtAttackBlock(self.getTileAtSpace(tile.x, tile.y - 1));
+                    }
+                }
+            }
+
+            var checkForAdjacentAttackBlocks = function(tile)
+            {
+                hurtAttackBlock(self.getTileAtSpace(tile.x + 1, tile.y));
+                hurtAttackBlock(self.getTileAtSpace(tile.x, tile.y + 1));
+                hurtAttackBlock(self.getTileAtSpace(tile.x, tile.y - 1));
+                hurtAttackBlock(self.getTileAtSpace(tile.x - 1, tile.y));
+            }
 
             // Create a 'combo' of all of these tiles
             var wasChainFormedThisFrame = false;
@@ -526,8 +657,17 @@ function GameEngine()
                     tile.comboStart(totalComboDelay);
                     wasChainFormedThisFrame |= tile.isChaining;
 
+                    checkForAdjacentAttackBlocks(tile);
+
                     // hacky, stop growing for one frame
                     self.stopBoardFromGrowing = true;
+                });
+
+            totalComboDelay = (keys.length + allAttackBlocksCombod.length) * self.comboDelayResetPerTile + self.comboDelayReset;
+            allAttackBlocksCombod.forEach(
+                function(tile)
+                {
+                    tile.comboStart(totalComboDelay);
                 });
 
             // Tiles that just landed should not be chaining anymore, unless....
@@ -546,6 +686,12 @@ function GameEngine()
                     function(key)
                     {
                         allComboTiles[key].isChaining = true;
+                    });
+
+                allAttackBlocksCombod.forEach(
+                    function(tile)
+                    {
+                        tile.isChaining = true;
                     });
             }
 
@@ -644,7 +790,14 @@ function GameEngine()
             {
                 for(var j = 0; j < attackBlock.tilesWide; j++)
                 {
-                    var tile = new Tile(j, gameEngine.rowCount - 1 - i, attackBlock.attackType, self);
+                    var tile = new Tile(j, gameEngine.attackBlockAllowedHeight + 1 + i, attackBlock.attackType, self);
+                    tile.isAttackBlock = true;
+                    tile.isConnectedRight = j < attackBlock.tilesWide - 1;
+                    tile.isConnectedLeft = j > 0;
+                    tile.isConnectedUp = i < attackBlock.tilesHigh - 1;
+                    tile.isConnectedDown = i > 0;
+                    tile.isFalling = true;
+
                     var boardSpace = self.getBoardSpace(tile.x, tile.y);
                     boardSpace.addTile(tile);
                     self.tiles.push(tile);
@@ -654,14 +807,20 @@ function GameEngine()
 
         this.updateWaitingAttackBlocks = function()
         {
-            for(var i = self.attackBlocksInWait.length - 1; i >= 0; i--)
+            for(var i = 0; i < self.attackBlocksInWait.length; i++)
             {
                 var attackBlock = self.attackBlocksInWait[i];
                 attackBlock.framesLeftUntilDrop--;
-                if(attackBlock.framesLeftUntilDrop <= 0 && !self.stopBoardFromGrowing)
+
+                // if the tile is ready to fall
+                // remove it from queue and fall
+                if(attackBlock.framesLeftUntilDrop <= 0 && !self.stopBoardFromGrowing &&
+                    self.highestTileHeight <= gameEngine.attackBlockAllowedHeight)
                 {
+                    // only one attack per frame
                     self.releaseAttackBlockIntoBoard(attackBlock);
                     self.attackBlocksInWait.splice(i, 1);
+                    break;
                 }
             }
         }
@@ -829,11 +988,11 @@ function GameEngine()
 
             // can't swap unmovable tiles
             // ignore input
-            if(leftTile != null && !leftTile.canMove())
+            if(leftTile != null && (!leftTile.canMove() || leftTile.isAttackBlock))
             {
                 return;
             }
-            if(rightTile != null && !rightTile.canMove())
+            if(rightTile != null && (!rightTile.canMove() || rightTile.isAttackBlock))
             {
                 return;
             }
@@ -944,6 +1103,12 @@ function GameEngine()
             this.isHovering = false;
             this.hoverFrameCount = 0;
             this.hoverFrameReset = board.fallDelayReset;
+
+            this.isAttackBlock = false;
+            this.isConnectedRight = false;
+            this.isConnectedLeft = false;
+            this.isConnectedUp = false;
+            this.isConnectedDown = false;
             
             var self = this;
 
