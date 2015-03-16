@@ -45,8 +45,7 @@ function GenerationEngine()
             self.frameCount,
             [
                 self.currentInput,
-                self.currentInput
-                //Math.max(0, Math.floor(Math.random() * (6 + 15)) - 15) // does nothing x15 chance
+                Math.max(0, Math.floor(Math.random() * (6 + 15)) - 15) // does nothing x15 chance
                 //[gameEngine.inputTypes.None] or self.currentInput or  Math.floor(Math.random() * 6),
             ]);
 

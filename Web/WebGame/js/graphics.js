@@ -232,9 +232,42 @@ function GraphicsEngine()
                     );
                     canvasContext.beginPath();
                     canvasContext.rect(0, 0, graphicsEngine.tileWidth, graphicsEngine.tileHeight);
-                    canvasContext.stroke();
                     canvasContext.fill();
+
+                    // draw borders around the tile
+                    if(!tile.isConnectedUp)
+                    {
+                        canvasContext.beginPath();
+                        canvasContext.moveTo(0, 0);
+                        canvasContext.lineTo(graphicsEngine.tileWidth, 0);
+                        canvasContext.stroke();
+                    }
+
+                    if(!tile.isConnectedRight)
+                    {
+                        canvasContext.beginPath();
+                        canvasContext.moveTo(graphicsEngine.tileWidth, 0);
+                        canvasContext.lineTo(graphicsEngine.tileWidth, graphicsEngine.tileHeight);
+                        canvasContext.stroke();
+                    }
+
+                    if(!tile.isConnectedLeft)
+                    {
+                        canvasContext.beginPath();
+                        canvasContext.moveTo(0, 0);
+                        canvasContext.lineTo(0, graphicsEngine.tileHeight);
+                        canvasContext.stroke();
+                    }
+
+                    if(!tile.isConnectedDown)
+                    {
+                        canvasContext.beginPath();
+                        canvasContext.moveTo(0, graphicsEngine.tileHeight);
+                        canvasContext.lineTo(graphicsEngine.tileWidth, graphicsEngine.tileHeight);
+                        canvasContext.stroke();
+                    }
                     canvasContext.restore();
+
                 });
                 
             // cursor overtop tiles
