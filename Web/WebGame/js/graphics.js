@@ -277,7 +277,7 @@ function GraphicsEngine()
                 {
                     var tile = self.gameEngineBoard.getTileAtSpace(j, i);
 
-                    if(tile && !tile.isAttackBlock && tile.isComboing && !self.isTileAlreadyInCombo(tile))
+                    if(tile && !tile.isAttackBlock && tile.isComboing && !self.isTileAlreadyInCombo(tile) && !tile.persistAfterCombo)
                     {
                         self.newCombo.push(tile);
                     }
@@ -299,7 +299,7 @@ function GraphicsEngine()
                         false);
                 }
 
-                if(self.newCombo[0].isChaining)
+                if(self.newCombo[0].isChaining && self.gameEngineBoard.globalChainCounter > 1)
                 {
                     var tileY = self.newCombo.length > 3 ? self.newCombo[0].y + 1 : self.newCombo[0].y;
 

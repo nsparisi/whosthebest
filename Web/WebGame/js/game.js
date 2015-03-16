@@ -45,6 +45,7 @@ function GameEngine()
     // need to start keeping global timing values here
     this.attackBlockDelay = 24 // about 70ish frames in 60fps
     this.comboAttackPatterns = [[0], [0], [0], [0], [3], [4], [5], [6], [3, 4], [4, 4], [5, 5], [6, 6]];
+    this.attackBlockQueue = [];
     
     // a reference to itself
     var self = this;
@@ -83,6 +84,9 @@ function GameEngine()
 
         else if(self.currentGameState == self.gameStateTypes.Playing)
         {
+            // if any attacks are queued, send them out before processing next frame
+            self.sendAllAttacks();
+
             // update each board, using it's specified inputs
             var numberOfPlayersAlive = self.boards.length;
             for(var i = 0; i < self.boards.length; i++)
@@ -173,8 +177,29 @@ function GameEngine()
     {
         // todo make round robin
         var targetBoardIndex = (fromBoardIndex + 1) % gameEngine.numberOfPlayers;
-        gameEngine.boards[targetBoardIndex].wasAttackedByOtherPlayer(attackBlock);
-        console.log("Player " + fromBoardIndex + " has attacked Player " + targetBoardIndex);
+        var attackData = new AttackBlockData(fromBoardIndex, attackBlock, targetBoardIndex);
+        self.attackBlockQueue.push(attackData);
+    }
+
+    this.sendAllAttacks = function()
+    {
+        for(var i = 0; i < self.attackBlockQueue.length; i++)
+        {
+            var attackData = self.attackBlockQueue[i];
+            gameEngine.boards[attackData.targetBoardIndex].wasAttackedByOtherPlayer(attackData.attackBlock);
+        }
+        self.attackBlockQueue = [];
+    }
+
+    // ************************************************
+    // AttackBlockData object.
+    // Representsinfo about the type of attack that was made to a player
+    // ************************************************
+    var AttackBlockData = function(fromBoadIndex, attackBlock, targetBoardIndex)
+    {
+        this.fromBoadIndex = fromBoadIndex;
+        this.attackBlock = attackBlock;
+        this.targetBoardIndex = targetBoardIndex;
     }
 
     // ************************************************
@@ -246,6 +271,7 @@ function GameEngine()
         this.boardSpaces = [];
         this.lastRowOfTileTypes = [];
         this.attackBlocksInWait = [];
+        this.allAttackBlocksCombodThisFrame = [];
         
         this.lastTileId = 0;
 
@@ -392,7 +418,15 @@ function GameEngine()
                     // highest tile
                     self.highestTileHeight = Math.max(self.highestTileHeight, tile.y);
 
-                    if(tile.isComboJustFinished)
+                    // these tiles finished comboing - but are part of an attack block combo, e.g.
+                    if(tile.persistAfterCombo && tile.isComboJustFinished)
+                    {
+                        tile.hoverStart();
+                        tile.isComboJustFinished = false;
+                        tile.persistAfterCombo = false;
+                    }
+
+                    else if(tile.isComboJustFinished)
                     {
                         // kill the tile later
                         tileKillList.push(tile);
@@ -539,7 +573,7 @@ function GameEngine()
                             tile.isFalling = false;
                         }
 
-                            // continue to fall
+                        // continue to fall
                         else if(tile.isFalling && shouldBeFalling)
                         {
                             tile.isFalling = true;
@@ -551,7 +585,7 @@ function GameEngine()
                             space.addTile(tile);
                         }
 
-                            // just started to hover
+                        // just started to hover
                         else if(!tile.isFalling && shouldBeFalling)
                         {
                             tile.hoverStart();
@@ -622,53 +656,81 @@ function GameEngine()
             // ---------------------------------
             // Resolve any Chains and Combos for this frame
             // ---------------------------------
-            var allAttackBlocksCombod = [];
-            var hurtAttackBlock = function(tile)
-            {
-                if(tile && tile.isAttackBlock)
-                {
-                    if(allAttackBlocksCombod.indexOf(tile) == -1)
-                    {
-                        allAttackBlocksCombod.push(tile);
-                        hurtAttackBlock(self.getTileAtSpace(tile.x + 1, tile.y));
-                        hurtAttackBlock(self.getTileAtSpace(tile.x - 1, tile.y));
-                        hurtAttackBlock(self.getTileAtSpace(tile.x, tile.y + 1));
-                        hurtAttackBlock(self.getTileAtSpace(tile.x, tile.y - 1));
-                    }
-                }
-            }
-
-            var checkForAdjacentAttackBlocks = function(tile)
-            {
-                hurtAttackBlock(self.getTileAtSpace(tile.x + 1, tile.y));
-                hurtAttackBlock(self.getTileAtSpace(tile.x, tile.y + 1));
-                hurtAttackBlock(self.getTileAtSpace(tile.x, tile.y - 1));
-                hurtAttackBlock(self.getTileAtSpace(tile.x - 1, tile.y));
-            }
 
             // Create a 'combo' of all of these tiles
             var wasChainFormedThisFrame = false;
             var keys = Object.keys(allComboTiles);
-            var totalComboDelay = keys.length * self.comboDelayResetPerTile + self.comboDelayReset;
+
+            // find comboing attack blocks
+            self.allAttackBlocksCombodThisFrame = [];
+            keys.forEach(
+                function(key)
+                {
+                    self.checkForAdjacentAttackBlocks(allComboTiles[key]);
+                });
+
+            // total combo length of both (attack and non attack tiles) and (plain tiles)
+            var totalComboDelay = (keys.length + self.allAttackBlocksCombodThisFrame.length) * self.comboDelayResetPerTile + self.comboDelayReset;
+            var basicComboDelay = keys.length * self.comboDelayResetPerTile + self.comboDelayReset;
             keys.forEach(
                 function(key)
                 {
                     var tile = allComboTiles[key];
-                    tile.comboStart(totalComboDelay);
+                    tile.comboStart(basicComboDelay, false);
                     wasChainFormedThisFrame |= tile.isChaining;
-
-                    checkForAdjacentAttackBlocks(tile);
 
                     // hacky, stop growing for one frame
                     self.stopBoardFromGrowing = true;
                 });
 
-            totalComboDelay = (keys.length + allAttackBlocksCombod.length) * self.comboDelayResetPerTile + self.comboDelayReset;
-            allAttackBlocksCombod.forEach(
-                function(tile)
+            // go through the attack block and generate tiles for the bottom rows
+            if(self.allAttackBlocksCombodThisFrame.length > 0)
+            {
+                for(var i = self.boardSpaces.length - 1; i >= 0; i--)
                 {
-                    tile.comboStart(totalComboDelay);
-                });
+                    self.lastRowOfTileTypes = [];
+                    for(var j = 0; j < self.boardSpaces[i].length; j++)
+                    {
+                        var tile = self.getTileAtSpace(j, i);
+
+                        if(tile != null && tile.isComboJustStarted && tile.isAttackBlock)
+                        {
+                            tile.comboStart(totalComboDelay, true);
+
+                            if(!tile.isConnectedDown)
+                            {
+                                if(tile.isConnectedUp)
+                                {
+                                    self.getTileAtSpace(tile.x, tile.y + 1).isConnectedDown = false;
+                                }
+                                
+                                // generate the tile type, cannot be 3 same in a row
+                                var ignoreTypes = [];
+                                if(self.lastRowOfTileTypes[j - 2] == self.lastRowOfTileTypes[j - 1])
+                                {
+                                    ignoreTypes.push(self.lastRowOfTileTypes[j - 2]);
+                                }
+                                var newType = self.getNextRandomTile(ignoreTypes);
+
+                                // remove attack tile
+                                var boardSpace = self.getBoardSpace(tile.x, tile.y);
+                                boardSpace.removeTile(tile);
+                                self.tiles.splice(self.tiles.indexOf(tile), 1);
+
+                                // replace with new basic tile
+                                // todo some ignore generation logic
+                                var newBasicTile = new Tile(tile.x, tile.y, newType, self);
+                                newBasicTile.comboStart(totalComboDelay, true);
+                                newBasicTile.isChaining = true;
+                                boardSpace.addTile(newBasicTile);
+                                self.tiles.push(newBasicTile);
+
+                                self.lastRowOfTileTypes[j] = newBasicTile.type;
+                            }
+                        }
+                    }
+                }
+            }
 
             // Tiles that just landed should not be chaining anymore, unless....
             tilesToEndChain.forEach(
@@ -686,12 +748,6 @@ function GameEngine()
                     function(key)
                     {
                         allComboTiles[key].isChaining = true;
-                    });
-
-                allAttackBlocksCombod.forEach(
-                    function(tile)
-                    {
-                        tile.isChaining = true;
                     });
             }
 
@@ -715,6 +771,30 @@ function GameEngine()
 
             // attack other player -- weak combos will be ignored
             self.sendComboAttack(keys.length);
+        }
+
+        this.hurtAttackBlock = function(tile)
+        {
+            if(tile && tile.isAttackBlock)
+            {
+                if(self.allAttackBlocksCombodThisFrame.indexOf(tile) == -1)
+                {
+                    self.allAttackBlocksCombodThisFrame.push(tile);
+                    self.hurtAttackBlock(self.getTileAtSpace(tile.x + 1, tile.y));
+                    self.hurtAttackBlock(self.getTileAtSpace(tile.x - 1, tile.y));
+                    self.hurtAttackBlock(self.getTileAtSpace(tile.x, tile.y + 1));
+                    self.hurtAttackBlock(self.getTileAtSpace(tile.x, tile.y - 1));
+                    tile.isComboJustStarted = true;
+                }
+            }
+        }
+
+        this.checkForAdjacentAttackBlocks = function(tile)
+        {
+            self.hurtAttackBlock(self.getTileAtSpace(tile.x + 1, tile.y));
+            self.hurtAttackBlock(self.getTileAtSpace(tile.x, tile.y + 1));
+            self.hurtAttackBlock(self.getTileAtSpace(tile.x, tile.y - 1));
+            self.hurtAttackBlock(self.getTileAtSpace(tile.x - 1, tile.y));
         }
 
         this.updateSwapDelay = function()
@@ -1098,6 +1178,7 @@ function GameEngine()
             this.isComboJustFinished = false;
             this.isChaining = false;
             this.comboFrameCount = 0;
+            this.persistAfterCombo = false;
 
             this.isFalling = false;
             this.isHovering = false;
@@ -1125,10 +1206,11 @@ function GameEngine()
                 self.isSwapping = true;
             }
 
-            this.comboStart = function(totalDelay)
+            this.comboStart = function(totalDelay, persistAfterCombo)
             {
                 self.comboFrameCount = totalDelay;
                 self.isComboing = true;
+                self.persistAfterCombo = persistAfterCombo;
             }
 
             this.hoverStart = function()
