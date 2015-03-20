@@ -28,12 +28,14 @@ namespace Server
                 playerBuffers.Add(new Queue<ToServerData>());
             }
 
-            toClientData.PlayerInput = new GameInputType[playersInMatch.Count];
+            toClientData.MessageType = ToClientMessageType.Frame;
+            toClientData.FrameData = new FrameData();
+            toClientData.FrameData.Input = new GameInputType[playersInMatch.Count];
         }
 
         public void AcceptData(ToServerData data, Guid fromPlayerId)
         {
-            Debug.Log(this.GetType(), "Processing packet: " + data.Frame);
+            Debug.Log(this.GetType(), "Processing packet: " + data.FrameData.Frame);
 
             lock (syncRoot)
             {
@@ -61,24 +63,19 @@ namespace Server
                     for (int i = 0; i < playersInMatch.Count; i++)
                     {
                         ToServerData playerData = playerBuffers[i].Dequeue();
-                        toClientData.Frame = playerData.Frame;
-                        toClientData.PlayerInput[i] = playerData.Input;
-                        toClientData.Time = DateTime.Now;
+                        toClientData.FrameData.Frame = playerData.FrameData.Frame;
+                        toClientData.FrameData.Input[i] = playerData.FrameData.Input[0];
+                        toClientData.TimeStamp = DateTime.Now;
                     }
 
                     // send the packet to every player
                     for (int i = 0; i < playersInMatch.Count; i++)
                     {
-                        Debug.Log(this.GetType(), "sending data to client: {0}, frame: {1} " , i, toClientData.Frame);
+                        Debug.Log(this.GetType(), "sending data to client: {0}, frame: {1} ", i, toClientData.FrameData.Frame);
                         playersInMatch[i].Contract.ToClient(toClientData);
                     }
                 }
             }
-        }
-
-        private Player GetById(Guid id)
-        {
-            return playersInMatch.First(); 
         }
     }
 }

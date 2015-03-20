@@ -12,6 +12,8 @@ namespace Client
     {
         static void Main(string[] args)
         {
+            // player sends random data at fps
+            // Client p 20
             if (args.Length == 2 && args[0].Equals("p"))
             {
                 Console.Out.WriteLine("Constructing Player...");
@@ -19,25 +21,13 @@ namespace Client
                 {
                     Console.WriteLine("Press <ENTER> to look for match.");
                     Console.ReadLine();
-                    connection.LookForMatch();
-
+                    connection.QueueForMatch();
                     connection.StartTestFast(Convert.ToInt32(args[1]));
                 }
             }
 
-            else if (args.Length == 1 && args[0].Equals("r"))
-            {
-                Console.Out.WriteLine("Constructing Receiver...");
-
-                using (Receiver receiver = new Receiver())
-                {
-                    Console.WriteLine("Listening...");
-                    Console.WriteLine("Press <ENTER> to terminate.");
-                    Console.WriteLine();
-                    Console.ReadLine();
-                }
-            }
-
+            // player send manual data on key press
+            // Client p
             else if (args.Length == 1 && args[0].Equals("p"))
             {
                 Console.Out.WriteLine("Constructing Player...");
@@ -45,18 +35,19 @@ namespace Client
                 {
                     Console.WriteLine("Press <ENTER> to look for match.");
                     Console.ReadLine();
-                    connection.LookForMatch();
-
+                    connection.QueueForMatch();
                     connection.StartTestInput();
                 }
             }
+
+            // web request
             else
             {
                 // web server
                 using (PlayerConnection connection = new PlayerConnection())
                 {
                     Console.ReadLine();
-                    connection.LookForMatch();
+                    connection.QueueForMatch();
                     connection.StartFromWeb();
                 }
             }

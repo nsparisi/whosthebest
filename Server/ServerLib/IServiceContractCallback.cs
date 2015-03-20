@@ -11,13 +11,7 @@ namespace ServerLib
     public interface IServiceContractCallback
     {
         [OperationContract(IsOneWay = true)]
-        void ToClientDebug(string message, DateTime timestamp);
-
-        [OperationContract(IsOneWay = true)]
         void ToClient(ToClientData data);
-
-        [OperationContract(IsOneWay = true)]
-        void StartMatch();
     }
 
     // Use a data contract as illustrated in the sample below to add composite types to service operations.
@@ -25,29 +19,50 @@ namespace ServerLib
     [DataContract]
     public class ToClientData
     {
-        uint frame;
-        GameInputType[] playerInput;
-        DateTime time;
+        FrameData frameData;
+        DateTime timeStamp;
+        ToClientMessageType messageType;
+        string message;
 
         [DataMember]
-        public uint Frame
+        public string Message
         {
-            get { return frame; }
-            set { frame = value; }
+            get { return message; }
+            set { message = value; }
         }
 
         [DataMember]
-        public GameInputType[] PlayerInput
+        public FrameData FrameData
         {
-            get { return playerInput; }
-            set { playerInput = value; }
+            get { return frameData; }
+            set { frameData = value; }
         }
 
         [DataMember]
-        public DateTime Time
+        public DateTime TimeStamp
         {
-            get { return time; }
-            set { time = value; }
+            get { return timeStamp; }
+            set { timeStamp = value; }
         }
+
+        [DataMember]
+        public ToClientMessageType MessageType
+        {
+            get { return messageType; }
+            set { messageType = value; }
+        }
+    }
+
+    [DataContract]
+    public enum ToClientMessageType
+    {
+        [EnumMember]
+        Debug = 0,
+
+        [EnumMember]
+        StartMatch,
+
+        [EnumMember]
+        Frame,
     }
 }

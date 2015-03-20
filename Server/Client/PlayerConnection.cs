@@ -7,11 +7,12 @@ using System.ServiceModel;
 using System.Text;
 using System.Diagnostics;
 using System.Threading;
+using ServerLib;
 
 namespace Client
 {
     [CallbackBehavior(ConcurrencyMode = ConcurrencyMode.Single)]
-    public class PlayerConnection : IServiceContractCallback, IDisposable
+    public class PlayerConnection : Client.ServiceReference.IServiceContractCallback, IDisposable
     {
         ServiceContractClient client;
 
@@ -19,46 +20,63 @@ namespace Client
         {
             InstanceContext context = new InstanceContext(this);
             client = new ServiceContractClient(context);
-            client.Subscribe();
+            client.ToServer(ConstructToServerData(ToServerMessageType.Subscribe));
         }
 
-        public void LookForMatch()
+        public void QueueForMatch()
         {
-            while (true)
+            // announce we're looking for a match
+            // all calls are asynchronous
+            client.ToServer(ConstructToServerData(ToServerMessageType.QueueForMatch));
+        }
+
+        public void CancelQueueForMatch()
+        {
+            client.ToServer(ConstructToServerData(ToServerMessageType.CancelQueueForMatch));
+        }
+
+        private void TraceDataFromServer(ServerLib.ToClientData data)
+        {
+            int diff = (DateTime.Now - data.TimeStamp).Milliseconds;
+            Debug.Log(this.GetType(), string.Format("Received debug message: {0} (delay {1}ms)", data.Message, diff));
+        }
+        
+        public void ToClient(ServerLib.ToClientData data)
+        {
+            TraceDataFromServer(data);
+
+            switch (data.MessageType)
             {
-                Debug.Log(this.GetType(), "Looking for match...");
-                ToWebClient("Looking for match...");
-                if (client.WaitForMatch())
-                {
-                    Debug.Log(this.GetType(), "Found match!");
+                case ServerLib.ToClientMessageType.Debug:
                     break;
-                }
+                case ServerLib.ToClientMessageType.Frame:
+                    FrameSentToClient(data);
+                    break;
+                case ServerLib.ToClientMessageType.StartMatch:
+                    this.StartMatch();
+                    break;
+                default:
+                    break;
             }
         }
 
-        public void StartMatch()
+        private void StartMatch()
         {
             ToWebClient("StartMatch");
         }
 
-        public void ToClientDebug(string message, DateTime timestamp)
+        public void FrameSentToClient(ServerLib.ToClientData data)
         {
-            int diff = (DateTime.Now - timestamp).Milliseconds;
-            Console.Out.WriteLine("Received Message:" + message + " : delay : " + diff + "ms");
-        }
-
-        public void ToClient(ServerLib.ToClientData data)
-        {
-            string message = "Received Message. Frame: " + data.Frame;
-            for (int i = 0; i < data.PlayerInput.Length; i++)
+            string message = "Received Message. Frame: " + data.FrameData.Frame;
+            for (int i = 0; i < data.FrameData.Input.Length; i++)
             {
-                message += string.Format(" Player {0} Input: {1}", i, data.PlayerInput[i]);
+                message += string.Format(" Player {0} Input: {1}", i, data.FrameData.Input[i]);
             }
 
-            string m = string.Format("{0}|{1}|{2}", 0, data.Frame, data.Time.Ticks);
-            for (int i = 0; i < data.PlayerInput.Length; i++)
+            string m = string.Format("{0}|{1}|{2}", 0, data.FrameData.Frame, data.TimeStamp.Ticks);
+            for (int i = 0; i < data.FrameData.Input.Length; i++)
             {
-                m += string.Format("|{0}", (int)data.PlayerInput[i]);
+                m += string.Format("|{0}", (int)data.FrameData.Input[i]);
             }
 
             ToWebClient(m);
@@ -87,15 +105,20 @@ namespace Client
             string[] tokens = message.Split('|');
             if(tokens.Length == 4 && tokens[0].Equals("0"))
             {
-
                 long javascriptTime = Convert.ToInt32(tokens[2]);
                 DateTime timestamp = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddMilliseconds(javascriptTime);
 
                 ServerLib.ToServerData data = new ServerLib.ToServerData()
                 {
-                    Frame = Convert.ToUInt32(tokens[1]),
-                    Input = (ServerLib.GameInputType)Convert.ToInt32(tokens[2]),
-                    Time = timestamp
+                    MessageType = ToServerMessageType.Frame,
+                    TimeStamp = timestamp,
+                    FrameData = new FrameData()
+                    {
+                        Frame = Convert.ToUInt16(tokens[1]),
+                        Input = new []{
+                            (ServerLib.GameInputType)Convert.ToInt32(tokens[2])
+                        }
+                    }
                 };
 
                 return data;
@@ -106,7 +129,7 @@ namespace Client
 
         public void StartTestInput()
         {
-            uint i = 0;
+            ushort i = 0;
             Random r = new Random();
             while(true)
             {
@@ -118,9 +141,15 @@ namespace Client
                 i++;
                 ServerLib.ToServerData data = new ServerLib.ToServerData()
                 {
-                    Frame = i,
-                    Input = (ServerLib.GameInputType)r.Next(0, 6),
-                    Time = DateTime.Now
+                    MessageType = ToServerMessageType.Frame,
+                    TimeStamp = DateTime.Now,
+                    FrameData = new FrameData()
+                    {
+                        Frame = i,
+                        Input = new []{
+                            (ServerLib.GameInputType)r.Next(0, 6)
+                        }
+                    }
                 };
 
                 ToServer(data);
@@ -137,7 +166,7 @@ namespace Client
             long remaining = rateInMs;
             long last = stopwatch.ElapsedMilliseconds;
 
-            int i = 0;
+            ushort i = 0;
             Random r = new Random();
             while (true)
             {
@@ -154,9 +183,15 @@ namespace Client
 
                     ServerLib.ToServerData data = new ServerLib.ToServerData()
                     {
-                        Frame = (uint)i,
-                        Input = (ServerLib.GameInputType) r.Next(0,6),
-                        Time = DateTime.Now
+                        MessageType = ToServerMessageType.Frame,
+                        TimeStamp = DateTime.Now,
+                        FrameData = new FrameData()
+                        {
+                            Frame = i,
+                            Input = new []{
+                                (ServerLib.GameInputType)r.Next(0, 6)
+                            }
+                        }
                     };
                     ToServer(data);
 
@@ -165,7 +200,7 @@ namespace Client
                         int m = (i / 100) % 10;
                         string goalline = "";
                         for (int j = 0; j < 60; j++) { goalline += m; }
-                        client.ToServerDebug(goalline, DateTime.Now);
+                        client.ToServer(ConstructToServerData(ToServerMessageType.Debug, message: goalline));
                         Console.Out.WriteLine(string.Format(goalline));
                     }
 
@@ -184,7 +219,7 @@ namespace Client
 
         private void ToServer(ServerLib.ToServerData data)
         {
-            string message = string.Format("Frame: {0}, Input:{1}", data.Frame, data.Input);
+            string message = string.Format("Frame: {0}, Input:{1}", data.FrameData.Frame, data.FrameData.Input);
             Debug.Log(this.GetType(), "Sending message:" + message);
             client.ToServer(data);
         }
@@ -194,13 +229,29 @@ namespace Client
             try
             {
                 Debug.Log(this.GetType(), "Disposing connection");
-                client.Unsubscribe();
+                client.ToServer(ConstructToServerData(ToServerMessageType.Unsubscribe));
                 client.Close();
             }
             finally
             {
                 client.Abort();
             }
+        }
+
+        private ToServerData ConstructToServerData(
+            ToServerMessageType messageType,
+            FrameData frameData = null,
+            string message = null)
+        {
+            ToServerData data = new ToServerData()
+            {
+                MessageType = messageType,
+                TimeStamp = DateTime.Now,
+                FrameData = frameData,
+                Message = message
+            };
+
+            return data;
         }
     }
 }

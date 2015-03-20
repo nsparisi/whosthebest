@@ -15,48 +15,18 @@ namespace Client.ServiceReference {
     [System.ServiceModel.ServiceContractAttribute(ConfigurationName="ServiceReference.IServiceContract", CallbackContract=typeof(Client.ServiceReference.IServiceContractCallback))]
     public interface IServiceContract {
         
-        [System.ServiceModel.OperationContractAttribute(IsOneWay=true, Action="http://tempuri.org/IServiceContract/ToServerDebug")]
-        void ToServerDebug(string data, System.DateTime timestamp);
-        
-        [System.ServiceModel.OperationContractAttribute(IsOneWay=true, Action="http://tempuri.org/IServiceContract/ToServerDebug")]
-        System.Threading.Tasks.Task ToServerDebugAsync(string data, System.DateTime timestamp);
-        
         [System.ServiceModel.OperationContractAttribute(IsOneWay=true, Action="http://tempuri.org/IServiceContract/ToServer")]
         void ToServer(ServerLib.ToServerData data);
         
         [System.ServiceModel.OperationContractAttribute(IsOneWay=true, Action="http://tempuri.org/IServiceContract/ToServer")]
         System.Threading.Tasks.Task ToServerAsync(ServerLib.ToServerData data);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IServiceContract/Subscribe", ReplyAction="http://tempuri.org/IServiceContract/SubscribeResponse")]
-        bool Subscribe();
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IServiceContract/Subscribe", ReplyAction="http://tempuri.org/IServiceContract/SubscribeResponse")]
-        System.Threading.Tasks.Task<bool> SubscribeAsync();
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IServiceContract/Unsubscribe", ReplyAction="http://tempuri.org/IServiceContract/UnsubscribeResponse")]
-        bool Unsubscribe();
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IServiceContract/Unsubscribe", ReplyAction="http://tempuri.org/IServiceContract/UnsubscribeResponse")]
-        System.Threading.Tasks.Task<bool> UnsubscribeAsync();
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IServiceContract/WaitForMatch", ReplyAction="http://tempuri.org/IServiceContract/WaitForMatchResponse")]
-        bool WaitForMatch();
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IServiceContract/WaitForMatch", ReplyAction="http://tempuri.org/IServiceContract/WaitForMatchResponse")]
-        System.Threading.Tasks.Task<bool> WaitForMatchAsync();
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
     public interface IServiceContractCallback {
         
-        [System.ServiceModel.OperationContractAttribute(IsOneWay=true, Action="http://tempuri.org/IServiceContract/ToClientDebug")]
-        void ToClientDebug(string message, System.DateTime timestamp);
-        
         [System.ServiceModel.OperationContractAttribute(IsOneWay=true, Action="http://tempuri.org/IServiceContract/ToClient")]
         void ToClient(ServerLib.ToClientData data);
-        
-        [System.ServiceModel.OperationContractAttribute(IsOneWay=true, Action="http://tempuri.org/IServiceContract/StartMatch")]
-        void StartMatch();
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -87,44 +57,12 @@ namespace Client.ServiceReference {
                 base(callbackInstance, binding, remoteAddress) {
         }
         
-        public void ToServerDebug(string data, System.DateTime timestamp) {
-            base.Channel.ToServerDebug(data, timestamp);
-        }
-        
-        public System.Threading.Tasks.Task ToServerDebugAsync(string data, System.DateTime timestamp) {
-            return base.Channel.ToServerDebugAsync(data, timestamp);
-        }
-        
         public void ToServer(ServerLib.ToServerData data) {
             base.Channel.ToServer(data);
         }
         
         public System.Threading.Tasks.Task ToServerAsync(ServerLib.ToServerData data) {
             return base.Channel.ToServerAsync(data);
-        }
-        
-        public bool Subscribe() {
-            return base.Channel.Subscribe();
-        }
-        
-        public System.Threading.Tasks.Task<bool> SubscribeAsync() {
-            return base.Channel.SubscribeAsync();
-        }
-        
-        public bool Unsubscribe() {
-            return base.Channel.Unsubscribe();
-        }
-        
-        public System.Threading.Tasks.Task<bool> UnsubscribeAsync() {
-            return base.Channel.UnsubscribeAsync();
-        }
-        
-        public bool WaitForMatch() {
-            return base.Channel.WaitForMatch();
-        }
-        
-        public System.Threading.Tasks.Task<bool> WaitForMatchAsync() {
-            return base.Channel.WaitForMatchAsync();
         }
     }
 }

@@ -17,23 +17,42 @@ namespace Server
         private IServiceContractCallback clientConnection;
         private Match connectedMatch;
 
-        // static vars
         private static uint totalConnections = 0;
         private static object syncRoot = new Object();
 
-        public void ToServerDebug(string data, DateTime timestamp)
-        {
-            long ticks = (DateTime.Now - timestamp).Milliseconds;
-            Debug.Log(this.GetType(), "Server received data: {0} : delay {1}ms", data, ticks.ToString());
-        }
-
         public void ToServer(ToServerData data)
         {
-            long ticks = (DateTime.Now - data.Time).Milliseconds;
-            Debug.Log(this.GetType(), "Server received frame: {0} : delay {1}ms", data.Frame, ticks.ToString());
-            if(this.connectedMatch != null)
+            long ticks = (DateTime.Now - data.TimeStamp).Milliseconds;
+
+            switch(data.MessageType)
             {
-                this.connectedMatch.AcceptData(data, player.Id);
+                case ToServerMessageType.Debug:
+                    Debug.Log(this.GetType(), "Server received debug: {0}  (delay {1}ms)", data.Message, ticks.ToString());
+
+                    break;
+                case ToServerMessageType.Frame:
+                    Debug.Log(this.GetType(), "Server received frame: {0} (delay {1}ms)", data.FrameData.Frame, ticks.ToString());
+
+                    if (this.connectedMatch != null)
+                    {
+                        this.connectedMatch.AcceptData(data, player.Id);
+                    }
+
+                    break;
+                case ToServerMessageType.Subscribe:
+                    this.Subscribe();
+                    break;
+                case ToServerMessageType.Unsubscribe:
+                    this.Unsubscribe();
+                    break;
+                case ToServerMessageType.QueueForMatch:
+                    this.QueueForMatch();
+                    break;
+                case ToServerMessageType.CancelQueueForMatch:
+                    this.CancelQueueForMatch();
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -42,7 +61,27 @@ namespace Server
             clientConnection.ToClient(data);
         }
 
-        public bool Subscribe()
+        public void AddedToMatch(Match match)
+        {
+            // save the match
+            connectedMatch = match;
+
+            // let client know they are in a match
+            ToClient(new ToClientData()
+            {
+                MessageType = ToClientMessageType.StartMatch,
+                TimeStamp = DateTime.Now
+            });
+        }
+
+        public bool IsConnectionActive()
+        {
+            ICommunicationObject communication = (ICommunicationObject)clientConnection;
+            Debug.Log(this.GetType(), "Communication state: {0}", communication.State);
+            return communication.State == CommunicationState.Opened;
+        }
+
+        private bool Subscribe()
         {
             try
             {
@@ -65,7 +104,7 @@ namespace Server
             }
         }
 
-        public bool Unsubscribe()
+        private bool Unsubscribe()
         {
             try
             {
@@ -78,70 +117,16 @@ namespace Server
             }
         }
 
-        public bool WaitForMatch()
+        private void QueueForMatch()
         {
             // Search for a match
-            // no waiting!
+            // async! cancelqueue if you want to stop
             MatchManager.Instance.FindAppropriatePlayerForMatch(player);
-
-            // Wait until put in a match or timed-out
-            WaitToBePlacedInMatch();
-
-            if(connectedMatch == null)
-            {
-                MatchManager.Instance.RemovePlayerWaitingForMatch(player);
-
-                // could have context switched
-                if (connectedMatch == null)
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
 
-        public void AddedToMatch(Match match)
+        private void CancelQueueForMatch()
         {
-            connectedMatch = match;
-            clientConnection.StartMatch();
+            MatchManager.Instance.RemovePlayerWaitingForMatch(player);
         }
-
-        public bool IsConnectionActive()
-        {
-            ICommunicationObject communication = (ICommunicationObject)clientConnection;
-            Debug.Log(this.GetType(), "Communication state: {0}", communication.State);
-            return communication.State == CommunicationState.Opened;
-        }
-
-        private void WaitToBePlacedInMatch()
-        {
-            const long timeoutMs = 1 * 1000 * 60;
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-            while (connectedMatch == null)
-            {
-                Thread.Sleep(1000);
-
-                if (watch.ElapsedMilliseconds > timeoutMs)
-                {
-                    break;
-                }
-            }
-            watch.Stop();
-        }
-
-        //public void Broadcast(string message, DateTime time)
-        //{
-        //    // this.Debug("Number of suscribers: " + subscribers.Count());
-        //    foreach (IServiceContractCallback client in allConnections)
-        //    {
-        //        ICommunicationObject communication = (ICommunicationObject)client;
-        //        if(communication.State == CommunicationState.Opened)
-        //        {
-        //            client.ServerToClient(message, time);
-        //        }
-        //    }
-        //}
     }
 }
