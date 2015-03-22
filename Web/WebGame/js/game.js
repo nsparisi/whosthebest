@@ -1,5 +1,7 @@
 function GameEngine()
-{    
+{
+    GameEngine.prototype.instance = this;
+
     //tile reference:
     // 0 = empty
     // 1 = metal
@@ -59,7 +61,7 @@ function GameEngine()
         for(var i = 0; i < self.numberOfPlayers; i++)
         {
             var rng = new Math.seedrandom(seed);
-            self.boards.push(new Board(rng, i, gameEngine.attackBlockTypeStartIndex));
+            self.boards.push(new Board(rng, i, GameEngine.prototype.instance.attackBlockTypeStartIndex));
         }
 
         self.boards.forEach(
@@ -125,7 +127,8 @@ function GameEngine()
             // wait for "play again" option
             if(self.pressedRestartButton(frameData.inputs[0]))
             {
-                self.initialize();
+                // self.initialize();
+                mainControl.switchToMenu();
             }
         }
     }
@@ -170,13 +173,13 @@ function GameEngine()
 
     this.pressedRestartButton = function(inputs)
     {
-        return inputs && inputs.indexOf(gameEngine.inputTypes.Swap) != -1;
+        return inputs && inputs.indexOf(GameEngine.prototype.instance.inputTypes.Swap) != -1;
     }
 
     this.attackOtherPlayer = function(fromBoardIndex, attackBlock)
     {
         // todo make round robin
-        var targetBoardIndex = (fromBoardIndex + 1) % gameEngine.numberOfPlayers;
+        var targetBoardIndex = (fromBoardIndex + 1) % GameEngine.prototype.instance.numberOfPlayers;
         var attackData = new AttackBlockData(fromBoardIndex, attackBlock, targetBoardIndex);
         self.attackBlockQueue.push(attackData);
     }
@@ -186,7 +189,7 @@ function GameEngine()
         for(var i = 0; i < self.attackBlockQueue.length; i++)
         {
             var attackData = self.attackBlockQueue[i];
-            gameEngine.boards[attackData.targetBoardIndex].wasAttackedByOtherPlayer(attackData.attackBlock);
+            GameEngine.prototype.instance.boards[attackData.targetBoardIndex].wasAttackedByOtherPlayer(attackData.attackBlock);
         }
         self.attackBlockQueue = [];
     }
@@ -316,13 +319,13 @@ function GameEngine()
 
             // make board spaces
             // these are static boxes at fixed coordinates
-            for(var i = 0; i < gameEngine.rowCount; i++)
+            for(var i = 0; i < GameEngine.prototype.instance.rowCount; i++)
             {
                 self.boardSpaces[i] = new Array();
             }
-            for(var i = 0; i < gameEngine.rowCount; i++)
+            for(var i = 0; i < GameEngine.prototype.instance.rowCount; i++)
             {
-                for(var j = 0; j < gameEngine.colCount; j++)
+                for(var j = 0; j < GameEngine.prototype.instance.colCount; j++)
                 {
                     self.boardSpaces[i][j] = new BoardSpace();
                 }
@@ -374,7 +377,7 @@ function GameEngine()
             // Internal safety clock -- some leeway in vs mode.
             if(!self.stopBoardFromGrowing)
             {
-                if(self.highestTileHeight >= gameEngine.rowCountInBounds)
+                if(self.highestTileHeight >= GameEngine.prototype.instance.rowCountInBounds)
                 {
                     self.gameOverLeewayCount--;
 
@@ -870,7 +873,7 @@ function GameEngine()
             {
                 for(var j = 0; j < attackBlock.tilesWide; j++)
                 {
-                    var tile = new Tile(j, gameEngine.attackBlockAllowedHeight + 1 + i, attackBlock.attackType, self);
+                    var tile = new Tile(j, GameEngine.prototype.instance.attackBlockAllowedHeight + 1 + i, attackBlock.attackType, self);
                     tile.isAttackBlock = true;
                     tile.isConnectedRight = j < attackBlock.tilesWide - 1;
                     tile.isConnectedLeft = j > 0;
@@ -895,7 +898,7 @@ function GameEngine()
                 // if the tile is ready to fall
                 // remove it from queue and fall
                 if(attackBlock.framesLeftUntilDrop <= 0 && !self.stopBoardFromGrowing &&
-                    self.highestTileHeight <= gameEngine.attackBlockAllowedHeight)
+                    self.highestTileHeight <= GameEngine.prototype.instance.attackBlockAllowedHeight)
                 {
                     // only one attack per frame
                     self.releaseAttackBlockIntoBoard(attackBlock);
@@ -912,13 +915,13 @@ function GameEngine()
             {
                 // combo patterns are predetermined i.e:
                 // an 8-combo will always generate a size-3 block and a size-4 block.
-                var comboIndex = Math.min(comboSize, gameEngine.comboAttackPatterns.length - 1);
-                var comboPattern = gameEngine.comboAttackPatterns[comboIndex];
+                var comboIndex = Math.min(comboSize, GameEngine.prototype.instance.comboAttackPatterns.length - 1);
+                var comboPattern = GameEngine.prototype.instance.comboAttackPatterns[comboIndex];
 
                 // multiple blocks can be generated from one combo.
                 for(var i = 0; i < comboPattern.length; i++)
                 {
-                    gameEngine.attackOtherPlayer(
+                    GameEngine.prototype.instance.attackOtherPlayer(
                         self.playerIndex, 
                         new AttackBlock(comboPattern[i], 1, self.attackBlockType));
                 }
@@ -929,17 +932,17 @@ function GameEngine()
         {
             // chain attacks are always the width of the board
             // the height grows as the chain grows
-            gameEngine.attackOtherPlayer(
+            GameEngine.prototype.instance.attackOtherPlayer(
                 self.playerIndex,
-                new AttackBlock(gameEngine.colCount, chainSize - 1, self.attackBlockType));
+                new AttackBlock(GameEngine.prototype.instance.colCount, chainSize - 1, self.attackBlockType));
         }
 
         this.getNextRandomTile = function(ignoreList)
         {
             while(true)
             {
-                var type = gameEngine.basicTileTypeStartIndex + 
-                    Math.floor(self.randomNumberGenerator() * gameEngine.basicTileTypeCount);
+                var type = GameEngine.prototype.instance.basicTileTypeStartIndex +
+                    Math.floor(self.randomNumberGenerator() * GameEngine.prototype.instance.basicTileTypeCount);
                 if(!ignoreList || ignoreList.indexOf(type) == -1)
                 {
                     return type;
@@ -950,7 +953,7 @@ function GameEngine()
         this.generateRow = function(rowNum)
         {
             var row = new Array();
-            for(var i = 0; i < gameEngine.colCount; i++)
+            for(var i = 0; i < GameEngine.prototype.instance.colCount; i++)
             {
                 // no type can repeat in adjacent rows
                 var ignoreTypes = [self.lastRowOfTileTypes[i]];
@@ -1019,9 +1022,9 @@ function GameEngine()
         this.updateBoardNewHeight = function()
         {
             //copy the contents of the space below
-            for(var i = gameEngine.rowCount - 1; i > 0; i--)
+            for(var i = GameEngine.prototype.instance.rowCount - 1; i > 0; i--)
             {
-                for(var j = 0; j < gameEngine.colCount; j++)
+                for(var j = 0; j < GameEngine.prototype.instance.colCount; j++)
                 {
                     self.boardSpaces[i][j].contents = self.boardSpaces[i-1][j].contents;
                 }
@@ -1111,28 +1114,28 @@ function GameEngine()
         {
             if(inputs != null)
             {
-                if(inputs.indexOf(gameEngine.inputTypes.Up) != -1)
+                if(inputs.indexOf(GameEngine.prototype.instance.inputTypes.Up) != -1)
                 {
-                    self.cursor.y = Math.min(self.cursor.y + 1, gameEngine.rowCountInBounds);
+                    self.cursor.y = Math.min(self.cursor.y + 1, GameEngine.prototype.instance.rowCountInBounds);
                 }
-                if(inputs.indexOf(gameEngine.inputTypes.Down) != -1)
+                if(inputs.indexOf(GameEngine.prototype.instance.inputTypes.Down) != -1)
                 {
                     self.cursor.y = Math.max(self.cursor.y - 1, 1);
                 }
-                if(inputs.indexOf(gameEngine.inputTypes.Left) != -1)
+                if(inputs.indexOf(GameEngine.prototype.instance.inputTypes.Left) != -1)
                 {
                     self.cursor.x = Math.max(self.cursor.x - 1, 0);
                 }
-                if(inputs.indexOf(gameEngine.inputTypes.Right) != -1)
+                if(inputs.indexOf(GameEngine.prototype.instance.inputTypes.Right) != -1)
                 {
-                    self.cursor.x = Math.min(self.cursor.x + 1, gameEngine.colCount - 2);
+                    self.cursor.x = Math.min(self.cursor.x + 1, GameEngine.prototype.instance.colCount - 2);
                 }
-                if(inputs.indexOf(gameEngine.inputTypes.Swap) != -1 ||
+                if(inputs.indexOf(GameEngine.prototype.instance.inputTypes.Swap) != -1 ||
                     self.queuedUpSwapAction)
                 {
                     self.swapAction();
                 }
-                if(inputs.indexOf(gameEngine.inputTypes.Elevate) != -1)
+                if(inputs.indexOf(GameEngine.prototype.instance.inputTypes.Elevate) != -1)
                 {
                     self.fastElevate = true;
                 }
@@ -1154,7 +1157,7 @@ function GameEngine()
             this.tilesWide = tilesWide;
             this.tilesHigh = tilesHigh;
             this.attackType = attackType;
-            this.framesLeftUntilDrop = gameEngine.attackBlockDelay;
+            this.framesLeftUntilDrop = GameEngine.prototype.instance.attackBlockDelay;
         }
 
         // ************************************************

@@ -66,8 +66,12 @@
     <Content Include="js\game.js" />
     <Content Include="js\generation.js" />
     <Content Include="js\graphics.js" />
+    <Content Include="js\input.js" />
     <Content Include="js\main.js" />
+    <Content Include="js\main_control.js" />
+    <Content Include="js\menu.js" />
     <Content Include="js\seedrandom.js" />
+    <Content Include="js\server_translator.js" />
     <None Include="WebGame_TemporaryKey.pfx" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\$(WMSJSProjectDirectory)\Microsoft.VisualStudio.$(WMSJSProject).targets" />

@@ -12,62 +12,33 @@ var bodyElement = document.getElementsByTagName("body")[0];
 //********************
 // Main engines
 //********************
-var generationEngine = new GenerationEngine();
-var gameEngine = new GameEngine();
-var graphicsEngine = new GraphicsEngine();
-gameEngine.initialize();
-graphicsEngine.initialize();
+var serverTranslator = new ServerTranslator();
+var mainControl = new MainControl();
+mainControl.initialize();
+var inputEngine = new InputEngine();
+inputEngine.initialize();
 
+//var generationEngine = new GenerationEngine();
+//var gameEngine = new GameEngine();
+//var graphicsEngine = new GraphicsEngine();
+//gameEngine.initialize();
+//graphicsEngine.initialize();
 
 /** THE GAME ITSELF **********************************************************/
-// Game state:
 function input() 
 {
-    // store last frame
-    for(var k in keysCurrent) 
-    { 
-        keysPrevious[k] = keysCurrent[k];
-    }
-    clickPrevious = click;
+    inputEngine.update();
 }
 
 function update() 
 {
-    // TODO
-    generationEngine.update();
+    mainControl.update();
 }
 
 function draw() 
 {
-    graphicsEngine.update();
+    mainControl.render();
 }
-
-/** THE GAME "ENGINE" ********************************************************/
-var keysPrevious = {};
-var keysCurrent = {};
-var click = null;
-var clickPrevious = null;
-
-// Listen for key presses.
-function canvasKeyDown(e) 
-{
-    keysCurrent[String.fromCharCode(e.which)] = true;
-    //console.log(String.fromCharCode(e.which));
-}
-function canvasKeyUp(e) 
-{
-    keysCurrent[String.fromCharCode(e.which)] = false;
-}
-bodyElement.onkeydown = canvasKeyDown;
-bodyElement.onkeyup = canvasKeyUp;
-
-// Listen for clicks.
-function canvasClick(e) 
-{
-    click = { "x": e.offsetX, "y": e.offsetY };
-}
-//$('#gameCanvas').click(canvasClick);
-bodyElement.onmousedown = canvasClick;
 
 
 // Set up game loop.
@@ -80,14 +51,13 @@ function nextFrame()
     deltaTimeMs = currentTime - lastUpdate;
     
     // UPDATE
-    update(deltaTimeMs);
+    update();
     
     // INPUTS
-    input(deltaTimeMs);
-    click = null;
+    input();
     
     // RENDER
-    draw(deltaTimeMs);
+    draw();
     
     lastUpdate = currentTime;
     //requestAnimationFrame(nextFrame);

@@ -11,7 +11,7 @@ namespace ServerLib
     public class FrameData
     {
         ushort frame;
-        GameInputType[] input;
+        GameInputType[][] input;
 
         [DataMember]
         public ushort Frame
@@ -21,7 +21,7 @@ namespace ServerLib
         }
 
         [DataMember]
-        public GameInputType[] Input
+        public GameInputType[][] Input
         {
             get { return input; }
             set { input = value; }

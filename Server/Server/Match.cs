@@ -30,7 +30,7 @@ namespace Server
 
             toClientData.MessageType = ToClientMessageType.Frame;
             toClientData.FrameData = new FrameData();
-            toClientData.FrameData.Input = new GameInputType[playersInMatch.Count];
+            toClientData.FrameData.Input = new GameInputType[playersInMatch.Count][];
         }
 
         public void AcceptData(ToServerData data, Guid fromPlayerId)

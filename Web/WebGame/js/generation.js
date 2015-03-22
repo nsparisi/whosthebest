@@ -9,6 +9,11 @@ function GenerationEngine()
     this.frameAdvance = false;
     
     var self = this;
+    this.initialize = function()
+    {
+
+    }
+
     this.update = function()
     {
         // figure out button state
@@ -39,8 +44,6 @@ function GenerationEngine()
     {
         self.frameCount++;
 
-        var input = Math.floor(Math.random() * 4 + 1);
-
         var packet = self.makePacket(
             self.frameCount,
             [
@@ -50,7 +53,7 @@ function GenerationEngine()
             ]);
 
         // console.log("sending packet: " + packet);
-        gameEngine.update(packet);
+        GameEngine.prototype.instance.update(packet);
 
         // drains input buffer
         self.drainInput();
@@ -59,93 +62,73 @@ function GenerationEngine()
     this.makePacket = function(frame, inputs)
     {
         var packet = 
-            gameEngine.gameId + gameEngine.packetDelimiter +  // game ID
-            frame + gameEngine.packetDelimiter +  // frame
+            GameEngine.prototype.instance.gameId + GameEngine.prototype.instance.packetDelimiter +  // game ID
+            frame + GameEngine.prototype.instance.packetDelimiter +  // frame
             "0";  // time
             
         for(var i = 0; i < inputs.length; i++)
         {
-            packet += gameEngine.packetDelimiter + inputs[i];
+            packet += GameEngine.prototype.instance.packetDelimiter + inputs[i];
         }
             
         return packet;
     }
     
-    this.makeInputString = function()
-    {
-        var inputs = "";
-        for(var i = 0; i < self.currentInput.length; i++)
-        {
-             inputs += self.currentInput[i] == 1 ? gameEngine.inputDelimiter + i : "";
-        }
-        
-        // remove leading comma
-        inputs = inputs.substring(1);
-        return inputs;
-    }
-    
     this.updatePlayerInput = function()
     {
-        if(self.justPressed("W"))
+        var inputDelimiter = GameEngine.prototype.instance.inputDelimiter;
+        var inputTypes = GameEngine.prototype.instance.inputTypes;
+
+        if(inputEngine.justPressed("W"))
         {
-            self.currentInput += gameEngine.inputDelimiter + gameEngine.inputTypes.Up;
+            self.currentInput += inputDelimiter + inputTypes.Up;
         }
         
-        if(self.justPressed("S"))
+        if(inputEngine.justPressed("S"))
         {
-            self.currentInput += gameEngine.inputDelimiter + gameEngine.inputTypes.Down;
+            self.currentInput += inputDelimiter + inputTypes.Down;
         }
         
-        if(self.justPressed("A"))
+        if(inputEngine.justPressed("A"))
         {
-            self.currentInput += gameEngine.inputDelimiter + gameEngine.inputTypes.Left;
+            self.currentInput += inputDelimiter + inputTypes.Left;
         }
         
-        if(self.justPressed("D"))
+        if(inputEngine.justPressed("D"))
         {
-            self.currentInput += gameEngine.inputDelimiter + gameEngine.inputTypes.Right;
+            self.currentInput += inputDelimiter + inputTypes.Right;
         }
         
-        if(self.justPressed("¿") || self.justClicked())
+        if(inputEngine.justPressed("¿") || inputEngine.justClicked())
         {
-            self.currentInput += gameEngine.inputDelimiter + gameEngine.inputTypes.Swap;
+            self.currentInput += inputDelimiter + inputTypes.Swap;
         }
 
-        if(self.justPressed("Q") || self.justPressed("E") || self.justPressed(" ") )
+        if(inputEngine.justPressed("Q") || inputEngine.justPressed("E") || inputEngine.justPressed(" "))
         {
-            self.currentInput += gameEngine.inputDelimiter + gameEngine.inputTypes.Elevate;
+            self.currentInput += inputDelimiter + inputTypes.Elevate;
         }
 
         // debugging frame control
-        if(self.justPressed("P"))
+        if(inputEngine.justPressed("P"))
         {
             self.isPaused = !self.isPaused;
         }
-        if(self.justPressed("k")) // +
+        if(inputEngine.justPressed("k")) // +
         {
             self.frameRate = Math.min(self.frameRate + 3, 60);
             self.threshold = 1000 / self.frameRate;
         }
-        if(self.justPressed("m")) // -
+        if(inputEngine.justPressed("m")) // -
         {
             self.frameRate = Math.max(self.frameRate - 3, 1);
             self.threshold = 1000 / self.frameRate;
         }
-        if(self.justPressed("Ü")) // \
+        if(inputEngine.justPressed("Ü")) // \
         {
             self.isPaused = true;
             self.frameAdvance = true;
         }
-    }
-    
-    this.justPressed = function(key)
-    {
-        return keysCurrent[key] && !keysPrevious[key];
-    }
-    
-    this.justClicked = function()
-    {
-        return click && !clickPrevious; 
     }
     
     this.drainInput = function()
