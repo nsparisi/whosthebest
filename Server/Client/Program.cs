@@ -15,7 +15,6 @@ namespace Client
             // web server
             using (PlayerConnection connection = new PlayerConnection())
             {
-                Console.ReadLine();
                 connection.StartFromWeb();
             }
         }

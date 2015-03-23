@@ -18,8 +18,15 @@ namespace Client
 
         public PlayerConnection()
         {
+            // create client connection with server
             InstanceContext context = new InstanceContext(this);
             client = new ServiceContractClient(context);
+
+            // modify client address to be unique
+            WSDualHttpBinding dualHttpBinding = (WSDualHttpBinding)client.Endpoint.Binding;
+            string clientCallbackAddress = dualHttpBinding.ClientBaseAddress.AbsoluteUri;
+            clientCallbackAddress += Guid.NewGuid().ToString();
+            dualHttpBinding.ClientBaseAddress = new Uri(clientCallbackAddress);
         }
         
         public void ToClient(ServerLib.ToClientData data)
@@ -32,11 +39,26 @@ namespace Client
 
         public void StartFromWeb()
         {
+            //Thread listenForInput = new Thread(() =>
+            //{
+            //    while (true)
+            //    {
+            //        string message = Console.In.ReadLine();
+            //        ToServerData data = WebClientTranslator.Translate(message);
+            //        if (data != null)
+            //        {
+            //            ToServer(data);
+            //        }
+            //    }
+            //});
+            //listenForInput.IsBackground = false;
+            //listenForInput.Start();
+
             while (true)
             {
                 string message = Console.In.ReadLine();
                 ToServerData data = WebClientTranslator.Translate(message);
-                if(data != null)
+                if (data != null)
                 {
                     ToServer(data);
                 }
@@ -50,8 +72,7 @@ namespace Client
 
         private void ToServer(ServerLib.ToServerData data)
         {
-            string message = string.Format("Frame: {0}, Input:{1}", data.FrameData.Frame, data.FrameData.Input);
-            Debug.Log(this.GetType(), "Sending message:" + message);
+            Debug.Log(this.GetType(), "Sending message:" + data);
             client.ToServer(data);
         }
 

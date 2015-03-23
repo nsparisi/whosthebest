@@ -114,12 +114,12 @@ namespace Client
 
         public static ToServerData Translate(string fromClient)
         {
-            ToServerData data = null;
+            ToServerData data = new ToServerData();
 
             string[] parts = fromClient.Split(PACKET_DELIMITER);
             if (!ToServerValidatePacket(parts))
             {
-                return data;
+                return null;
             }
 
             // <id>|timestamp|<type>|<payload>|<eom>
@@ -132,7 +132,7 @@ namespace Client
             ToServerMessageType messageType;
             if (!Enum.TryParse<ToServerMessageType>(type, true, out messageType))
             {
-                return data;
+                return null;
             }
             data.MessageType = messageType;
 
@@ -140,7 +140,7 @@ namespace Client
             long javascriptTime;
             if (!long.TryParse(time, out javascriptTime))
             {
-                return data;
+                return null;
             }
             data.TimeStamp = ToServerTimestampTranslation(javascriptTime);
 

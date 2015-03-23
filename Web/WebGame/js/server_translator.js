@@ -1,5 +1,59 @@
-﻿function ServerTranslator()
+﻿function ServerConnection()
 {
+    // open the connection
+    this.webSocket = new WebSocket("ws://localhost:8080");
+
+    var self = this;
+    this.webSocket.onopen = function()
+    {
+        console.log("The connection to the server was opened.");
+        ServerTranslator.prototype.instance.toServerSubscribe();
+    }
+
+    this.webSocket.onclose = function(event)
+    {
+        console.log("The connection to the server was closed.");
+        console.log("    code:" + event.code);
+        console.log("    reason:" + event.reason);
+        console.log("    wasClean:" + event.wasClean);
+    }
+
+    this.webSocket.onmessage = function(event)
+    {
+        console.log("Incoming message from server.");
+        console.log("    data:" + event.data);
+    }
+
+    window.onbeforeunload = function()
+    {
+        self.websocket.onclose = function() { }; // disable onclose handler first
+        self.websocket.close()
+    };
+
+    this.toServer = function(message)
+    {
+        if(self.webSocket.readyState == WebSocket.OPEN)
+        {
+            console.log("Sending message to server.");
+            console.log("    message:" + message);
+            self.webSocket.send(message);
+        }
+    }
+
+    this.close = function()
+    {
+        ServerTranslator.prototype.instance.toServerUnsubscribe();
+        self.webSocket.close();
+    }
+}
+
+function ServerTranslator()
+{
+    ServerTranslator.prototype.instance = this;
+
+    // handler for web socket
+    this.serverConnection;
+
     this.PACKET_DELIMITER = "|";
     this.FRAME_DELIMETER = "~";
     this.PLAYERINPUT_DELIMETER = ",";
@@ -23,6 +77,16 @@
         };
 
     var self = this;
+    this.initialize = function()
+    {
+        if(self.serverConnection)
+        {
+            self.serverConnection.close();
+        }
+
+        self.serverConnection = new ServerConnection();
+    }
+
     this.toClientTranslate = function(toClientData)
     {
         // <id>|timestamp|<type>|<payload>|<eom>
@@ -60,17 +124,17 @@
 
     this.toClientDebug = function(payload)
     {
-        console.log("[received Debug] " + payload);
+        console.log("[translator]received Debug " + payload);
     }
 
     this.toClientStartMatch = function(payload)
     {
-        console.log("[received StartMatch] ");
+        console.log("[translator]received StartMatch ");
     }
 
     this.toClientFrame = function(payload)
     {
-        console.log("[received Frame] " + payload);
+        console.log("[translator]received Frame " + payload);
     }
 
     // ************************************
@@ -140,7 +204,11 @@
     this.toServer = function(message)
     {
         // todo send packet to server
-        console.log("[to server]" + message);
+        if(self.serverConnection)
+        {
+            console.log("[translator]to server:" + message);
+            self.serverConnection.toServer(message);
+        }
     }
 
     this.constructToServerPacket = function(messageType, payload)
@@ -158,7 +226,9 @@
         message += self.PACKET_DELIMITER;
 
         // payload
-        message += toServerData;
+        message += payload;
         message += self.PACKET_DELIMITER;
+
+        return message;
     }
 }
