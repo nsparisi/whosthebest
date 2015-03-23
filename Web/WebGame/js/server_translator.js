@@ -1,13 +1,18 @@
 ﻿function ServerConnection()
 {
     // open the connection
-    this.webSocket = new WebSocket("ws://localhost:8080");
-
+    this.webSocket = new WebSocket("ws://192.168.1.5:8080");
+    
     var self = this;
     this.webSocket.onopen = function()
     {
-        console.log("The connection to the server was opened.");
+        self.log("The connection to the server was opened.");
         ServerTranslator.prototype.instance.toServerSubscribe();
+    }
+
+    this.log = function(msg)
+    {
+        //console.log(msg);
     }
 
     this.webSocket.onclose = function(event)
@@ -20,8 +25,9 @@
 
     this.webSocket.onmessage = function(event)
     {
-        console.log("Incoming message from server.");
-        console.log("    data:" + event.data);
+        self.log("Incoming message from server.");
+        self.log("    data:" + event.data);
+        ServerTranslator.prototype.instance.toClientTranslate(event.data);
     }
 
     window.onbeforeunload = function()
@@ -34,8 +40,8 @@
     {
         if(self.webSocket.readyState == WebSocket.OPEN)
         {
-            console.log("Sending message to server.");
-            console.log("    message:" + message);
+            self.log("Sending message to server.");
+            self.log("    message:" + message);
             self.webSocket.send(message);
         }
     }
@@ -90,7 +96,7 @@ function ServerTranslator()
     this.toClientTranslate = function(toClientData)
     {
         // <id>|timestamp|<type>|<payload>|<eom>
-        var parts = toClientData.split(PACKET_DELIMITER);
+        var parts = toClientData.split(self.PACKET_DELIMITER);
 
         // validate proper message
         if(!self.toClientValidate(parts))
@@ -113,7 +119,7 @@ function ServerTranslator()
         }
         else if(messageType == self.toClientMessageType.Frame)
         {
-            self.toClientFrame(payload);
+            self.toClientFrame(timestamp, payload);
         }
     }
 
@@ -124,17 +130,33 @@ function ServerTranslator()
 
     this.toClientDebug = function(payload)
     {
-        console.log("[translator]received Debug " + payload);
     }
 
     this.toClientStartMatch = function(payload)
     {
-        console.log("[translator]received StartMatch ");
+        mainControl.switchToGame(payload);
     }
 
-    this.toClientFrame = function(payload)
+    this.toClientFrame = function(timestamp, payload)
     {
-        console.log("[translator]received Frame " + payload);
+        //frame~,player,1,inputs~player,2,inputs
+        var parts = payload.split(self.FRAME_DELIMETER);
+        if(parts.length >= 2)
+        {
+            var frame = parts[0];
+            var inputs = [];
+            for(var i = 1; i < parts.length; i++)
+            {
+                var playerInputs = parts[i];
+                inputs.push(playerInputs);
+            }
+
+            var data = new FrameData(timestamp, frame, inputs);
+            if(GenerationEngine.prototype.instance)
+            {
+                GenerationEngine.prototype.instance.receiveFrameFromServer(data);
+            }
+        }
     }
 
     // ************************************
@@ -206,7 +228,6 @@ function ServerTranslator()
         // todo send packet to server
         if(self.serverConnection)
         {
-            console.log("[translator]to server:" + message);
             self.serverConnection.toServer(message);
         }
     }
@@ -231,4 +252,15 @@ function ServerTranslator()
 
         return message;
     }
+}
+
+// ************************************************
+// FrameData object.
+// Represents the frame string in a readable data format
+// ************************************************
+var FrameData = function(time, frame, inputs)
+{
+    this.time = time;
+    this.frame = frame;
+    this.inputs = inputs;
 }

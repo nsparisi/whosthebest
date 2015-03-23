@@ -45,7 +45,7 @@
         }
     }
 
-    this.switchToGame = function()
+    this.switchToGame = function(randomSeed)
     {
         self.currentGameState = self.gameStateType.Match;
 
@@ -53,7 +53,7 @@
         self.generationEngine = new GenerationEngine();
         self.graphicsEngine = new GraphicsEngine();
 
-        self.gameEngine.initialize();
+        self.gameEngine.initialize(randomSeed);
         self.generationEngine.initialize(self.gameEngine);
         self.graphicsEngine.initialize(self.gameEngine);
     }

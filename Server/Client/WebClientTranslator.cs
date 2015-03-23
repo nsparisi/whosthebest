@@ -79,7 +79,7 @@ namespace Client
 
         private static string ToClientStartMatchTranslation(ToClientData toClientData)
         {
-            return string.Empty;
+            return toClientData.Message;
         }
 
         private static string ToClientFrameTranslation(ToClientData toClientData)
@@ -185,16 +185,20 @@ namespace Client
             {
                 // parse list of player inputs
                 string[] inputs = tokens[1].Split(PLAYERINPUT_DELIMETER);
-                GameInputType[] gameInputs = new GameInputType[inputs.Length];
+                List<GameInputType> gameInputs = new List<GameInputType>();
                 for (int i = 0; i < inputs.Length; i++)
                 {
-                    gameInputs[i] = (GameInputType)Convert.ToInt32(tokens[1]);
+                    if (!string.IsNullOrEmpty(inputs[i]))
+                    {
+                        gameInputs.Add((GameInputType)Convert.ToInt32(inputs[i]));
+                    }
                 }
 
+                // Input: 1st-dimension is always length 1 (only one player is being considered)
                 data.FrameData = new FrameData()
                 {
                     Frame = Convert.ToUInt16(tokens[0]),
-                    Input = new[] { gameInputs }
+                    Input = new[] { gameInputs.ToArray() }
                 };
             }
         }

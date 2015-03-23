@@ -51,16 +51,21 @@ function GameEngine()
     
     // a reference to itself
     var self = this;
-    this.initialize = function()
+    this.initialize = function(randomSeed)
     {
         self.boards = [];
         self.currentGameState = self.gameStateTypes.Starting;
 
         // board to initialize 
-        var seed = Math.random();
+        if(!randomSeed)
+        {
+            console.log("[game]WARNING: no seed specified");
+            randomSeed = Math.random();
+        }
+
         for(var i = 0; i < self.numberOfPlayers; i++)
         {
-            var rng = new Math.seedrandom(seed);
+            var rng = new Math.seedrandom(randomSeed);
             self.boards.push(new Board(rng, i, GameEngine.prototype.instance.attackBlockTypeStartIndex));
         }
 
@@ -72,11 +77,8 @@ function GameEngine()
     }
     
     // updates the engine by one frame
-    this.update = function(data)
+    this.update = function(inputs)
     {
-        // parse frame packet data into a set of inputs for each board
-        var frameData = self.parseFrameData(data);
-
         if(self.currentGameState == self.gameStateTypes.Starting)
         {
             // start immediately, todo wait 3 seconds
@@ -95,7 +97,7 @@ function GameEngine()
             {
                 if(!self.boards[i].isGameOver)
                 {
-                    self.boards[i].update(frameData.inputs[i]);
+                    self.boards[i].update(inputs[i]);
                 }
                 else
                 {
@@ -125,36 +127,12 @@ function GameEngine()
         else if(self.currentGameState == self.gameStateTypes.Ended)
         {
             // wait for "play again" option
-            if(self.pressedRestartButton(frameData.inputs[0]))
+            if(self.pressedRestartButton(inputs[0]))
             {
                 // self.initialize();
                 mainControl.switchToMenu();
             }
         }
-    }
-    
-    this.parseFrameData = function(data)
-    {
-        var frameData = null;
-        var gameId = 0;
-        
-        // id | frame | time | p1input1,p1inputN | pNinput1,pNinputN
-        var tokens = data.split(self.packetDelimiter);
-        if(tokens.length > 0 && tokens[0] == gameId)
-        {
-            frameData = new FrameData();
-            frameData.frame = tokens[1];
-            frameData.time = tokens[2];
-
-            // inputs[0] == player 0 input
-            // inputs[n] == player n input
-            for(var i = 3; i < tokens.length; i++)
-            {
-                frameData.inputs[i-3] = tokens[i];
-            }
-        }
-        
-        return frameData;
     }
 
     this.gameHasEnded = function(winnerIndex)
@@ -203,17 +181,6 @@ function GameEngine()
         this.fromBoadIndex = fromBoadIndex;
         this.attackBlock = attackBlock;
         this.targetBoardIndex = targetBoardIndex;
-    }
-
-    // ************************************************
-    // FrameData object.
-    // Represents the frame string in a readable data format
-    // ************************************************
-    var FrameData = function()
-    {
-        this.frame = -1;
-        this.time = -1;
-        this.inputs = [];
     }
 
     // ************************************************

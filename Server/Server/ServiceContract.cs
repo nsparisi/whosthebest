@@ -31,7 +31,7 @@ namespace Server
                     ToClientDebug("echo: " + data.Message);
                     break;
                 case ToServerMessageType.Frame:
-                    Debug.Log(this.GetType(), "Server received frame: {0} (delay {1}ms)", data.FrameData.Frame, ticks.ToString());
+                    // Debug.Log(this.GetType(), "Server received frame: {0} (delay {1}ms)", data.FrameData.Frame, ticks.ToString());
 
                     if (this.connectedMatch != null)
                     {
@@ -83,7 +83,8 @@ namespace Server
             ToClient(new ToClientData()
             {
                 MessageType = ToClientMessageType.StartMatch,
-                TimeStamp = DateTime.Now
+                TimeStamp = DateTime.Now,
+                Message = match.MatchSeed.ToString()
             });
         }
 
