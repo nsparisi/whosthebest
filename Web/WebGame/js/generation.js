@@ -36,10 +36,16 @@ function GenerationEngine()
 
         // send packets to game on an interval
         self.elapsed += deltaTimeMs;
-        while(self.elapsed > self.threshold)
+        if(self.elapsed > self.threshold)
         {
-            self.elapsed -= self.threshold;
-            self.sendFrameToServer();
+            // If the opponent is slow, we'll send frames out too fast.
+            // instead wait for the server to sync us up, then send out next frame
+            if(self.frameCount < self.expectedFrame + 2)
+            {
+                // set to 0, purposefully avoid queueing up many frames at once
+                self.elapsed = 0;
+                self.sendFrameToServer();
+            }
         }
     }
 
