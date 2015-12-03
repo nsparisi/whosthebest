@@ -1,14 +1,22 @@
 function GenerationEngine()
 {
+    GenerationEngine.prototype.instance = this;
+
     this.frameRate = 20;
     this.elapsed = 0;
     this.threshold = 1000 / this.frameRate;
     this.frameCount = 0;
-    this.currentInput = "";
+    this.expectedFrame = 0;
+    this.currentInput = [];
     this.isPaused = false;
     this.frameAdvance = false;
     
     var self = this;
+    this.initialize = function()
+    {
+
+    }
+
     this.update = function()
     {
         // figure out button state
@@ -20,7 +28,7 @@ function GenerationEngine()
             if(this.frameAdvance)
             {
                 this.frameAdvance = false;
-                self.sendUpdate();
+                self.sendFrameToServer();
             }
 
             return;
@@ -28,128 +36,113 @@ function GenerationEngine()
 
         // send packets to game on an interval
         self.elapsed += deltaTimeMs;
-        while(self.elapsed > self.threshold)
+        if(self.elapsed > self.threshold)
         {
-            self.elapsed -= self.threshold;
-            self.sendUpdate();
+            // If the opponent is slow, we'll send frames out too fast.
+            // instead wait for the server to sync us up, then send out next frame
+            if(self.frameCount < self.expectedFrame + 2)
+            {
+                // set to 0, purposefully avoid queueing up many frames at once
+                self.elapsed = 0;
+                self.sendFrameToServer();
+            }
         }
     }
 
-    this.sendUpdate = function()
+    this.sendFrameToServer = function()
     {
-        self.frameCount++;
-
-        var input = Math.floor(Math.random() * 4 + 1);
-
-        var packet = self.makePacket(
-            self.frameCount,
-            [
-                self.currentInput,
-                Math.max(0, Math.floor(Math.random() * (6 + 15)) - 15) // does nothing x15 chance
-                //[gameEngine.inputTypes.None] or self.currentInput or  Math.floor(Math.random() * 6),
-            ]);
-
-        // console.log("sending packet: " + packet);
-        gameEngine.update(packet);
+        // send frame data to server
+        ServerTranslator.prototype.instance.toServerFrame(
+            self.frameCount, 
+            self.currentInput);
 
         // drains input buffer
         self.drainInput();
+
+        // update frame count
+        // todo wrap around
+        self.frameCount++;
     }
-    
-    this.makePacket = function(frame, inputs)
+
+    this.receiveFrameFromServer = function(frameData)
     {
-        var packet = 
-            gameEngine.gameId + gameEngine.packetDelimiter +  // game ID
-            frame + gameEngine.packetDelimiter +  // frame
-            "0";  // time
-            
-        for(var i = 0; i < inputs.length; i++)
+        // FrameData object
+        // time : Long
+        // frame : Integer
+        // inputs : Array
+
+        if(frameData.frame == self.expectedFrame)
         {
-            packet += gameEngine.packetDelimiter + inputs[i];
+            GameEngine.prototype.instance.update(frameData.inputs);
+            self.expectedFrame++;
         }
-            
-        return packet;
-    }
-    
-    this.makeInputString = function()
-    {
-        var inputs = "";
-        for(var i = 0; i < self.currentInput.length; i++)
+        else 
         {
-             inputs += self.currentInput[i] == 1 ? gameEngine.inputDelimiter + i : "";
+            console.log("[generation]frame mismatch.");
+            console.log("[generation]    Expected: " + self.expectedFrame);
+            console.log("[generation]    Received: " + frameData.frame);
         }
-        
-        // remove leading comma
-        inputs = inputs.substring(1);
-        return inputs;
     }
     
     this.updatePlayerInput = function()
     {
-        if(self.justPressed("W"))
+        var inputDelimiter = GameEngine.prototype.instance.inputDelimiter;
+        var inputTypes = GameEngine.prototype.instance.inputTypes;
+
+        if(inputEngine.justPressed("W"))
         {
-            self.currentInput += gameEngine.inputDelimiter + gameEngine.inputTypes.Up;
+            self.currentInput.push(inputTypes.Up);
         }
         
-        if(self.justPressed("S"))
+        if(inputEngine.justPressed("S"))
         {
-            self.currentInput += gameEngine.inputDelimiter + gameEngine.inputTypes.Down;
+            self.currentInput.push(inputTypes.Down);
         }
         
-        if(self.justPressed("A"))
+        if(inputEngine.justPressed("A"))
         {
-            self.currentInput += gameEngine.inputDelimiter + gameEngine.inputTypes.Left;
+            self.currentInput.push(inputTypes.Left);
         }
         
-        if(self.justPressed("D"))
+        if(inputEngine.justPressed("D"))
         {
-            self.currentInput += gameEngine.inputDelimiter + gameEngine.inputTypes.Right;
+            self.currentInput.push(inputTypes.Right);
         }
         
-        if(self.justPressed("¿") || self.justClicked())
+        if(inputEngine.justPressed("¿") || inputEngine.justClicked())
         {
-            self.currentInput += gameEngine.inputDelimiter + gameEngine.inputTypes.Swap;
+            self.currentInput.push(inputTypes.Swap);
         }
 
-        if(self.justPressed("Q") || self.justPressed("E") || self.justPressed(" ") )
+        if(inputEngine.justPressed("Q") || inputEngine.justPressed("E") || inputEngine.justPressed(" "))
         {
-            self.currentInput += gameEngine.inputDelimiter + gameEngine.inputTypes.Elevate;
+            self.currentInput.push(inputTypes.Elevate);
         }
 
         // debugging frame control
-        if(self.justPressed("P"))
+        if(inputEngine.justPressed("P"))
         {
             self.isPaused = !self.isPaused;
         }
-        if(self.justPressed("k")) // +
+        if(inputEngine.justPressed("k")) // +
         {
             self.frameRate = Math.min(self.frameRate + 3, 60);
             self.threshold = 1000 / self.frameRate;
         }
-        if(self.justPressed("m")) // -
+        if(inputEngine.justPressed("m")) // -
         {
             self.frameRate = Math.max(self.frameRate - 3, 1);
             self.threshold = 1000 / self.frameRate;
         }
-        if(self.justPressed("Ü")) // \
+        if(inputEngine.justPressed("Ü")) // \
         {
             self.isPaused = true;
             self.frameAdvance = true;
         }
     }
     
-    this.justPressed = function(key)
-    {
-        return keysCurrent[key] && !keysPrevious[key];
-    }
-    
-    this.justClicked = function()
-    {
-        return click && !clickPrevious; 
-    }
-    
     this.drainInput = function()
     {
-        self.currentInput = ""
+        self.currentInput = []
     }
 }

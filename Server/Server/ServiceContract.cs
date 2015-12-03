@@ -28,10 +28,10 @@ namespace Server
             {
                 case ToServerMessageType.Debug:
                     Debug.Log(this.GetType(), "Server received debug: {0}  (delay {1}ms)", data.Message, ticks.ToString());
-
+                    ToClientDebug("echo: " + data.Message);
                     break;
                 case ToServerMessageType.Frame:
-                    Debug.Log(this.GetType(), "Server received frame: {0} (delay {1}ms)", data.FrameData.Frame, ticks.ToString());
+                    // Debug.Log(this.GetType(), "Server received frame: {0} (delay {1}ms)", data.FrameData.Frame, ticks.ToString());
 
                     if (this.connectedMatch != null)
                     {
@@ -58,7 +58,20 @@ namespace Server
 
         public void ToClient(ToClientData data)
         {
-            clientConnection.ToClient(data);
+            if (clientConnection != null)
+            {
+                clientConnection.ToClient(data);
+            }
+        }
+
+        public void ToClientDebug(string message)
+        {
+            ToClient(new ToClientData()
+            {
+                MessageType = ToClientMessageType.Debug,
+                TimeStamp = DateTime.Now,
+                Message = message
+            });
         }
 
         public void AddedToMatch(Match match)
@@ -70,7 +83,8 @@ namespace Server
             ToClient(new ToClientData()
             {
                 MessageType = ToClientMessageType.StartMatch,
-                TimeStamp = DateTime.Now
+                TimeStamp = DateTime.Now,
+                Message = match.MatchSeed.ToString()
             });
         }
 
@@ -81,12 +95,18 @@ namespace Server
             return communication.State == CommunicationState.Opened;
         }
 
-        private bool Subscribe()
+        private void Subscribe()
         {
             try
             {
                 lock (syncRoot)
                 {
+                    if (this.clientConnection != null)
+                    {
+                        Debug.Log(this.GetType(), "Already subscribed {0}", this.player.Name);
+                        return;
+                    }
+
                     // player initialization
                     totalConnections++;
                     string playerName = "Player " + totalConnections;
@@ -95,12 +115,10 @@ namespace Server
 
                     // channel back to client
                     this.clientConnection = OperationContext.Current.GetCallbackChannel<IServiceContractCallback>();
-                    return true;
                 }
             } 
             catch
             {
-                return false;
             }
         }
 

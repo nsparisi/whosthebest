@@ -12,10 +12,16 @@
   <xs:complexType name="FrameData">
     <xs:sequence>
       <xs:element minOccurs="0" name="Frame" type="xs:unsignedShort" />
-      <xs:element minOccurs="0" name="Input" nillable="true" type="tns:ArrayOfGameInputType" />
+      <xs:element minOccurs="0" name="Input" nillable="true" type="tns:ArrayOfArrayOfGameInputType" />
     </xs:sequence>
   </xs:complexType>
   <xs:element name="FrameData" nillable="true" type="tns:FrameData" />
+  <xs:complexType name="ArrayOfArrayOfGameInputType">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="ArrayOfGameInputType" nillable="true" type="tns:ArrayOfGameInputType" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="ArrayOfArrayOfGameInputType" nillable="true" type="tns:ArrayOfArrayOfGameInputType" />
   <xs:complexType name="ArrayOfGameInputType">
     <xs:sequence>
       <xs:element minOccurs="0" maxOccurs="unbounded" name="GameInputType" type="tns:GameInputType" />

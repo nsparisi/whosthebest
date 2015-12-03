@@ -33,6 +33,13 @@ namespace Server
             lock (syncLock)
             {
                 Debug.Log(this.GetType(), string.Format("FindAppropriatePlayerForMatch .. count {0}", playersNotInMatch.Count));
+
+                if(playersNotInMatch.Contains(player))
+                {
+                    Debug.Log(this.GetType(), string.Format("{0} is already queued. Ignoring.", player.Name));
+                    return;
+                }
+
                 Player opponent = null;
                 if (playersNotInMatch.Any())
                 {
@@ -70,6 +77,7 @@ namespace Server
         {
             lock (syncLock)
             {
+                Debug.Log(this.GetType(), string.Format("Removing {0} from queue.", player.Name));
                 if (playersNotInMatch.Contains(player))
                 {
                     playersNotInMatch.Remove(player);

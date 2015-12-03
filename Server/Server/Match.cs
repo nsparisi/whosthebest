@@ -15,6 +15,21 @@ namespace Server
 
         object syncRoot = new Object();
 
+        private int matchSeed = -1;
+        public int MatchSeed
+        {
+            get
+            {
+                if (matchSeed == -1)
+                {
+                    Random random = new Random();
+                    matchSeed = random.Next();
+                }
+
+                return matchSeed;
+            }
+        }
+
         public Match(params Player[] players)
         {
             playersInMatch = new List<Player>();
@@ -30,12 +45,12 @@ namespace Server
 
             toClientData.MessageType = ToClientMessageType.Frame;
             toClientData.FrameData = new FrameData();
-            toClientData.FrameData.Input = new GameInputType[playersInMatch.Count];
+            toClientData.FrameData.Input = new GameInputType[playersInMatch.Count][];
         }
 
         public void AcceptData(ToServerData data, Guid fromPlayerId)
         {
-            Debug.Log(this.GetType(), "Processing packet: " + data.FrameData.Frame);
+            // Debug.Log(this.GetType(), "Processing packet: " + data.FrameData.Frame);
 
             lock (syncRoot)
             {
@@ -71,7 +86,7 @@ namespace Server
                     // send the packet to every player
                     for (int i = 0; i < playersInMatch.Count; i++)
                     {
-                        Debug.Log(this.GetType(), "sending data to client: {0}, frame: {1} ", i, toClientData.FrameData.Frame);
+                        // Debug.Log(this.GetType(), "sending data to client: {0}, frame: {1} ", i, toClientData.FrameData.Frame);
                         playersInMatch[i].Contract.ToClient(toClientData);
                     }
                 }

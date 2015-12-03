@@ -1,5 +1,7 @@
 function GraphicsEngine()
 {
+    GraphicsEngine.prototype.instance = this;
+
     var textures =
         {
             gameBackgound : "images/bg.jpg"
@@ -62,22 +64,22 @@ function GraphicsEngine()
         self.sprites.push(self.fpsText);
 
         // player 1
-        var board = new GraphicsBoard(gameEngine.boards[0]);
+        var board = new GraphicsBoard(GameEngine.prototype.instance.boards[0]);
         board.x = canvasElement.width / 4;
         board.y = canvasElement.height / 2;
-        board.x -= gameEngine.colCount * this.tileWidth / 2;
-        board.y -= gameEngine.rowCountInBounds * this.tileHeight / 2;
+        board.x -= GameEngine.prototype.instance.colCount * this.tileWidth / 2;
+        board.y -= GameEngine.prototype.instance.rowCountInBounds * this.tileHeight / 2;
         self.sprites.push(board);
         self.graphicsBoards.push(board);
 
         // player 2
-        if(gameEngine.boards.length > 1)
+        if(GameEngine.prototype.instance.boards.length > 1)
         {
-            var board = new GraphicsBoard(gameEngine.boards[1]);
+            var board = new GraphicsBoard(GameEngine.prototype.instance.boards[1]);
             board.x = canvasElement.width * 3 / 4;
             board.y = canvasElement.height / 2
-            board.x -= gameEngine.colCount * this.tileWidth / 2;
-            board.y -= gameEngine.rowCountInBounds * this.tileHeight / 2;
+            board.x -= GameEngine.prototype.instance.colCount * this.tileWidth / 2;
+            board.y -= GameEngine.prototype.instance.rowCountInBounds * this.tileHeight / 2;
             self.sprites.push(board);
             self.graphicsBoards.push(board);
         }
@@ -86,11 +88,11 @@ function GraphicsEngine()
     this.update = function()
     {
         // check game state
-        if(gameEngine.currentGameState == gameEngine.gameStateTypes.Starting)
+        if(GameEngine.prototype.instance.currentGameState == GameEngine.prototype.instance.gameStateTypes.Starting)
         {
             for(var i = 0; i < self.graphicsBoards.length; i++)
             {
-                self.graphicsBoards[i].gameEngineBoard = gameEngine.boards[i];
+                self.graphicsBoards[i].gameEngineBoard = GameEngine.prototype.instance.boards[i];
             }
         }
 
@@ -119,11 +121,11 @@ function GraphicsEngine()
         this.gameEngineBoard = gameEngineBoard;
         this.x = canvasElement.width / 2;
         this.y = canvasElement.height / 2 
-        this.x -= gameEngine.colCount * graphicsEngine.tileWidth / 2;
-        this.y -= gameEngine.rowCountInBounds * graphicsEngine.tileHeight / 2;
-        this.width = gameEngine.colCount * graphicsEngine.tileWidth;
-        this.height = gameEngine.rowCountInBounds * graphicsEngine.tileHeight;
-        this.yOffsetAsHeight = graphicsEngine.tileHeight / gameEngineBoard.yOffsetMax;
+        this.x -= GameEngine.prototype.instance.colCount * GraphicsEngine.prototype.instance.tileWidth / 2;
+        this.y -= GameEngine.prototype.instance.rowCountInBounds * GraphicsEngine.prototype.instance.tileHeight / 2;
+        this.width = GameEngine.prototype.instance.colCount * GraphicsEngine.prototype.instance.tileWidth;
+        this.height = GameEngine.prototype.instance.rowCountInBounds * GraphicsEngine.prototype.instance.tileHeight;
+        this.yOffsetAsHeight = GraphicsEngine.prototype.instance.tileHeight / gameEngineBoard.yOffsetMax;
 
         this.comboPopups = [];
                 
@@ -154,14 +156,14 @@ function GraphicsEngine()
         
         // cursor double-block
         this.cursor1 = new Sprite(
-            graphicsEngine.tileWidth,
-            graphicsEngine.tileHeight,
+            GraphicsEngine.prototype.instance.tileWidth,
+            GraphicsEngine.prototype.instance.tileHeight,
             'rgba(0,0,0,0.0)',
             'black', 
             3);  
         this.cursor2 = new Sprite(
-            graphicsEngine.tileWidth,
-            graphicsEngine.tileHeight,
+            GraphicsEngine.prototype.instance.tileWidth,
+            GraphicsEngine.prototype.instance.tileHeight,
             'rgba(0,0,0,0.0)',
             'black', 
             3);
@@ -194,20 +196,20 @@ function GraphicsEngine()
                     // fill color style
                     var fillStyle = "#FF00FF";
 
-                    if(tile.type >= gameEngine.attackBlockTypeStartIndex)
+                    if(tile.type >= GameEngine.prototype.instance.attackBlockTypeStartIndex)
                     {
                         var fillStyle = "#FF00FF";
                     }
-                    else if(tile.type >= gameEngine.basicTileTypeStartIndex)
+                    else if(tile.type >= GameEngine.prototype.instance.basicTileTypeStartIndex)
                     {
-                        var fillStyle = graphicsEngine.colors[tile.type - gameEngine.basicTileTypeStartIndex];
+                        var fillStyle = GraphicsEngine.prototype.instance.colors[tile.type - GameEngine.prototype.instance.basicTileTypeStartIndex];
                     }
 
                     // tile is being combo'd
                     if(tile.comboFrameCount > 0 &&
                         tile.comboFrameCount % 2 == 0)
                     {
-                        fillStyle = graphicsEngine.comboFlashStyle;
+                        fillStyle = GraphicsEngine.prototype.instance.comboFlashStyle;
                     }
 
                     // debug, tile is chaining
@@ -220,18 +222,18 @@ function GraphicsEngine()
 
                     // ===============
                     // x, y position
-                    var x = tile.x * graphicsEngine.tileWidth;
+                    var x = tile.x * GraphicsEngine.prototype.instance.tileWidth;
                     if(tile.swappingFrameCount >= 0)
                     {
                         var swapPercent = 1 - (tile.swappingFrameCount / tile.swappingFrameReset);
-                        x += swapPercent * graphicsEngine.tileWidth * tile.xShift;
+                        x += swapPercent * GraphicsEngine.prototype.instance.tileWidth * tile.xShift;
                     }
                     canvasContext.translate(
                         x,
-                        self.height - tile.y * graphicsEngine.tileHeight - yOffsetCurrentHeight
+                        self.height - tile.y * GraphicsEngine.prototype.instance.tileHeight - yOffsetCurrentHeight
                     );
                     canvasContext.beginPath();
-                    canvasContext.rect(0, 0, graphicsEngine.tileWidth, graphicsEngine.tileHeight);
+                    canvasContext.rect(0, 0, GraphicsEngine.prototype.instance.tileWidth, GraphicsEngine.prototype.instance.tileHeight);
                     canvasContext.fill();
 
                     // draw borders around the tile
@@ -239,15 +241,15 @@ function GraphicsEngine()
                     {
                         canvasContext.beginPath();
                         canvasContext.moveTo(0, 0);
-                        canvasContext.lineTo(graphicsEngine.tileWidth, 0);
+                        canvasContext.lineTo(GraphicsEngine.prototype.instance.tileWidth, 0);
                         canvasContext.stroke();
                     }
 
                     if(!tile.isConnectedRight)
                     {
                         canvasContext.beginPath();
-                        canvasContext.moveTo(graphicsEngine.tileWidth, 0);
-                        canvasContext.lineTo(graphicsEngine.tileWidth, graphicsEngine.tileHeight);
+                        canvasContext.moveTo(GraphicsEngine.prototype.instance.tileWidth, 0);
+                        canvasContext.lineTo(GraphicsEngine.prototype.instance.tileWidth, GraphicsEngine.prototype.instance.tileHeight);
                         canvasContext.stroke();
                     }
 
@@ -255,15 +257,15 @@ function GraphicsEngine()
                     {
                         canvasContext.beginPath();
                         canvasContext.moveTo(0, 0);
-                        canvasContext.lineTo(0, graphicsEngine.tileHeight);
+                        canvasContext.lineTo(0, GraphicsEngine.prototype.instance.tileHeight);
                         canvasContext.stroke();
                     }
 
                     if(!tile.isConnectedDown)
                     {
                         canvasContext.beginPath();
-                        canvasContext.moveTo(0, graphicsEngine.tileHeight);
-                        canvasContext.lineTo(graphicsEngine.tileWidth, graphicsEngine.tileHeight);
+                        canvasContext.moveTo(0, GraphicsEngine.prototype.instance.tileHeight);
+                        canvasContext.lineTo(GraphicsEngine.prototype.instance.tileWidth, GraphicsEngine.prototype.instance.tileHeight);
                         canvasContext.stroke();
                     }
                     canvasContext.restore();
@@ -271,10 +273,10 @@ function GraphicsEngine()
                 });
                 
             // cursor overtop tiles
-            self.cursor1.x = self.gameEngineBoard.cursor.x * graphicsEngine.tileWidth;
-            self.cursor1.y = self.height - self.gameEngineBoard.cursor.y * graphicsEngine.tileHeight - yOffsetCurrentHeight;
+            self.cursor1.x = self.gameEngineBoard.cursor.x * GraphicsEngine.prototype.instance.tileWidth;
+            self.cursor1.y = self.height - self.gameEngineBoard.cursor.y * GraphicsEngine.prototype.instance.tileHeight - yOffsetCurrentHeight;
             self.cursor1.render();
-            self.cursor2.x = self.cursor1.x + graphicsEngine.tileWidth;
+            self.cursor2.x = self.cursor1.x + GraphicsEngine.prototype.instance.tileWidth;
             self.cursor2.y = self.cursor1.y;
             self.cursor2.render();
             
@@ -378,8 +380,8 @@ function GraphicsEngine()
 
         this.addComboPopup = function(tileX, tileY, number, falseComboTrueChain)
         {
-            var realX = tileX * graphicsEngine.tileWidth;
-            var realY = self.height - tileY * graphicsEngine.tileHeight -
+            var realX = tileX * GraphicsEngine.prototype.instance.tileWidth;
+            var realY = self.height - tileY * GraphicsEngine.prototype.instance.tileHeight -
                 self.yOffsetAsHeight * self.gameEngineBoard.yOffset;
 
             self.comboPopups.push(
@@ -387,11 +389,11 @@ function GraphicsEngine()
 
             if(falseComboTrueChain && number <= 3)
             {
-                graphicsEngine.audios.chain_mild.play();
+                GraphicsEngine.prototype.instance.audios.chain_mild.play();
             }
             else if(falseComboTrueChain && number > 3)
             {
-                graphicsEngine.audios.chain_intense.play();
+                GraphicsEngine.prototype.instance.audios.chain_intense.play();
             }
         }
 
@@ -404,184 +406,185 @@ function GraphicsEngine()
             }
         }
     }
+}
 
-    var ComboPopup = function(realX, realY, number, removeCallback, falseComboTrueChain)
+function ComboPopup(realX, realY, number, removeCallback, falseComboTrueChain)
+{
+    var bgColor = "rgb(214,16,0)";
+    var bgBorder = "rgb(255,255,255)";
+    var textColor = "rgb(255, 240, 0)";
+
+    if(falseComboTrueChain)
     {
-        var bgColor = "rgb(214,16,0)";
-        var bgBorder = "rgb(255,255,255)";
-        var textColor = "rgb(255, 240, 0)";
+        bgColor = "rgb(0,146,0)";
 
-        if(falseComboTrueChain)
+        this.text = new Text(
+            GraphicsEngine.prototype.instance.tileWidth,
+            GraphicsEngine.prototype.instance.tileHeight,
+            'bold 15pt Arial',
+            textColor);
+        this.text.text = "x" + number;
+        this.text.x = realX + GraphicsEngine.prototype.instance.tileWidth * 0.1;
+        this.text.y = realY + GraphicsEngine.prototype.instance.tileHeight * 0.9;
+    }
+    else
+    {
+        this.text = new Text(
+            GraphicsEngine.prototype.instance.tileWidth,
+            GraphicsEngine.prototype.instance.tileHeight,
+            'bold 22pt Arial',
+            textColor);
+
+        this.text.text = number;
+        this.text.x = realX + GraphicsEngine.prototype.instance.tileWidth * 0.2;
+        this.text.y = realY + GraphicsEngine.prototype.instance.tileHeight * 0.9;
+    }
+
+
+    this.background = new Sprite(
+        GraphicsEngine.prototype.instance.tileWidth,
+        GraphicsEngine.prototype.instance.tileHeight,
+        bgColor,
+        bgBorder,
+        2);
+    this.background.x = realX;
+    this.background.y = realY;
+
+    this.durationMs = 1000;
+    this.ageMs = 0;
+    var destinationY = GraphicsEngine.prototype.instance.tileHeight * -0.75;
+
+
+    var self = this;
+    this.render = function()
+    {
+        canvasContext.save();
+        canvasContext.scale(0.95, 0.95);
+
+        var t = self.ageMs / self.durationMs;
+        canvasContext.translate(0, t * destinationY);
+
+        self.background.render();
+        self.text.render();
+        canvasContext.restore();
+
+        self.ageMs += deltaTimeMs;
+        if(self.ageMs >= self.durationMs)
         {
-            bgColor = "rgb(0,146,0)";
-
-            this.text = new Text(
-                graphicsEngine.tileWidth,
-                graphicsEngine.tileHeight,
-                'bold 15pt Arial',
-                textColor);
-            this.text.text = "x" + number;
-            this.text.x = realX + graphicsEngine.tileWidth * 0.1;
-            this.text.y = realY + graphicsEngine.tileHeight * 0.9;
+            removeCallback(self);
         }
-        else
+    }
+}
+
+// Sprite object right now represents a square
+// with a width, height, stroke and fill style and rect line width
+function Sprite(width, height, fillStyle, strokeStyle, lineWidth)
+{
+    this.x = 0;
+    this.y = 0;
+    this.width = width;
+    this.height = height;
+    this.fillStyle = fillStyle;
+    this.strokeStyle = strokeStyle;
+    this.lineWidth = lineWidth;
+
+    var self = this;
+    this.render = function()
+    {
+        //Render the sprite
+        canvasContext.save();
+        canvasContext.strokeStyle = self.strokeStyle;
+        canvasContext.lineWidth = self.lineWidth;
+        canvasContext.fillStyle = self.fillStyle;
+        canvasContext.translate(
+            self.x,
+            self.y
+        );
+        canvasContext.beginPath();
+        canvasContext.rect(0, 0, self.width, self.height);
+        canvasContext.stroke();
+        canvasContext.fill();
+        canvasContext.restore();
+    };
+};
+
+function SoundClip(audioPath)
+{
+    this.audioObj = new Audio();
+    var self = this;
+
+    this.audioObj.onloadeddata = function()
+    {
+        self.play = function()
         {
-            this.text = new Text(
-                graphicsEngine.tileWidth,
-                graphicsEngine.tileHeight,
-                'bold 22pt Arial',
-                textColor);
-
-            this.text.text = number;
-            this.text.x = realX + graphicsEngine.tileWidth * 0.2;
-            this.text.y = realY + graphicsEngine.tileHeight * 0.9;
-        }
-
-
-        this.background = new Sprite(
-            graphicsEngine.tileWidth,
-            graphicsEngine.tileHeight,
-            bgColor,
-            bgBorder,
-            2);
-        this.background.x = realX;
-        this.background.y = realY;
-
-        this.durationMs = 1000;
-        this.ageMs = 0;
-        var destinationY = graphicsEngine.tileHeight * -0.75;
-
-
-        var self = this;
-        this.render = function()
-        {
-            canvasContext.save();
-            canvasContext.scale(0.95, 0.95);
-
-            var t = self.ageMs / self.durationMs;
-            canvasContext.translate(0, t * destinationY);
-
-            self.background.render();
-            self.text.render();
-            canvasContext.restore();
-
-            self.ageMs += deltaTimeMs;
-            if(self.ageMs >= self.durationMs)
-            {
-                removeCallback(self);
-            }
+            self.audioObj.volume = GraphicsEngine.prototype.instance.sfxVolume;
+            self.audioObj.play();
         }
     }
 
-    // Sprite object right now represents a square
-    // with a width, height, stroke and fill style and rect line width
-    var Sprite = function(width, height, fillStyle, strokeStyle, lineWidth) 
+    // load the sound
+    this.audioObj.src = audioPath;
+    this.audioObj.load();
+
+    // can't play sound unless loaded
+    this.play = function() { }
+}
+
+// a texture that loads an image safely and draws it at
+// x,y with width,height
+function Texture(width, height, imgPath)
+{
+    this.x = 0;
+    this.y = 0;
+    this.width = width;
+    this.height = height;
+    this.fillStyle = null;
+    this.imageObj = new Image();
+
+    var self = this;
+    this.imageObj.onload = function()
     {
-        this.x = 0;
-        this.y = 0;
-        this.width = width;
-        this.height = height;
-        this.fillStyle = fillStyle;
-        this.strokeStyle = strokeStyle;
-        this.lineWidth = lineWidth;
-        
-        var self = this;
-        this.render = function() 
+        var pattern = canvasContext.createPattern(self.imageObj, 'repeat');
+        self.fillStyle = pattern;
+        self.render = function()
         {
-            //Render the sprite
             canvasContext.save();
-            canvasContext.strokeStyle = self.strokeStyle;
-            canvasContext.lineWidth = self.lineWidth;
-            canvasContext.fillStyle = self.fillStyle;
             canvasContext.translate(
                 self.x,
                 self.y
             );
-            canvasContext.beginPath();
+            canvasContext.fillStyle = self.fillStyle;
             canvasContext.rect(0, 0, self.width, self.height);
-            canvasContext.stroke();
             canvasContext.fill();
             canvasContext.restore();
-        };
+        }
     };
-    
-    var SoundClip = function(audioPath)
+
+    // load the image
+    this.imageObj.src = imgPath;
+
+    // don't do anything until loaded
+    this.render = function() { }
+}
+
+function Text(x, y, font, fillStyle)
+{
+    this.text = "";
+    this.font = font;
+    this.fillStyle = fillStyle;
+    this.x = x;
+    this.y = y;
+    this.scaleX = 1;
+    this.scaleY = 1;
+
+    var self = this;
+    this.render = function()
     {
-        this.audioObj = new Audio();
-        var self = this;
-
-        this.audioObj.onloadeddata = function()
-        {
-            self.play = function()
-            {
-                self.audioObj.volume = graphicsEngine.sfxVolume;
-                self.audioObj.play();
-            }
-        }
-
-        // load the sound
-        this.audioObj.src = audioPath;
-        this.audioObj.load();
-
-        // can't play sound unless loaded
-        this.play = function(){}
-    }
-
-    // a texture that loads an image safely and draws it at
-    // x,y with width,height
-    var Texture = function(width, height, imgPath)
-    {
-        this.x = 0;
-        this.y = 0;
-        this.width = width;
-        this.height = height;
-        this.fillStyle = null;
-        this.imageObj = new Image();
-        
-        var self = this;
-        this.imageObj.onload = function() {
-            var pattern = canvasContext.createPattern(self.imageObj, 'repeat');
-            self.fillStyle = pattern;
-            self.render = function()
-            {
-                canvasContext.save();
-                canvasContext.translate(
-                    self.x,
-                    self.y
-                );
-                canvasContext.fillStyle = self.fillStyle;
-                canvasContext.rect(0, 0, self.width, self.height);
-                canvasContext.fill();
-                canvasContext.restore();
-            }
-        };
-        
-        // load the image
-        this.imageObj.src = imgPath;
-        
-        // don't do anything until loaded
-        this.render = function(){}
-    }
-    
-    var Text = function(x, y, font, fillStyle)
-    {
-        this.text = "";
-        this.font = font;
-        this.fillStyle = fillStyle;
-        this.x = x;
-        this.y = y;
-        this.scaleX = 1;
-        this.scaleY = 1;
-        
-        var self = this;
-        this.render = function()
-        {
-            canvasContext.save();
-            canvasContext.fillStyle = self.fillStyle;
-            canvasContext.font = self.font;
-            canvasContext.scale(self.scaleX, self.scaleY);
-            canvasContext.fillText(self.text, self.x, self.y);
-            canvasContext.restore();
-        }
+        canvasContext.save();
+        canvasContext.fillStyle = self.fillStyle;
+        canvasContext.font = self.font;
+        canvasContext.scale(self.scaleX, self.scaleY);
+        canvasContext.fillText(self.text, self.x, self.y);
+        canvasContext.restore();
     }
 }
