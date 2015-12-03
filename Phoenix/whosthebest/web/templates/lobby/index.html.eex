@@ -1,0 +1,5 @@
+<div class="jumbotron">
+    <h2>Welcome to the Lobby!</h2>
+</div>
+
+<script> require("web/static/js/chat_socket")</script>
