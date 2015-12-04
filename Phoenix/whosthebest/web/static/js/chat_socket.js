@@ -1,5 +1,3 @@
-console.log("testing 123");
-
 // NOTE: The contents of this file will only be executed if
 // you uncomment its entry in "web/static/js/app.js".
 
@@ -7,7 +5,7 @@ console.log("testing 123");
 // and connect at the socket path in "lib/my_app/endpoint.ex":
 import {Socket} from "deps/phoenix/web/static/js/phoenix"
 
-let socket = new Socket("/chatsocket", {params: {token: window.userToken}})
+let socket = new Socket("/chatsocket", {params: {token: window.userToken, user_id: "123"}})
 
 // When you connect, you'll often need to authenticate the client.
 // For example, imagine you have an authentication plug, `MyAuth`,
@@ -57,6 +55,23 @@ socket.connect()
 
 // Now that you are connected, you can join channels with a topic:
 let channel = socket.channel("chat:lobby", {})
+let chatInput = $("#chat-input")
+let messagesContainer = $("#messages")
+
+chatInput.on("keypress", event => {
+
+    // enter button is pressed
+    if(event.keyCode === 13)
+    {
+        channel.push("new_msg", {body: chatInput.val(), user: "User123"})
+        chatInput.val("")
+    }
+})
+
+channel.on("new_msg", payload => {
+    messagesContainer.append(`<br/>[${Date()}] ${payload.body}`)
+})
+
 channel.join()
   .receive("ok", resp => { console.log("Joined successfully", resp) })
   .receive("error", resp => { console.log("Unable to join", resp) })

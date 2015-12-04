@@ -8,4 +8,9 @@ defmodule Whosthebest.GameChannel do
   def join("game:" <> _private_room_id, _params, _socket) do
     {:error, %{reason: "unauthorized"}}
   end
+  
+  def debug(message) do
+    as_string = to_string(message)
+    IO.inspect "[**GameChannel**] " <> as_string
+  end
 end

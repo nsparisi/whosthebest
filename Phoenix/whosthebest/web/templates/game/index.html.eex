@@ -1,5 +1,7 @@
 <div class="jumbotron">
-    <h2>Game!</h2>
+    <h2>Game <%= @last_game_id %> !</h2>
+    
 </div>
 
+<script>window.userToken = "<%= assigns[:user_token] %>";</script>
 <script> require("web/static/js/game_socket")</script>

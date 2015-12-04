@@ -7,10 +7,21 @@ defmodule Whosthebest.Router do
     plug :fetch_flash
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug :put_user_token
   end
 
   pipeline :api do
     plug :accepts, ["json"]
+  end
+  
+  # interesting, test code -- not sure it belongs here.
+  defp put_user_token(conn, _) do
+    username = get_session(conn, :username)
+    if username do
+        conn
+    else 
+        conn
+    end
   end
 
   scope "/", Whosthebest do
@@ -19,6 +30,10 @@ defmodule Whosthebest.Router do
     get "/", PageController, :index
     get "/lobby", LobbyController, :index
     get "/game", GameController, :index
+    
+    get "/users/login/:username", UserController, :login
+    get "/users/logout", UserController, :logout
+    resources "/users", UserController
   end
 
   # Other scopes may use custom stacks.
