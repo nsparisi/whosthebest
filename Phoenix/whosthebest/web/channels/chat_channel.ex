@@ -3,7 +3,6 @@ defmodule Whosthebest.ChatChannel do
   require Logger
 
   def join("chat:lobby", message, socket) do
-    IO.inspect message
     :timer.send_interval(5000, :ping)
     send(self, {:after_join, message})
     {:ok, socket}

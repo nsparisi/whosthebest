@@ -24,19 +24,9 @@ defmodule Whosthebest.GameSocket do
   
     # max_age: 1209600 is equivalent to two weeks in seconds
     case Phoenix.Token.verify(socket, "user_id", token, max_age: 1209600) do
-        {:ok, verified_user_id} ->
-        
-            # get the user from the DB
-            #user = Repo.get_by(Whosthebest.User, id: verified_user_id) 
-            #user = Repo.get_by(Whosthebest.User, name: "Nick") 
-            
-            # get their game_id, so they can join the correct game room
-            #last_game_id = user.last_game_id
-            
+        {:ok, verified_user_id} ->            
             # add relevant info to the socket
-            #socket = assign(socket, :user_id, verified_user_id)
-            #socket = assign(socket, :last_game_id, last_game_id)
-            
+            socket = assign(socket, :user_id, verified_user_id)            
             {:ok, socket}
         {:error, reason} ->
             :error

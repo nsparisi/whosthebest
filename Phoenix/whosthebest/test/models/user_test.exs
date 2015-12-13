@@ -3,7 +3,7 @@ defmodule Whosthebest.UserTest do
 
   alias Whosthebest.User
 
-  @valid_attrs %{email: "some content", last_game_id: "some content", name: "some content", password: "some content"}
+  @valid_attrs %{email: "some@content", last_game_id: "some content", name: "some content", password: "some content"}
   @invalid_attrs %{}
 
   test "changeset with valid attributes" do

@@ -4,4 +4,5 @@
 </div>
 
 <script>window.userToken = "<%= assigns[:user_token] %>";</script>
+<script>window.lastGameId = "<%= @last_game_id %>";</script>
 <script> require("web/static/js/game_socket")</script>

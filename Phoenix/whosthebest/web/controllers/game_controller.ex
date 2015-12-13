@@ -6,7 +6,7 @@ defmodule Whosthebest.GameController do
         username = get_session(conn, :username)        
         
         # if they are not logged in, redirect
-        if username == "" do
+        if !username do
             conn
                 |> put_flash(:error, "Please login via /users/login/<username>.")
                 |> redirect(to: page_path(conn, :index))
@@ -15,13 +15,12 @@ defmodule Whosthebest.GameController do
         # get the user from the DB
         user = Repo.get_by(Whosthebest.User, name: username) 
         
-        # get their game_id, so they can join the correct game room
-        last_game_id = user.last_game_id
-        
         # generate a token based on the user unique id
         token = Phoenix.Token.sign(conn, "user_id", user.id)
         conn = assign(conn, :user_token, token)
         
+        # get the user's game_id, so they can join the correct game room
+        last_game_id = user.last_game_id
         render conn, "index.html", last_game_id: last_game_id
     end
     

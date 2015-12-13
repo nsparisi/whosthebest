@@ -16,10 +16,17 @@ defmodule Whosthebest.UserController do
   end
   
   def login(conn, %{"username" => username}) do
-    conn
-        |> put_session(:username, username)
-        |> put_flash(:info, "You are now logged in as: " <> username)
-        |> redirect(to: user_path(conn, :index))
+    case Repo.get_by(User, name: username) do
+        nil ->
+            conn
+                |> put_flash(:error, "Cannot login as " <> username)
+                |> redirect(to: user_path(conn, :index))
+        user ->
+            conn
+                |> put_session(:username, username)
+                |> put_flash(:info, "You are now logged in as: " <> username)
+                |> redirect(to: user_path(conn, :index))
+    end    
   end
   
   def logout(conn, _params) do
