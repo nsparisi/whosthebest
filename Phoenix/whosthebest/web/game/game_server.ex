@@ -27,13 +27,6 @@ defmodule Whosthebest.GameServer do
     end
     
     @doc """
-    Dequeues the next frame for the given user.
-    """
-    def dequeue_frame(server, user) do
-        GenServer.call(server, {:dequeue, user})
-    end
-    
-    @doc """
     Gets the internal state of the Server, for testing purposes.
     """
     def get_state(server) do
@@ -74,31 +67,14 @@ defmodule Whosthebest.GameServer do
         
         case process_queues(state) do
             {:ok, current_state} ->
-                state = current_state
+                {:reply, :ok, current_state}
             {:broadcast, payload, current_state} ->
-                state = current_state
+                {:reply, {:broadcast, payload}, current_state}
         end
-        
-        {:reply, nil, state}
-    end
-    
-    def handle_call({:dequeue, user}, _from, state) do
-        Debug.log("GameServer  handle_cast dequeue " <> user)
-        {:ok, frame, state} = dequeue_message(state, user)
-        {:reply, frame, state}
     end
     
     def handle_call(:state, _from, state) do
         {:reply, state, state}
-    end
-    
-    defp queues_ready?(state) do
-        # for each user: check if the queue length is not-empty
-        Enum.reduce(HashDict.keys(state), true, 
-            fn(user, acc) -> 
-                queue = HashDict.fetch!(state, user)
-                length(queue) > 0 && acc 
-            end)
     end
     
     #unused right now
@@ -182,5 +158,26 @@ defmodule Whosthebest.GameServer do
         else
             {:ok, state}
         end
+    end
+    
+    def queues_ready?(state) do
+        # for each user: check if the queue length is not-empty
+        Enum.reduce(HashDict.keys(state), true, 
+            fn(user, acc) -> 
+                queue = HashDict.fetch!(state, user)
+                length(queue) > 0 && acc 
+            end)
+    end
+    
+    def to_pretty_string(state) do
+        Enum.reduce(HashDict.keys(state), "",
+            fn(user, acc) -> 
+                queue = HashDict.fetch!(state, user)
+                queue_string = Enum.reduce(queue, "", 
+                    fn(item, acc) -> 
+                        acc <> "{frame:" <> item[:frame] <> " inputs:" <> item[:inputs] <> "}"
+                    end)
+                acc <> "{ user=>" <> user <> ", queue=>[" <> queue_string <> "]} "
+            end)
     end
 end

@@ -7,6 +7,8 @@ defmodule Whosthebest.GameTest do
     @valid_attrs %{email: "some@content"}
     @invalid_attrs %{}
     @game_key "game:1"
+    @user1 "user:1"
+    @user2 "user:2"
 
     test "GameManager game creation" do
         {:ok, manager} = GameManager.start_link()
@@ -26,31 +28,31 @@ defmodule Whosthebest.GameTest do
         refute Process.alive? game
     end
     
-    test "GameServer scenario" do
+    test "GameServer client-side scenario" do
         {:ok, manager} = GameManager.start_link()
         game = GameManager.get_or_create_game(manager, @game_key)
         
-        user1 = "user:1"
-        user2 = "user:2"
-        message1 = "1~,1,2,3,4"
-        message2 = "2~,1,2,3,4"
+        user1_inputs = ",1,2"
+        user2_inputs = ",3,4"
+        message1_1 = "1~" <> user1_inputs
+        message1_2 = "2~" <> user1_inputs
+        message2_1 = "1~" <> user2_inputs
+        message2_2 = "2~" <> user2_inputs
         
         #setup
-        GameServer.join_user(game, user1)
-        GameServer.join_user(game, user2)
+        GameServer.join_user(game, @user1)
+        GameServer.join_user(game, @user2)
         
-        GameServer.handle_message(game, user1, message1)
-        GameServer.handle_message(game, user2, message1)
+        assert :ok == GameServer.handle_message(game, @user1, message1_1)
+        {:broadcast, payload} = GameServer.handle_message(game, @user2, message2_1)
+        assert payload == "1~" <> user1_inputs <> "~" <> user2_inputs
         
-        #assert GameServer.dequeue_frame(game, user2)[:frame] == "1"
-        
-        GameServer.handle_message(game, user2, message1)
-        GameServer.handle_message(game, user2, message2)
-        #assert GameServer.dequeue_frame(game, user2)[:frame] == "1"
-        #assert GameServer.dequeue_frame(game, user2)[:frame] == "2"
+        assert :ok == GameServer.handle_message(game, @user2, message2_2)
+        {:broadcast, payload} = GameServer.handle_message(game, @user1, message1_2)
+        assert payload == "2~" <> user1_inputs <> "~" <> user2_inputs
     end
     
-    test "GameServer translation" do
+    test "GameServer to-server translation" do
         payload = "2~,1,2,3,4"
         translation = GameServer.to_server_frame_translation(payload)
         assert translation[:frame] == "2"
