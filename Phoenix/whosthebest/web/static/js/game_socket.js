@@ -1,3 +1,4 @@
+/*
 import {Socket} from "deps/phoenix/web/static/js/phoenix"
 
 // import socket object from phoenix
@@ -29,3 +30,4 @@ channel.on("broadcast", payload => {
 })
 
 export default socket
+*/
