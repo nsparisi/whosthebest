@@ -26,6 +26,10 @@ defmodule Whosthebest.GameServer do
         GenServer.call(server, {:message, user, message})
     end
     
+    def get_game_state(server) do
+        GenServer.call(server, :get_game_state)
+    end
+    
     @doc """
     Gets the internal state of the Server, for testing purposes.
     """
@@ -36,9 +40,10 @@ defmodule Whosthebest.GameServer do
     # ********************************
     # Server callbacks
     # ********************************
-    
-    # the state of this server will be a HashDict mapping user ids 
-    # to a queue of frames.
+    # the state of this server will be a Dict with the following values:
+    # :number_of_players = 2
+    # :game_state = :initializing/:ready
+    # :user_frames = HashDict mapping user ids to a queue of frames
     # A frame will contain any metadata about a particular frame received 
     # from the user, including the message payload.
     # User1 -> frame4   User2 -> frame4
@@ -48,13 +53,27 @@ defmodule Whosthebest.GameServer do
     def init(:ok) do
         Debug.log("GameServer  init")
         :timer.send_interval(5000, :refresh)
-        {:ok, HashDict.new}
+        {:ok, 
+            %{
+                :number_of_players => 2, 
+                :game_state => :initializing, 
+                :user_frames => HashDict.new
+            }
+        }
     end
     
     def handle_cast({:join, user}, state) do
         Debug.log("GameServer  handle_cast join " <> user)
-        if !HashDict.has_key?(state, user) do
-            state = HashDict.put(state, user, [])
+        user_frames = state[:user_frames]
+        if !HashDict.has_key?(user_frames, user) do
+            # add the user to the game
+            user_frames = HashDict.put(user_frames, user, [])
+            state = Dict.put(state, :user_frames, user_frames)
+            
+            # if all of the user have joined, mark as ready
+            if state[:number_of_players] == length(HashDict.keys(user_frames)) do
+                state = Dict.put(state, :game_state, :ready)
+            end
         end
         {:noreply, state}
     end
@@ -71,6 +90,10 @@ defmodule Whosthebest.GameServer do
             {:broadcast, payload, current_state} ->
                 {:reply, {:broadcast, payload}, current_state}
         end
+    end
+    
+    def handle_call(:get_game_state, _from, state) do
+        {:reply, state[:game_state], state}
     end
     
     def handle_call(:state, _from, state) do
@@ -121,25 +144,29 @@ defmodule Whosthebest.GameServer do
     end
     
     def enqueue_message(state, user, message) do
-        new_queue = HashDict.fetch!(state, user) ++ [message]
-        state = HashDict.put(state, user, new_queue)
+        user_frames = state[:user_frames]
+        new_queue = HashDict.fetch!(user_frames, user) ++ [message]
+        user_frames = HashDict.put(user_frames, user, new_queue)
+        state = Dict.put(state, :user_frames, user_frames)
         {:ok, state}
     end
     
     def dequeue_message(state, user) do
-        [frame | new_queue] = HashDict.fetch!(state, user)
-        state = HashDict.put(state, user, new_queue)
+        user_frames = state[:user_frames]
+        [frame | new_queue] = HashDict.fetch!(user_frames, user)
+        user_frames = HashDict.put(user_frames, user, new_queue)
+        state = Dict.put(state, :user_frames, user_frames)
         {:ok, frame, state}
     end
     
     def peek_message(state, user) do
-        List.first(HashDict.fetch!(state, user))
+        List.first(HashDict.fetch!(state[:user_frames], user))
     end
     
     def dequeue_and_form_payload(state) do
         # dequeue once for each user, and formulate a broadcast payload.
         # TODO someday have an ordering here, sort is bad.
-        all_users = Enum.sort(HashDict.keys(state))
+        all_users = Enum.sort(HashDict.keys(state[:user_frames]))
         peek_frame = peek_message(state, List.first(all_users))[:frame]
         %{:payload => payload, :state => state} = 
             Enum.reduce(all_users, %{payload: peek_frame, state: state}, 
@@ -162,17 +189,19 @@ defmodule Whosthebest.GameServer do
     
     def queues_ready?(state) do
         # for each user: check if the queue length is not-empty
-        Enum.reduce(HashDict.keys(state), true, 
+        user_frames = state[:user_frames]
+        Enum.reduce(HashDict.keys(user_frames), true, 
             fn(user, acc) -> 
-                queue = HashDict.fetch!(state, user)
+                queue = HashDict.fetch!(user_frames, user)
                 length(queue) > 0 && acc 
             end)
     end
     
     def to_pretty_string(state) do
-        Enum.reduce(HashDict.keys(state), "",
+        user_frames = state[:user_frames]
+        Enum.reduce(HashDict.keys(user_frames), "",
             fn(user, acc) -> 
-                queue = HashDict.fetch!(state, user)
+                queue = HashDict.fetch!(user_frames, user)
                 queue_string = Enum.reduce(queue, "", 
                     fn(item, acc) -> 
                         acc <> "{frame:" <> item[:frame] <> " inputs:" <> item[:inputs] <> "}"

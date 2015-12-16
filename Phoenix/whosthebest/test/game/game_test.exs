@@ -58,4 +58,16 @@ defmodule Whosthebest.GameTest do
         assert translation[:frame] == "2"
         assert translation[:inputs] == ",1,2,3,4"
     end
+    
+    test "GameServer game state" do
+        {:ok, manager} = GameManager.start_link()
+        game = GameManager.get_or_create_game(manager, @game_key)
+        assert :initializing == GameServer.get_game_state(game)
+        
+        GameServer.join_user(game, @user1)
+        assert :initializing == GameServer.get_game_state(game)
+        
+        GameServer.join_user(game, @user2)
+        assert :ready == GameServer.get_game_state(game)
+    end
 end

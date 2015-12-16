@@ -13,6 +13,7 @@ defmodule Whosthebest do
       worker(Whosthebest.Repo, []),
       # Here you could define other workers and supervisors as children
       # worker(Whosthebest.Worker, [arg1, arg2, arg3]),
+      worker(Whosthebest.GameManager, [[name: Whosthebest.GameManager]])
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html

@@ -58,4 +58,6 @@ defmodule Whosthebest.GameManager do
         end
         {:noreply, state}
     end
+    
+    # todo implement game cleanup.
 end
