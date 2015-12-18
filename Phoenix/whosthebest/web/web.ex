@@ -18,8 +18,9 @@ defmodule Whosthebest.Web do
 
   def model do
     quote do
-      use Ecto.Model
+      use Ecto.Schema
 
+      import Ecto
       import Ecto.Changeset
       import Ecto.Query, only: [from: 1, from: 2]
     end
@@ -30,6 +31,7 @@ defmodule Whosthebest.Web do
       use Phoenix.Controller
 
       alias Whosthebest.Repo
+      import Ecto
       import Ecto.Model
       import Ecto.Query, only: [from: 1, from: 2]
 
@@ -62,6 +64,7 @@ defmodule Whosthebest.Web do
       use Phoenix.Channel
 
       alias Whosthebest.Repo
+      import Ecto
       import Ecto.Model
       import Ecto.Query, only: [from: 1, from: 2]
     end

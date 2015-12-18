@@ -17,7 +17,6 @@ defmodule Whosthebest.GameChannel do
         # and validate that they entered the right room
         case user.last_game_id == game_id do
             true ->
-                :timer.send_interval(5000, :ping)
                 socket = setup_game(game_id, socket)
                 send(self, {:after_join, %{user: user.name, from: user_id}})
                 {:ok, socket}
@@ -56,10 +55,17 @@ defmodule Whosthebest.GameChannel do
     
     # "game:frame" is called each frame to send the frame data to the server
     def handle_in("game:frame", %{"payload" => payload}, socket) do
-        GameServer.handle_message(
+        case GameServer.handle_message(
             socket.assigns[:game], 
             to_string(socket.assigns[:user_id]), 
-            payload)
+            payload) 
+        do
+            :ok ->
+                {:noreply, socket}
+            {:broadcast, to_client_payload} ->
+                broadcast! socket, "game:frame", %{:payload => to_client_payload}
+                {:noreply, socket}
+        end
     end
     
     # "game:end" is called when the game is over.
@@ -67,6 +73,8 @@ defmodule Whosthebest.GameChannel do
     def handle_int("game:end", %{}, socket) do
         Debug.log "GameChannel game:end " <> to_string(socket.assigns[:user_id])
         broadcast! socket, "game:end", %{}
+        
+        {:noreply, socket}
     end
     
     # **************************
@@ -91,12 +99,5 @@ defmodule Whosthebest.GameChannel do
     # terminate will not reliably be called
     def terminate(_reason, _socket) do
         
-    end
-  
-    # this is called in join(), set to be run on an interval
-    def handle_info(:ping, socket) do
-        Debug.log socket.assigns[:user_id]
-        broadcast! socket, "broadcast", %{user: socket.assigns[:user_id]}
-        {:noreply, socket}
     end
 end

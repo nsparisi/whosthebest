@@ -1,5 +1,6 @@
 ﻿import {Socket} from "deps/phoenix/web/static/js/phoenix"
 import {mainControl} from "web/static/js/game/common"
+import {GenerationEngine} from "web/static/js/game/generation"
 
 export function ServerConnection()
 {
@@ -22,9 +23,7 @@ export function ServerConnection()
         ServerTranslator.prototype.instance.toClientStartMatch(dummyPayload);
     })
     
-    channel.on("game:frame", payload => {
-        console.log("game:frame!")
-        
+    channel.on("game:frame", payload => {        
         // todo real timestamp
         var dummyTimestamp = 0;
         ServerTranslator.prototype.instance.toClientFrame(dummyTimestamp, payload.payload)
@@ -32,10 +31,6 @@ export function ServerConnection()
       
     channel.on("user_joined", payload => {
         console.log("User has joined : " + payload.user)
-    })
-
-    channel.on("broadcast", payload => {
-        console.log(payload.user)
     })
     
     this.toServerGameReady = function()

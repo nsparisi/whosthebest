@@ -22,7 +22,6 @@ defmodule Whosthebest.GameServer do
     Passes a message sent from a user to this game server.
     """
     def handle_message(server, user, message) do
-        Debug.log("GameServer  join_user " <> user <> " : " <> message)
         GenServer.call(server, {:message, user, message})
     end
     
@@ -79,7 +78,6 @@ defmodule Whosthebest.GameServer do
     end
     
     def handle_call({:message, user, message}, _from, state) do
-        Debug.log("GameServer  handle_call message " <> user <> " : " <> message)
         frame_data = to_server_frame_translation(message)
         
         {:ok, state} = enqueue_message(state, user, frame_data)
