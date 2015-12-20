@@ -17,6 +17,7 @@ defmodule Whosthebest.GameChannel do
         # and validate that they entered the right room
         case user.last_game_id == game_id do
             true ->
+                socket = assign(socket, :game_id, game_id)
                 socket = setup_game(game_id, socket)
                 send(self, {:after_join, %{user: user.name, from: user_id}})
                 {:ok, socket}
@@ -45,6 +46,7 @@ defmodule Whosthebest.GameChannel do
         Debug.log "GameChannel game:ready " <> to_string(socket.assigns[:user_id])
         game = socket.assigns[:game]
         GameServer.join_user(game, to_string(socket.assigns[:user_id]))
+        GameServer.clear_frames(game)
         
         if :ready == GameServer.get_game_state(game) do
             broadcast! socket, "game:ready", %{}
@@ -70,10 +72,11 @@ defmodule Whosthebest.GameChannel do
     
     # "game:end" is called when the game is over.
     # TODO at some point this will be determined by the server, not client
-    def handle_int("game:end", %{}, socket) do
+    def handle_in("game:end", %{}, socket) do
         Debug.log "GameChannel game:end " <> to_string(socket.assigns[:user_id])
+        GameServer.reset(socket.assigns[:game])
+        game_id = socket.assigns[:game_id]
         broadcast! socket, "game:end", %{}
-        
         {:noreply, socket}
     end
     

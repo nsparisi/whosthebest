@@ -25,8 +25,19 @@ defmodule Whosthebest.GameServer do
         GenServer.call(server, {:message, user, message})
     end
     
+    @doc """
+    Gets the current state of the game. Such as 
+    :initializing or :ready
+    """
     def get_game_state(server) do
         GenServer.call(server, :get_game_state)
+    end
+    
+    @doc """
+    Resets the game server
+    """
+    def reset(server) do
+        GenServer.call(server, :reset)
     end
     
     @doc """
@@ -34,6 +45,11 @@ defmodule Whosthebest.GameServer do
     """
     def get_state(server) do
         GenServer.call(server, :state)
+    end
+    
+    def clear_frames(server) do
+        Debug.log("GameServer  clear frames ")
+        GenServer.call(server, :clear_frames)
     end
     
     # ********************************
@@ -52,12 +68,14 @@ defmodule Whosthebest.GameServer do
     def init(:ok) do
         Debug.log("GameServer  init")
         :timer.send_interval(5000, :refresh)
-        {:ok, 
-            %{
-                :number_of_players => 2, 
-                :game_state => :initializing, 
-                :user_frames => HashDict.new
-            }
+        {:ok, new_state }
+    end
+    
+    def new_state do
+        %{
+            :number_of_players => 2, 
+            :game_state => :initializing, 
+            :user_frames => HashDict.new
         }
     end
     
@@ -96,6 +114,21 @@ defmodule Whosthebest.GameServer do
     
     def handle_call(:state, _from, state) do
         {:reply, state, state}
+    end
+    
+    def handle_call(:reset, _from, state) do
+        {:reply, nil, new_state}
+    end
+    
+    def handle_call(:clear_frames, _from, state) do
+        state = Enum.reduce(
+            HashDict.keys(state[:user_frames]), state,
+            fn(user, acc) ->  
+                user_frames = HashDict.put(acc[:user_frames], user, []) 
+                Dict.put(acc, :user_frames, user_frames)
+            end)
+        
+        {:reply, nil, state}
     end
     
     #unused right now

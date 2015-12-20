@@ -35,11 +35,11 @@ export function GraphicsEngine()
     var self = this;
     this.initialize = function()
     {
-        self.sfxVolume = 0;
+        self.sfxVolume = 0.1;
         self.audios =
             {
-                chain_intense: new SoundClip("audio/chain_intense.mp3"),
-                chain_mild: new SoundClip("audio/chain_mild.mp3")
+                chain_intense: new SoundClip("images/chain_intense.mp3" ),
+                chain_mild: new SoundClip("images/chain_mild.mp3")
             }
 
         // border (not needed)

@@ -2,6 +2,7 @@
 import {GenerationEngine} from "web/static/js/game/generation"
 import {GraphicsEngine} from "web/static/js/game/graphics"
 import {MainMenu} from "web/static/js/game/menu"
+import {ServerTranslator} from "web/static/js/game/server_translator"
 
 export function MainControl()
 {
@@ -23,6 +24,7 @@ export function MainControl()
     var self = this;
     this.initialize = function()
     {
+        ServerTranslator.prototype.instance.initialize();
         self.switchToMenu();
     }
 

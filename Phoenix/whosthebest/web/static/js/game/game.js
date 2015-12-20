@@ -1,3 +1,6 @@
+import {mainControl} from "web/static/js/game/common"
+import {ServerTranslator} from "web/static/js/game/server_translator"
+
 export function GameEngine()
 {
     GameEngine.prototype.instance = this;
@@ -131,6 +134,7 @@ export function GameEngine()
             {
                 // self.initialize();
                 mainControl.switchToMenu();
+                ServerTranslator.prototype.instance.toServerGameEnd();
             }
         }
     }

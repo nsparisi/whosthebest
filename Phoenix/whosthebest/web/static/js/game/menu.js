@@ -39,23 +39,23 @@ export function MainMenu()
             "bold 14px Arial",
             'black'
             );
-        self.menuText1.text = "1: New Game. 2: New Connection. 3: Queue. 4: Cancel.";
-        self.sprites.push(self.menuText1);
+        self.menuText1.text = "Press '1' to Ready for game!.";
+        //self.sprites.push(self.menuText1);
 
         // Debug text 1
         self.menuText2 = new Text(
-            120,
-            150,
+            160,
+            160,
             "bold 20px Arial",
             'black'
             );
-        self.menuText2.text = "Press Start 2";
+        self.menuText2.text = "Press '1' to Start.";
         self.sprites.push(self.menuText2);
 
         // Debug text 1
         self.menuText3 = new Text(
-            150,
-            200,
+            320,
+            350,
             "bold 20px Arial",
             'black'
             );
@@ -67,7 +67,7 @@ export function MainMenu()
     {
         self.listenForInput();
 
-        self.menuText3.text = "socket: " + self.getWebSocketText();
+        self.menuText3.text = "Server: " + self.getWebSocketText();
     }
 
     this.render = function()
@@ -105,29 +105,24 @@ export function MainMenu()
             self.debug5();
         }
     }
-
+    
     this.debug1 = function()
     {
-        console.log("switch to game");
-        mainControl.switchToGame();
+        console.log("[menu]queue");
+        ServerTranslator.prototype.instance.toServerQueueForMatch();
+        self.menuText2.text = "Waiting for players..."
     }
     
     this.debug2 = function()
     {
-        console.log("[menu]new connection");
-        ServerTranslator.prototype.instance.initialize();
     }
 
     this.debug3 = function()
     {
-        console.log("[menu]queue");
-        ServerTranslator.prototype.instance.toServerQueueForMatch();
     }
 
     this.debug4 = function()
     {
-        console.log("[menu]cancel");
-        ServerTranslator.prototype.instance.toServerCancelQueueForMatch();
     }
 
     self.debugcount = 1;
@@ -146,6 +141,6 @@ export function MainMenu()
             return;
         }
 
-        return ServerTranslator.prototype.instance.serverConnection.readyState;
+        return ServerTranslator.prototype.instance.serverConnection.getChannelState();
     }
 }

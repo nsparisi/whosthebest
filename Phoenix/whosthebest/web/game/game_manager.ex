@@ -24,7 +24,7 @@ defmodule Whosthebest.GameManager do
     """
     def kill_game(server, key) do
         Debug.log("GameManager  kill_game " <> key)
-        GenServer.cast(server, {:kill, key})
+        GenServer.call(server, {:kill, key})
     end
     
     # ********************************
@@ -48,7 +48,7 @@ defmodule Whosthebest.GameManager do
         {:reply, HashDict.fetch!(state, key), state}
     end
     
-    def handle_cast({:kill, key}, state) do
+    def handle_call({:kill, key}, _from, state) do
         Debug.log("GameManager  handle_cast kill " <> key)
         
         if HashDict.has_key?(state, key) do
@@ -56,7 +56,7 @@ defmodule Whosthebest.GameManager do
             Process.exit(HashDict.fetch!(state, key), :shutdown)
             state = HashDict.delete(state, key)
         end
-        {:noreply, state}
+        {:reply, nil, state}
     end
     
     # todo implement game cleanup.

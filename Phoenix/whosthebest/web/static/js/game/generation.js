@@ -25,14 +25,14 @@ export function GenerationEngine()
     this.update = function()
     {
         // figure out button state
-        this.updatePlayerInput();
+        self.updatePlayerInput();
     
         // pause
         if(self.isPaused)
         {
-            if(this.frameAdvance)
+            if(self.frameAdvance)
             {
-                this.frameAdvance = false;
+                self.frameAdvance = false;
                 self.sendFrameToServer();
             }
 

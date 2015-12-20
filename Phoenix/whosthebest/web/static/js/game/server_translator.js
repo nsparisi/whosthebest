@@ -4,54 +4,60 @@ import {GenerationEngine} from "web/static/js/game/generation"
 
 export function ServerConnection()
 {
-    // import socket object from phoenix
-    // and establish a connection
-    let socket = new Socket("/gamesocket", {params: {user_token: window.userToken}})
-    socket.connect()
+    var self = this;
+    this.channel = {};
+    this.initialize = function()
+    {
+        // import socket object from phoenix
+        // and establish a connection
+        self.socket = new Socket("/gamesocket", {params: {user_token: window.userToken}});
+        self.socket.connect();
 
-    // join a channel, this will be the game server with game id
-    let channel = socket.channel("game:" + window.lastGameId, {})
-    channel.join()
-        .receive("ok", resp => { onJoin(); })
-        .receive("error", resp => { console.log("Unable to join", resp) })
+        // join a channel, this will be the game server with game id
+        self.channel = self.socket.channel("game:" + window.lastGameId, {});
+        self.channel.join()
+            .receive("ok", resp => { onJoin(); })
+            .receive("error", resp => { console.log("Unable to join", resp) });
 
-    channel.on("game:ready", payload => {
-        console.log("game:ready!")
+        self.channel.on("game:ready", payload => {
+            console.log("game:ready!")
+            
+            // todo real random seed
+            var dummyPayload = 1234;
+            ServerTranslator.prototype.instance.toClientStartMatch(dummyPayload);
+        });
         
-        // todo real random seed
-        var dummyPayload = 1234;
-        ServerTranslator.prototype.instance.toClientStartMatch(dummyPayload);
-    })
-    
-    channel.on("game:frame", payload => {        
-        // todo real timestamp
-        var dummyTimestamp = 0;
-        ServerTranslator.prototype.instance.toClientFrame(dummyTimestamp, payload.payload)
-    })
-      
-    channel.on("user_joined", payload => {
-        console.log("User has joined : " + payload.user)
-    })
+        self.channel.on("game:frame", payload => {        
+            // todo real timestamp
+            var dummyTimestamp = 0;
+            ServerTranslator.prototype.instance.toClientFrame(dummyTimestamp, payload.payload)
+        });
+          
+        self.channel.on("user_joined", payload => {
+            console.log("User has joined : " + payload.user)
+        });
+    }
     
     this.toServerGameReady = function()
     {
-        channel.push("game:ready", {});
+        self.channel.push("game:ready", {});
     }
     
     this.toServerGameFrame = function(payload)
     {
-        channel.push("game:frame", {payload: payload});
+        self.channel.push("game:frame", {payload: payload});
     }
     
     this.toServerGameEnd = function()
     {
-        channel.push("game:end", {});
+        self.channel.push("game:end", {});
     }
     
     var self = this;
     var onJoin = function()
     {
         self.log("The connection to the server was opened.");
+        console.log(self.channel);
     }
 
     this.log = function(msg)
@@ -69,6 +75,11 @@ export function ServerConnection()
         // todo send disconnect
     }
     
+    this.getChannelState = function()
+    {
+        return self.channel.state;
+    }
+    
     this.readyState = "Good";
 }
 
@@ -82,29 +93,16 @@ export function ServerTranslator()
     this.PACKET_DELIMITER = "|";
     this.FRAME_DELIMETER = "~";
     this.PLAYERINPUT_DELIMETER = ",";
-    this.GAME_ID = "00";
-    
-    this.toClientMessageType = 
-        {
-            Debug: 0,
-            StartMatch: 1,
-            Frame: 2
-        }
-
-    this.toServerMessageType = 
-        {
-            Debug: 0,
-            Subscribe: 1,
-            Unsubscribe: 2,
-            QueueForMatch: 3,
-            CancelQueueForMatch: 4,
-            Frame: 5
-        };
 
     var self = this;
     this.initialize = function()
     {
-        self.serverConnection = new ServerConnection();
+        if(!self.serverConnection)
+        {
+            console.log("Warning initiing!");
+            self.serverConnection = new ServerConnection();
+            self.serverConnection.initialize();
+        }
     }
 
     this.toClientDebug = function(payload)
@@ -160,6 +158,11 @@ export function ServerTranslator()
         }
 
         self.serverConnection.toServerGameFrame(payload);
+    }
+    
+    this.toServerGameEnd = function()
+    {
+        self.serverConnection.toServerGameEnd();
     }
 }
 
