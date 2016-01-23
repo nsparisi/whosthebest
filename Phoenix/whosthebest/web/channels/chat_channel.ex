@@ -22,7 +22,7 @@ defmodule Whosthebest.ChatChannel do
     {:noreply, socket}
   end
   
-  def handle_info({:after_join, msg}, socket) do
+  def handle_info({:after_join, _msg}, socket) do
     broadcast! socket, "new_msg", %{body: "Welcome to the Lobby! "}
     # broadcast! socket, "user:entered", %{user: msg["user"]}
     push socket, "join", %{status: "connected"}

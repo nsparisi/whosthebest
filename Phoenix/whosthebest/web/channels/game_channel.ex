@@ -75,7 +75,6 @@ defmodule Whosthebest.GameChannel do
     def handle_in("game:end", %{}, socket) do
         Debug.log "GameChannel game:end " <> to_string(socket.assigns[:user_id])
         GameServer.reset(socket.assigns[:game])
-        game_id = socket.assigns[:game_id]
         broadcast! socket, "game:end", %{}
         {:noreply, socket}
     end

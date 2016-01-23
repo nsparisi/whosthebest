@@ -28,12 +28,12 @@ defmodule Whosthebest.GameSocket do
             # add relevant info to the socket
             socket = assign(socket, :user_id, verified_user_id)            
             {:ok, socket}
-        {:error, reason} ->
+        {:error, _reason} ->
             :error
     end
   end
   
-  def connect(_params, socket) do
+  def connect(_params, _socket) do
     :error
   end
 
