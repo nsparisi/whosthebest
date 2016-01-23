@@ -4,7 +4,7 @@ defmodule Whosthebest.GameManager do
     alias Whosthebest.Debug
         
     @doc """
-    Starts a new instance of a game server.
+    Starts a new instance of a game manager.
     """
     def start_link(opts \\ []) do
         Debug.log("GameManager  start_link")
@@ -12,7 +12,7 @@ defmodule Whosthebest.GameManager do
     end
     
     @doc """
-    Gets or creates a game base on the provided key.
+    Gets or creates a game instance base on the provided key.
     """
     def get_or_create_game(server, key) do
         Debug.log("GameManager get_or_create_game " <> key)
@@ -30,31 +30,30 @@ defmodule Whosthebest.GameManager do
     # ********************************
     # Server callbacks
     # ********************************
-    
     def init(:ok) do
         Debug.log("GameManager  init")
-        {:ok, HashDict.new}
+        {:ok, Map.new}
     end
     
     def handle_call({:get, key}, _from, state) do
         Debug.log("GameManager  handle_call get " <> key)
         
-        if !HashDict.has_key?(state, key) do
+        if !Map.has_key?(state, key) do
             Debug.log("GameManager  starting new game")
             {:ok, game} = GameServer.start()
-            state = HashDict.put(state, key, game)
+            state = Map.put(state, key, game)
         end
         
-        {:reply, HashDict.fetch!(state, key), state}
+        {:reply, Map.fetch!(state, key), state}
     end
     
     def handle_call({:kill, key}, _from, state) do
         Debug.log("GameManager  handle_cast kill " <> key)
         
-        if HashDict.has_key?(state, key) do
+        if Map.has_key?(state, key) do
             Debug.log("GameManager  deleting game")
-            Process.exit(HashDict.fetch!(state, key), :shutdown)
-            state = HashDict.delete(state, key)
+            Process.exit(Map.fetch!(state, key), :shutdown)
+            state = Map.delete(state, key)
         end
         {:reply, nil, state}
     end

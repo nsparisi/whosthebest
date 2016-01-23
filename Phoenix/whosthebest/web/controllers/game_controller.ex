@@ -31,11 +31,11 @@ defmodule Whosthebest.GameController do
         %{"messenger" => messenger} = params
         
         # alternatively, can call helper method
-        # Dict.get/2 to retrieve a value from a Dict
-        messenger = Dict.get(params, "messenger") 
+        # Map.get/2 to retrieve a value from a Map
+        messenger = Map.get(params, "messenger") 
         
         # params can have many kvps
-        secret = Dict.get(params, "secret") 
+        secret = Map.get(params, "secret") 
         
         # return whatever render is supposed to do
         render conn, "show.html", messenger: messenger

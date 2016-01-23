@@ -47,6 +47,9 @@ defmodule Whosthebest.GameServer do
         GenServer.call(server, :state)
     end
     
+    @doc """
+    Clears the message buffers for every user in the game.
+    """
     def clear_frames(server) do
         Debug.log("GameServer  clear frames ")
         GenServer.call(server, :clear_frames)
@@ -55,10 +58,10 @@ defmodule Whosthebest.GameServer do
     # ********************************
     # Server callbacks
     # ********************************
-    # the state of this server will be a Dict with the following values:
+    # the state of this server will be a Map with the following values:
     # :number_of_players = 2
     # :game_state = :initializing/:ready
-    # :user_frames = HashDict mapping user ids to a queue of frames
+    # :user_frames = Map mapping user ids to a queue of frames
     # A frame will contain any metadata about a particular frame received 
     # from the user, including the message payload.
     # User1 -> frame4   User2 -> frame4
@@ -75,21 +78,21 @@ defmodule Whosthebest.GameServer do
         %{
             :number_of_players => 2, 
             :game_state => :initializing, 
-            :user_frames => HashDict.new
+            :user_frames => Map.new
         }
     end
     
     def handle_cast({:join, user}, state) do
         Debug.log("GameServer  handle_cast join " <> user)
-        user_frames = state[:user_frames]
-        if !HashDict.has_key?(user_frames, user) do
+        if !Map.has_key?(state[:user_frames], user) do
+        
             # add the user to the game
-            user_frames = HashDict.put(user_frames, user, [])
-            state = Dict.put(state, :user_frames, user_frames)
+            user_frames = Map.put(state[:user_frames], user, [])
+            state = Map.put(state, :user_frames, user_frames)
             
             # if all of the user have joined, mark as ready
-            if state[:number_of_players] == length(HashDict.keys(user_frames)) do
-                state = Dict.put(state, :game_state, :ready)
+            if state[:number_of_players] == length(Map.keys(user_frames)) do
+                state = Map.put(state, :game_state, :ready)
             end
         end
         {:noreply, state}
@@ -97,9 +100,7 @@ defmodule Whosthebest.GameServer do
     
     def handle_call({:message, user, message}, _from, state) do
         frame_data = to_server_frame_translation(message)
-        
         {:ok, state} = enqueue_message(state, user, frame_data)
-        
         case process_queues(state) do
             {:ok, current_state} ->
                 {:reply, :ok, current_state}
@@ -122,10 +123,13 @@ defmodule Whosthebest.GameServer do
     
     def handle_call(:clear_frames, _from, state) do
         state = Enum.reduce(
-            HashDict.keys(state[:user_frames]), state,
-            fn(user, acc) ->  
-                user_frames = HashDict.put(acc[:user_frames], user, []) 
-                Dict.put(acc, :user_frames, user_frames)
+            Map.keys(state[:user_frames]), state,
+            fn(user, acc) ->
+                # for every user key, set the value to an empty list  
+                user_frames = Map.put(acc[:user_frames], user, []) 
+                
+                # return an updated acc
+                Map.put(acc, :user_frames, user_frames)
             end)
         
         {:reply, nil, state}
@@ -136,77 +140,24 @@ defmodule Whosthebest.GameServer do
         {:noreply, state}
     end
     
-    
-    # from client:
-    # <id>|<timestamp>|<type>|<payload>|<eom>
-    # payload = <frame>~,<input>,<input>
-    
-    # this.toServerMessageType = 
-    #    {
-    #        Debug: 0,
-    #        Subscribe: 1,
-    #        Unsubscribe: 2,
-    #        QueueForMatch: 3,
-    #        CancelQueueForMatch: 4,
-    #        Frame: 5
-    #    };
-    
+    # Payload structure is as follows.
+    #
     # from server:
     # <id>|<timestamp>|<type>|<payload>|<eom>
     # when type = StartMatch, payload = random seed
     # when type = Frame, payload = 
     #   frame~,player,1,inputs~player,2,inputs
+    #
+    # from client:
+    # <id>|<timestamp>|<type>|<payload>|<eom>
+    # payload = <frame>~,<input>,<input>
     
-    # this.toClientMessageType = 
-    #    {
-    #        Debug: 0,
-    #        StartMatch: 1,
-    #        Frame: 2
-    #    }
-    
-    # payload is in format
-    # <frame>~,<input1>,<input2>
     @packet_delimiter "|"
     @frame_delimiter "~"
     @input_delimiter ","
     def to_server_frame_translation(payload) do
         split = String.split(payload, @frame_delimiter)        
         %{frame: List.first(split), inputs: List.last(split)}
-    end
-    
-    def enqueue_message(state, user, message) do
-        user_frames = state[:user_frames]
-        new_queue = HashDict.fetch!(user_frames, user) ++ [message]
-        user_frames = HashDict.put(user_frames, user, new_queue)
-        state = Dict.put(state, :user_frames, user_frames)
-        {:ok, state}
-    end
-    
-    def dequeue_message(state, user) do
-        user_frames = state[:user_frames]
-        [frame | new_queue] = HashDict.fetch!(user_frames, user)
-        user_frames = HashDict.put(user_frames, user, new_queue)
-        state = Dict.put(state, :user_frames, user_frames)
-        {:ok, frame, state}
-    end
-    
-    def peek_message(state, user) do
-        List.first(HashDict.fetch!(state[:user_frames], user))
-    end
-    
-    def dequeue_and_form_payload(state) do
-        # dequeue once for each user, and formulate a broadcast payload.
-        # TODO someday have an ordering here, sort is bad.
-        all_users = Enum.sort(HashDict.keys(state[:user_frames]))
-        peek_frame = peek_message(state, List.first(all_users))[:frame]
-        %{:payload => payload, :state => state} = 
-            Enum.reduce(all_users, %{payload: peek_frame, state: state}, 
-                fn(user, acc) -> 
-                    {:ok, message, current_state} = dequeue_message(acc[:state], user)
-                    current_payload = acc[:payload] <> @frame_delimiter <> message[:inputs]
-                    %{state: current_state, payload: current_payload}
-                end)
-        {:ok, payload, state}
     end
     
     def process_queues(state) do
@@ -220,19 +171,49 @@ defmodule Whosthebest.GameServer do
     
     def queues_ready?(state) do
         # for each user: check if the queue length is not-empty
-        user_frames = state[:user_frames]
-        Enum.reduce(HashDict.keys(user_frames), true, 
-            fn(user, acc) -> 
-                queue = HashDict.fetch!(user_frames, user)
+        Enum.reduce(Map.values(state[:user_frames]), true, 
+            fn(queue, acc) -> 
                 length(queue) > 0 && acc 
             end)
+    end
+    def dequeue_and_form_payload(state) do
+        # dequeue once for each user, and formulate a broadcast payload.
+        # TODO someday have an ordering here, sort is bad.
+        all_users = Enum.sort(Map.keys(state[:user_frames]))
+        peek_frame = peek_message(state, List.first(all_users))[:frame]
+        %{:payload => payload, :state => state} = 
+            Enum.reduce(all_users, %{payload: peek_frame, state: state}, 
+                fn(user, acc) -> 
+                    {:ok, message, current_state} = dequeue_message(acc[:state], user)
+                    current_payload = acc[:payload] <> @frame_delimiter <> message[:inputs]
+                    %{state: current_state, payload: current_payload}
+                end)
+        {:ok, payload, state}
+    end
+    
+    def enqueue_message(state, user, message) do
+        new_queue = Map.fetch!(state[:user_frames], user) ++ [message]
+        user_frames = Map.put(state[:user_frames], user, new_queue)
+        state = Map.put(state, :user_frames, user_frames)
+        {:ok, state}
+    end
+    
+    def dequeue_message(state, user) do
+        [frame | new_queue] = Map.fetch!(state[:user_frames], user)
+        user_frames = Map.put(state[:user_frames], user, new_queue)
+        state = Map.put(state, :user_frames, user_frames)
+        {:ok, frame, state}
+    end
+    
+    def peek_message(state, user) do
+        List.first(Map.fetch!(state[:user_frames], user))
     end
     
     def to_pretty_string(state) do
         user_frames = state[:user_frames]
-        Enum.reduce(HashDict.keys(user_frames), "",
+        Enum.reduce(Map.keys(user_frames), "",
             fn(user, acc) -> 
-                queue = HashDict.fetch!(user_frames, user)
+                queue = Map.fetch!(user_frames, user)
                 queue_string = Enum.reduce(queue, "", 
                     fn(item, acc) -> 
                         acc <> "{frame:" <> item[:frame] <> " inputs:" <> item[:inputs] <> "}"
