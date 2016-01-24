@@ -13,16 +13,14 @@
   </li>
 
   <li>
-    <strong>Password:</strong>
-    <%= @user.password %>
-  </li>
-
-  <li>
     <strong>Last game:</strong>
     <%= @user.last_game_id %>
   </li>
 
 </ul>
 
-<%= link "Edit", to: user_path(@conn, :edit, @user) %>
-<%= link "Back", to: user_path(@conn, :index) %>
+<%= if @current_user[:id] == @user.id do %>
+    <%= link "Edit", to: user_path(@conn, :edit, @user) %>
+<%= else %>
+    <%= link "Back", to: user_path(@conn, :index) %>
+<%= end %>

@@ -12,21 +12,34 @@
     </head>
 
     <body>
-        <script src="<%= static_path(@conn, "/js/app.js") %>"></script>
-        <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
         <div class="container" role="main">
             <div class="header">
                 <ul class="nav nav-pills pull-right">
                     <li><a href="http://www.phoenixframework.org/docs">Get Started</a></li>
                 </ul>
                 <span class="logo"></span>
+                <nav>
+                <ul>
+                    <li><a href="<%= page_path @conn, :index %>">Home</a></li>
+                    <li><a href="<%= user_path @conn, :index %>">Users</a></li>
+                    <li><a href="<%= admin_path @conn, :index %>">Admin</a></li>
+                    <%= if @current_user do %>
+                        <li><a href="<%= user_path(@conn, :show, @current_user[:id]) %>"><%= "Profile" %></a></li>
+                        <li><a href="<%= logout_path @conn, :logout %>">Logout</a></li>
+                    <%= else %>
+                        <li><a href="<%= login_path @conn, :login %>">Login</a></li>
+                    <%= end %>
+                </ul>
+                </nav>
             </div>
 
             <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
             <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
 
             <%= render @view_module, @view_template, assigns %>
+        </div>
 
-        </div> <!-- /container -->
+        <script src="<%= static_path(@conn, "/js/app.js") %>"></script>
+        <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
     </body>
 </html>

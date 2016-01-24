@@ -18,7 +18,7 @@ defmodule Whosthebest.Mixfile do
   # Type `mix help compile.app` for more information.
   def application do
     [mod: {Whosthebest, []},
-     applications: [:phoenix, :phoenix_html, :cowboy, :logger,
+     applications: [:phoenix, :phoenix_html, :cowboy, :logger, :gettext,
                     :phoenix_ecto, :postgrex, :openmaize]]
   end
 
@@ -30,12 +30,13 @@ defmodule Whosthebest.Mixfile do
   #
   # Type `mix help deps` for examples and options.
   defp deps do
-    [{:phoenix, "~> 1.1.3"},
+    [{:phoenix, "~> 1.1.2"},
      {:phoenix_ecto, "~> 2.0"},
      {:postgrex, ">= 0.0.0"},
      {:phoenix_html, "~> 2.3"},
      {:phoenix_live_reload, "~> 1.0", only: :dev},
      {:cowboy, "~> 1.0"},
+     {:gettext, "~> 0.9"},
      {:openmaize, "~> 0.12"}]
   end
 

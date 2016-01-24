@@ -7,7 +7,7 @@ defmodule Whosthebest.Router do
     plug :fetch_flash
     plug :protect_from_forgery
     plug :put_secure_browser_headers
-    plug :put_user_token
+    plug Openmaize.Authenticate
   end
 
   pipeline :api do
@@ -28,16 +28,24 @@ defmodule Whosthebest.Router do
     pipe_through :browser # Use the default browser stack
 
     get "/", PageController, :index
+    get "/login", PageController, :login, as: :login
+    post "/login", PageController, :login_user, as: :login
+    get "/logout", PageController, :logout, as: :logout
+    
     get "/lobby", LobbyController, :index
     get "/game", GameController, :index
-    
-    get "/users/login/:username", UserController, :login
-    get "/users/logout", UserController, :logout
-    resources "/users", UserController
   end
-
-  # Other scopes may use custom stacks.
-  # scope "/api", Whosthebest do
-  #   pipe_through :api
-  # end
+  
+  scope "/users", Whosthebest do
+    pipe_through :browser
+    
+    resources "/", UserController, only: [:index, :show, :edit, :update]
+  end
+  
+  scope "/admin", Whosthebest do
+    pipe_through :browser
+    
+    get "/", AdminController, :index
+    resources "/", AdminController, only: [:new, :create, :delete]
+  end
 end

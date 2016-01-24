@@ -1,7 +1,8 @@
+<h2>New user</h2>
 
-<%= form_for @changeset, @action, fn f -> %>
-  <%= if @changeset.action do %>
-    <div class="alert alert-danger">
+<%= form_for @conn, admin_path(@conn, :create), [as: :user], fn f -> %>
+  <%= if f.errors != [] do %>
+    <div class="alert alert-error">
       <p>Oops, something went wrong! Please check the errors below:</p>
       <ul>
         <%= for {attr, message} <- f.errors do %>
@@ -11,9 +12,6 @@
     </div>
   <% end %>
 
-  <h3><%= @current_user[:name] %></h3>
-
-<!--
   <div class="form-group">
     <%= label f, :name, "Name", class: "control-label" %>
     <%= text_input f, :name, class: "form-control" %>
@@ -26,16 +24,22 @@
 
   <div class="form-group">
     <%= label f, :password, "Password", class: "control-label" %>
-    <%= text_input f, :password, class: "form-control" %>
+    <%= password_input f, :password, class: "form-control" %>
   </div>
 
+  <div class="form-group">
+    <%= label f, :role, "Role", class: "control-label" %>
+    <%= text_input f, :role, class: "form-control" %>
+  </div>
+  
   <div class="form-group">
     <%= label f, :last_game_id, "Last game", class: "control-label" %>
     <%= text_input f, :last_game_id, class: "form-control" %>
   </div>
-  -->
-  
+
   <div class="form-group">
-    <%= submit "Submit", class: "btn btn-primary" %>
+    <%= submit "Submit", class: "btn" %>
   </div>
 <% end %>
+
+<%= link "Back", to: admin_path(@conn, :index) %>
