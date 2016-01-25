@@ -4,7 +4,7 @@ defmodule Whosthebest.User do
   alias Openmaize.Signup
 
   schema "users" do
-    field :name, :string
+    field :username, :string
     field :email, :string
     field :last_game_id, :string
     
@@ -16,8 +16,8 @@ defmodule Whosthebest.User do
     timestamps
   end
 
-  @required_fields ~w(name email role password)
-  @optional_fields ~w(last_game_id password_hash)
+  @required_fields ~w(username role password)
+  @optional_fields ~w(last_game_id password_hash email)
 
   @doc """
   Creates a changeset based on the `model` and `params`.
@@ -26,20 +26,23 @@ defmodule Whosthebest.User do
   with no validation performed.
   """
   def changeset(model, params \\ :empty) do
+    if(is_map(params) and !Map.has_key?(params, :role)) do
+        params = Map.put(params, "role", "user")
+    end
+  
     model
     |> cast(params, @required_fields, @optional_fields)
-    |> validate_length(:name, min: 3)
-    |> validate_length(:name, max: 20)
-    |> validate_length(:password, min: 8)
+    |> validate_length(:username, min: 3)
+    |> validate_length(:username, max: 20)
+    |> validate_length(:password, min: 6)
     |> validate_length(:password, max: 80)
-    |> validate_format(:email, ~r/@/)
-    |> unique_constraint(:email)
-    |> unique_constraint(:name)
+    |> validate_confirmation(:password, message: "passwords do not match")
+    |> unique_constraint(:username)
   end
   
   def auth_changeset(model, params) do
     model
     |> changeset(params)
-    |> Signup.create_user(params)
+    |> Signup.create_user(params, [min_length: 6, max_length: 80])
   end
 end

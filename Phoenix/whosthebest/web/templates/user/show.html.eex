@@ -3,18 +3,16 @@
 <ul>
 
   <li>
-    <strong>Name:</strong>
-    <%= @user.name %>
+    <strong>Username:</strong>
+    <%= @user.username %>
   </li>
-
   <li>
-    <strong>Email:</strong>
-    <%= @user.email %>
+    <strong>Stats:</strong>
+    <%= "Completely awesome!"%>
   </li>
-
   <li>
-    <strong>Last game:</strong>
-    <%= @user.last_game_id %>
+    <strong>Weaknesses:</strong>
+    <%= "none"%>
   </li>
 
 </ul>

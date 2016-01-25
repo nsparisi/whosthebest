@@ -23,6 +23,7 @@ defmodule Whosthebest.Web do
       import Ecto
       import Ecto.Changeset
       import Ecto.Query, only: [from: 1, from: 2]
+      alias Whosthebest.Debug
     end
   end
 
@@ -36,6 +37,8 @@ defmodule Whosthebest.Web do
       import Ecto.Query, only: [from: 1, from: 2]
 
       import Whosthebest.Router.Helpers
+      import Whosthebest.Gettext
+      alias Whosthebest.Debug
     end
   end
 
@@ -50,6 +53,9 @@ defmodule Whosthebest.Web do
       use Phoenix.HTML
 
       import Whosthebest.Router.Helpers
+      import Whosthebest.ErrorHelpers
+      import Whosthebest.Gettext
+      alias Whosthebest.Debug
     end
   end
 
@@ -67,6 +73,8 @@ defmodule Whosthebest.Web do
       import Ecto
       import Ecto.Model
       import Ecto.Query, only: [from: 1, from: 2]
+      import Whosthebest.Gettext
+      alias Whosthebest.Debug
     end
   end
 

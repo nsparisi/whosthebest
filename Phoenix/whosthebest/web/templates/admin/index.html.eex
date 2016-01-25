@@ -1,4 +1,4 @@
-<h2>Hi, <%= @admin.name %>, how's it hanging?</h2>
+<h2>Hi, <%= @admin.username %>, how's it hanging?</h2>
 
 <h2>Listing users</h2>
 
@@ -13,7 +13,7 @@
 <tbody>
     <%= for user <- @users do %>
         <tr>
-            <td><%= user.name %></td>
+            <td><%= user.username %></td>
             <td><%= user.role %></td>
             <td class="text-right">
                 <%= link "Delete", to: admin_path(@conn, :delete, user), method: :delete, class: "btn btn-danger" %>
@@ -22,5 +22,3 @@
     <% end %>
 </tbody>
 </table>
-
-<%= link "New user", to: admin_path(@conn, :new) %>

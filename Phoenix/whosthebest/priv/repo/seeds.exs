@@ -12,19 +12,19 @@
 
 users = [
   %{
-    name: "nick",
+    username: "nick",
     email: "nick@mail.com",
     password_hash: Comeonin.Bcrypt.hashpwsalt("test"),
     role: "user",
   },
   %{
-    name: "nat",
-    email: "dick@mail.com",
+    username: "nat",
+    email: "nat@mail.com",
     password_hash: Comeonin.Bcrypt.hashpwsalt("test"),
     role: "user",
   },
   %{
-    name: "admin",
+    username: "admin",
     email: "admin@mail.com",
     password_hash: Comeonin.Bcrypt.hashpwsalt("test"),
     role: "admin",

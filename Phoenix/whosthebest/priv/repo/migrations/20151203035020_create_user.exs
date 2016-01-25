@@ -3,7 +3,7 @@ defmodule Whosthebest.Repo.Migrations.CreateUser do
 
   def change do
     create table(:users) do
-      add :name, :string
+      add :username, :string
       add :email, :string
       add :last_game_id, :string
       add :role, :string

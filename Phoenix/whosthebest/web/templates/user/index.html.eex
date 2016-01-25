@@ -1,1 +1,3 @@
-<h2>Hi, <%= user_name @current_user %>, how's it hanging?</h2>
+<h2>Welcome to Whosthebest, <%= @user.username %>!</h2>
+<a href="<%= user_path(@conn, :show, @user.username) %>"><%= "View Profile" %></a>
+<a href="<%= logout_path(@conn, :logout) %>"><%= "Logout" %></a>
