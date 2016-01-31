@@ -19,7 +19,7 @@ defmodule Whosthebest.GameChannel do
             true ->
                 socket = assign(socket, :game_id, game_id)
                 socket = setup_game(game_id, socket)
-                send(self, {:after_join, %{user: user.name, from: user_id}})
+                send(self, {:after_join, %{user: user.username, from: user_id}})
                 {:ok, socket}
             false ->
                 {:error, %{reason: "unauthorized"}}

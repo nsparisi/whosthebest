@@ -6,6 +6,13 @@ defmodule Whosthebest.Debug do
     def log(message) do         
         do_log message
     end
+    @doc """
+    Logs a message with an inspected object.
+    very common to debug the contents of an object.
+    """
+    def log(message, object) do         
+        do_log "#{message} #{inspect object}"
+    end
     
     defp do_log(message) do
         IO.puts "[**debug**] #{inspect message}"

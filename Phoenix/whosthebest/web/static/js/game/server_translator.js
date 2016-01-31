@@ -1,4 +1,4 @@
-﻿import {Socket} from "deps/phoenix/web/static/js/phoenix"
+﻿import {Socket} from "phoenix"
 import {mainControl} from "web/static/js/game/common"
 import {GenerationEngine} from "web/static/js/game/generation"
 

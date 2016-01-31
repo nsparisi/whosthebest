@@ -3,25 +3,31 @@ defmodule Whosthebest.GameController do
     
     def index(conn, _params) do
         # get the logged in username from the browsing session
-        username = get_session(conn, :username)        
+        user = conn.assigns[:current_user]
         
         # if they are not logged in, redirect
-        if !username do
+        if !user do
             conn
-                |> put_flash(:error, "Please login via /users/login/<username>.")
+                |> put_flash(:error, "Must be logged in to play.")
                 |> redirect(to: page_path(conn, :index))
         end
         
-        # get the user from the DB
-        user = Repo.get_by(Whosthebest.User, name: username) 
+        # get the full user from the DB
+        user = Repo.get(Whosthebest.User, user.id)
+        
+        # if they are not logged in, redirect
+        if !user.last_game_id do
+            conn
+                |> put_flash(:error, "Need to be matched to play.")
+                |> redirect(to: page_path(conn, :index))
+        end
         
         # generate a token based on the user unique id
         token = Phoenix.Token.sign(conn, "user_id", user.id)
         conn = assign(conn, :user_token, token)
         
         # get the user's game_id, so they can join the correct game room
-        last_game_id = user.last_game_id
-        render conn, "index.html", last_game_id: last_game_id
+        render conn, "index.html", last_game_id: user.last_game_id
     end
     
     def show(conn, %{"messenger" => messenger} = params) do

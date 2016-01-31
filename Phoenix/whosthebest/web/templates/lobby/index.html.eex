@@ -5,4 +5,4 @@
 <div id="messages"></div>
 <input id="chat-input" type="text"></input>
 
-<script> require("web/static/js/chat_socket")</script>
+<script> require("chat_socket")</script>

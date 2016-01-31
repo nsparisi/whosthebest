@@ -9,6 +9,8 @@
 
         <title>Hello Phoenix!</title>
         <link rel="stylesheet" href="<%= static_path(@conn, "/css/app.css") %>">
+        <script src="<%= static_path(@conn, "/js/app.js") %>"></script>
+        <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
     </head>
 
     <body>
@@ -24,8 +26,9 @@
                     <li><a href="<%= user_path @conn, :index %>">Users</a></li>
                     <li><a href="<%= admin_path @conn, :index %>">Admin</a></li>
                     <%= if @current_user do %>
-                        <li><a href="<%= user_path(@conn, :show, @current_user[:id]) %>"><%= "Profile" %></a></li>
+                        <li><a href="<%= user_path(@conn, :show, @current_user[:username]) %>"><%= "Profile" %></a></li>
                         <li><a href="<%= logout_path @conn, :logout %>">Logout</a></li>
+                        <li><a href="<%= game_path @conn, :index %>">Play!</a></li>
                     <%= else %>
                         <li><a href="<%= login_path @conn, :login %>">Login</a></li>
                     <%= end %>
@@ -38,8 +41,5 @@
 
             <%= render @view_module, @view_template, assigns %>
         </div>
-
-        <script src="<%= static_path(@conn, "/js/app.js") %>"></script>
-        <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
     </body>
 </html>
