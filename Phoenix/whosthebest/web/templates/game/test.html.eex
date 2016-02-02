@@ -1,0 +1,9 @@
+<div class="jumbotron">
+    <h2>Test Game!</h2>
+</div>
+
+<!-- Game canvas will be rendered here -->
+<div id="game" ></div>
+
+<!-- Import the game --> 
+<script>require("web/static/js/test/test_game")</script>

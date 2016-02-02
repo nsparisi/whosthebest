@@ -30,6 +30,7 @@ defmodule Whosthebest.Router do
 
         # /game will be the one and only game page
         get "/game", GameController, :index
+        get "/test", GameController, :test
     end
   
     scope "/users", Whosthebest do

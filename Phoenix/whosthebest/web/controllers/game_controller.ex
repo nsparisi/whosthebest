@@ -30,6 +30,10 @@ defmodule Whosthebest.GameController do
         render conn, "index.html", last_game_id: user.last_game_id
     end
     
+    def test(conn, _params) do
+        render conn, "test.html"
+    end
+    
     def show(conn, %{"messenger" => messenger} = params) do
     
         # pattern matching that assigns the key 
