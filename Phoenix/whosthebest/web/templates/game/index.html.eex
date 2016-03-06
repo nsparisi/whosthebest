@@ -14,7 +14,7 @@
 <script> require("web/static/js/game_socket")</script>
 
 <!-- Import the game client logic -->
-<script> require("web/static/js/game/common")</script>
+<!--<script> require("web/static/js/game/common")</script>
 <script> require("web/static/js/game/seedrandom")</script>
 <script> require("web/static/js/game/server_translator")</script>
 <script> require("web/static/js/game/input")</script>
@@ -23,4 +23,8 @@
 <script> require("web/static/js/game/graphics")</script>
 <script> require("web/static/js/game/game")</script>
 <script> require("web/static/js/game/main_control")</script>
-<script> require("web/static/js/game/main")</script>
+<script> require("web/static/js/game/main")</script>-->
+
+
+<!-- Import the game --> 
+<script src='<%= static_path(@conn, "/js/game.js") %>'></script>

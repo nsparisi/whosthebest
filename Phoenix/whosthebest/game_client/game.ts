@@ -1,0 +1,1268 @@
+/// <reference path="references.ts" />
+Debug.log("game.ts");
+
+/**
+* GameEngine Object
+* This is a singleton class that handles the game state.
+* update is called to advance the game state by one frame.
+*/
+class GameEngine
+{
+    // singleton implementation
+    static Instance = new GameEngine();
+    constructor()
+    {
+        if(GameEngine.Instance)
+        {
+            throw new Error("An instance of GameEngine already exists.");
+        }
+        
+        GameEngine.Instance = this;
+    }
+    
+    //tile reference:
+    // 0 = empty
+    // 1 = metal
+    // 2 = enemy metal
+    // 3-10 basic types
+    // 10+ = enemy dropped blocks
+    basicTileTypeCount = 5; // normal 5, hard 6
+    basicTileTypeStartIndex = 3;
+    attackBlockTypeStartIndex = 10;
+
+    rowCount = 20;
+    colCount = 6;
+    rowCountInBounds = 12;
+    attackBlockAllowedHeight = 11;
+
+    // Packet information
+    gameId = 0;
+    packetDelimiter = "|";
+    inputDelimiter = ",";
+    inputTypes =
+    {
+        None: 0,
+        Up: 1,
+        Down: 2,
+        Left: 3,
+        Right: 4,
+        Swap: 5,
+        Elevate: 6, // if this exceeds 9, might be an issue with string.indexOf
+    }
+
+    gameStateTypes =
+    {
+        Starting: 0,
+        Playing: 1,
+        Ended: 2,
+    }
+    currentGameState = this.gameStateTypes.Starting;
+
+    // board references
+    boards: Board[] = [];
+    numberOfPlayers = 2;
+
+    // need to start keeping global timing values here
+    attackBlockDelay = 24 // about 70ish frames in 60fps
+    
+    // attack information
+    // e.g. an 8-combo will attack with a 3-size and a 4-size block
+    comboAttackPatterns = [[0], [0], [0], [0], [3], [4], [5], [6], [3, 4], [4, 4], [5, 5], [6, 6]];
+    attackBlockQueue: AttackBlockData[] = [];
+    
+    initialize = (randomSeed) =>
+    {
+        this.boards = [];
+        this.currentGameState = this.gameStateTypes.Starting;
+
+        // board to initialize 
+        if(!randomSeed)
+        {
+            Debug.log("[game]WARNING: no seed specified");
+            randomSeed = Math.random();
+        }
+
+        for(var i = 0; i < this.numberOfPlayers; i++)
+        {
+            var rng = new RandomNumberGenerator(randomSeed);
+            this.boards.push(new Board(rng, i, GameEngine.Instance.attackBlockTypeStartIndex));
+        }
+
+        this.boards.forEach(
+            (board) =>
+            {
+                board.initialize();
+            });
+    }
+    
+    // updates the engine by one frame
+    update = (inputs) =>
+    {
+        if(this.currentGameState == this.gameStateTypes.Starting)
+        {
+            // start immediately, todo wait 3 seconds
+            Debug.log("Starting new game!");
+            this.currentGameState = this.gameStateTypes.Playing;
+        }
+
+        else if(this.currentGameState == this.gameStateTypes.Playing)
+        {
+            // if any attacks are queued, send them out before processing next frame
+            this.sendAllAttacks();
+
+            // update each board, using it's specified inputs
+            var numberOfPlayersAlive = this.boards.length;
+            for(var i = 0; i < this.boards.length; i++)
+            {
+                if(!this.boards[i].isGameOver)
+                {
+                    this.boards[i].update(inputs[i]);
+                }
+                else
+                {
+                    numberOfPlayersAlive--;
+                }
+            }
+
+            // the game has ended, this player has won
+            if(numberOfPlayersAlive == 1)
+            {
+                for(var i = 0; i < this.boards.length; i++)
+                {
+                    if(!this.boards[i].isGameOver)
+                    {
+                        this.gameHasEnded(i);
+                    }
+                }
+            }
+
+            // the game has ended in a tie
+            else if(numberOfPlayersAlive == 0)
+            {
+                this.gameHasEnded(-1);
+            }
+        }
+
+        else if(this.currentGameState == this.gameStateTypes.Ended)
+        {
+            // wait for "play again" option
+            if(this.pressedRestartButton(inputs[0]))
+            {
+                // this.initialize();
+                MainControl.Instance.switchToMenu();
+                ServerTranslator.Instance.toServerGameEnd();
+            }
+        }
+    }
+
+    gameHasEnded = (winnerIndex) =>
+    {
+        if(winnerIndex >= 0)
+        {
+            Debug.log("Congratulations player " + winnerIndex);
+        }
+        else if(winnerIndex == -1)
+        {
+            Debug.log("You both lose!");
+        }
+
+        this.currentGameState = this.gameStateTypes.Ended;
+    }
+
+    pressedRestartButton = (inputs) =>
+    {
+        return inputs && inputs.indexOf(GameEngine.Instance.inputTypes.Swap) != -1;
+    }
+
+    attackOtherPlayer = (fromBoardIndex: number, attackBlock: AttackBlock) =>
+    {
+        // todo make round robin
+        var targetBoardIndex = (fromBoardIndex + 1) % GameEngine.Instance.numberOfPlayers;
+        var attackData : AttackBlockData = 
+        {
+            fromBoadIndex: fromBoardIndex, 
+            attackBlock:attackBlock, 
+            targetBoardIndex:targetBoardIndex
+        };
+        this.attackBlockQueue.push(attackData);
+    }
+
+    sendAllAttacks = () =>
+    {
+        for(var i = 0; i < this.attackBlockQueue.length; i++)
+        {
+            var attackData = this.attackBlockQueue[i];
+            GameEngine.Instance.boards[attackData.targetBoardIndex].wasAttackedByOtherPlayer(attackData.attackBlock);
+        }
+        this.attackBlockQueue = [];
+    }
+}
+
+// ************************************************
+// AttackBlockData object.
+// Representsinfo about the type of attack that was made to a player
+// ************************************************
+interface AttackBlockData
+{
+    fromBoadIndex: number;
+    attackBlock: AttackBlock;
+    targetBoardIndex: number;
+}
+
+/*
+BoardSpace object.
+Represents a static coordinate on the board.
+Keeps track of a contained tile.
+*/
+class BoardSpace
+{
+    contents = [];
+    
+    addTile = (tile) =>
+    {
+        if(tile != null && this.contents.indexOf(tile) == -1)
+        {
+            this.contents.push(tile);
+        }
+    }
+    
+    removeTile = (tile) =>
+    {
+        var index = this.contents.indexOf(tile);
+        if(index != -1)
+        {
+            this.contents.splice(index, 1);
+        }
+    }
+    
+    clear = () =>
+    {
+        this.contents = [];
+    }
+
+    getTile = () =>
+    {
+        return this.contents.length > 0 ? this.contents[0] : null;
+    }
+}
+
+/*
+Board object.
+A player's board. Contains all board-related operations.
+*/
+class Board 
+{
+    constructor(
+        public randomNumberGenerator: RandomNumberGenerator, 
+        public playerIndex: number, 
+        public attackBlockType: number)
+    {
+        
+    }
+    
+    cursor =
+    {
+        x: 1,
+        y: 1
+    }
+
+    tiles = [];
+    boardSpaces = [];
+    lastRowOfTileTypes = [];
+    attackBlocksInWait = [];
+    allAttackBlocksCombodThisFrame = [];
+    
+    lastTileId = 0;
+
+    yOffset = 0; 
+    yOffsetMax = 16;
+    yOffsetFrameCount = 20; //todo frames
+    yOffsetFrameReset = 20;
+
+    swapDelayReset = 2; //todo frames
+    swapDelayCount = -1;
+    queuedUpSwapAction = false;
+
+    // how long a combo lasts (44 + 25 - 9) / 60fps
+    comboDelayReset = 20;
+    comboDelayResetPerTile = 3;
+
+    // how long to hang in the air before falling
+    fallDelayReset = 4; // roughly 2x swap delay
+
+    // the elevate command will advance the height until a new row is added
+    fastElevateHeightPerFrame = 3;
+    fastElevate = false;
+
+    // some actions will stop the board from progressing
+    stopBoardFromGrowing = false;
+
+    // chains
+    globalChainCounter = 1;
+
+    // game over
+    isGameOver = false;
+    gameOverLeewayReset = 40; // todo frames
+    gameOverLeewayCount = 40; // how long until we really die
+
+    highestTileHeight = 0;
+
+    initialize = () =>
+    {
+        this.isGameOver = false;
+
+        // make board spaces
+        // these are static boxes at fixed coordinates
+        for(var i = 0; i < GameEngine.Instance.rowCount; i++)
+        {
+            this.boardSpaces[i] = new Array();
+        }
+        for(var i = 0; i < GameEngine.Instance.rowCount; i++)
+        {
+            for(var j = 0; j < GameEngine.Instance.colCount; j++)
+            {
+                this.boardSpaces[i][j] = new BoardSpace();
+            }
+        }
+
+        // make first set of tiles
+        for(var i = 8; i >= 0; i--)
+        {
+            var newRow = this.generateRow(i);
+            this.tiles = this.tiles.concat(newRow);
+
+            for(var j = 0; j < newRow.length; j++)
+            {
+                this.getBoardSpace(j, i).addTile(newRow[j]);
+            }
+        }
+    }
+
+    update = (inputs) =>
+    {
+        // tiles are moving upwards
+        this.updateBoardHeight();
+
+        // act on player inputs
+        this.readInputs(inputs);
+
+        // update every tile
+        this.tiles.forEach((tile) =>
+        {
+            tile.update();
+        });
+
+        // see if any blocks should fall
+        this.updateWaitingAttackBlocks();
+
+        // run a pass through all tiles
+        this.scanAllTilesForChanges();
+
+        // update swap delay
+        this.updateSwapDelay();
+
+        // did we lose?
+        this.checkGameOverConditions();
+    }
+
+    checkGameOverConditions = () =>
+    {
+        // todo, use a different metric. 
+        // Internal safety clock -- some leeway in vs mode.
+        if(!this.stopBoardFromGrowing)
+        {
+            if(this.highestTileHeight >= GameEngine.Instance.rowCountInBounds)
+            {
+                this.gameOverLeewayCount--;
+
+                if(this.gameOverLeewayCount == 0)
+                {
+                    this.isGameOver = true;
+                }
+            }
+            else 
+            {
+                this.gameOverLeewayCount = this.gameOverLeewayReset;
+            }
+        }
+    }
+
+    scanAllTilesForChanges = () =>
+    {
+        var tileKillList = [];
+        var tilesToEndChain = [];
+
+        // update this value if anything exciting is happening
+        this.stopBoardFromGrowing = false;
+
+        // what's the highest tile?
+        this.highestTileHeight = 0;
+
+        // ---------------------------------
+        // find dying tiles
+        // ---------------------------------
+        for(var i = 0; i < this.boardSpaces.length; i++)
+        {
+            for(var j = 0; j < this.boardSpaces[i].length; j++)
+            {
+                var tile = this.getTileAtSpace(j, i);
+
+                if(!tile || tile.y == 0)
+                {
+                    continue;
+                }
+
+                // highest tile
+                this.highestTileHeight = Math.max(this.highestTileHeight, tile.y);
+
+                // these tiles finished comboing - but are part of an attack block combo, e.g.
+                if(tile.persistAfterCombo && tile.isComboJustFinished)
+                {
+                    tile.hoverStart();
+                    tile.isComboJustFinished = false;
+                    tile.persistAfterCombo = false;
+                }
+
+                else if(tile.isComboJustFinished)
+                {
+                    // kill the tile later
+                    tileKillList.push(tile);
+
+                    // is there a tile resting on me?
+                    var aboveTile = this.getTileAtSpace(tile.x, tile.y + 1);
+                    if(aboveTile)
+                    {
+                        // this tile is now "chaining"
+                        aboveTile.isChaining = true;
+                    }
+                }
+            }
+        }
+
+        this.killTiles(tileKillList);
+
+        // ---------------------------------
+        // find falling tiles
+        // ---------------------------------
+        for(var i = 0; i < this.boardSpaces.length; i++)
+        {
+            for(var j = 0; j < this.boardSpaces[i].length; j++)
+            {
+                var tile = this.getTileAtSpace(j, i);
+
+                // ignore these tiles
+                if(!tile || tile.y == 0 || !tile.canMove())
+                {
+                    continue;
+                }
+
+                if(tile.isAttackBlock)
+                {
+                    var isBelowRowHovering = false;
+                    var shouldRowBeFalling = true;
+                    var hoverFrameCount = 0;
+                    var totalTilesInRow = 1;
+
+                    // scan to the right
+                    var currentTile = tile;
+                    while(currentTile)
+                    {
+                        var belowTile = this.getTileAtSpace(currentTile.x, currentTile.y - 1);
+
+                        // todo test landing on an already hovering tile
+                        isBelowRowHovering =
+                            (isBelowRowHovering && !belowTile) ||
+                            ((shouldRowBeFalling || isBelowRowHovering) && belowTile && belowTile.isHovering);
+                        shouldRowBeFalling = shouldRowBeFalling && (!belowTile && currentTile.y > 1 && currentTile.canMove());
+
+                        if(isBelowRowHovering && belowTile)
+                        {
+                            hoverFrameCount = Math.max(hoverFrameCount, belowTile.hoverFrameCount);
+                        }
+
+                        // this was the last tile
+                        if(!currentTile.isConnectedRight)
+                        {
+                            break;
+                        }
+
+                        totalTilesInRow++;
+                        currentTile = this.getTileAtSpace(currentTile.x + 1, currentTile.y);
+                    }
+
+                    var currentTile = tile;
+                    while(currentTile)
+                    {
+                        // remember the right tile, we may shift down this frame
+                        var nextTile = null;
+                        if(currentTile.isConnectedRight)
+                        {
+                            nextTile = this.getTileAtSpace(currentTile.x + 1, currentTile.y);
+                        }
+
+                        if(isBelowRowHovering)
+                        {
+                            currentTile.hoverFrameCount = hoverFrameCount;
+                            currentTile.isHovering = true;
+                        }
+
+                        // just landed
+                        if(currentTile.isFalling && !shouldRowBeFalling)
+                        {
+                            currentTile.isFalling = false;
+                        }
+
+                        // continue to fall
+                        else if(currentTile.isFalling && shouldRowBeFalling)
+                        {
+                            currentTile.isFalling = true;
+                            var space = this.getBoardSpace(currentTile.x, currentTile.y);
+                            space.removeTile(currentTile);
+
+                            currentTile.y--;
+                            space = this.getBoardSpace(currentTile.x, currentTile.y);
+                            space.addTile(currentTile);
+                        }
+
+                        // just started to hover
+                        else if(!currentTile.isFalling && shouldRowBeFalling)
+                        {
+                            currentTile.hoverStart();
+                        }
+
+                        currentTile = nextTile;
+                    }
+
+                    // already processed these tiles
+                    j += totalTilesInRow - 1;
+                }
+
+                // basic blocks
+                else
+                {
+                    // should be falling?
+                    var belowTile = this.getTileAtSpace(tile.x, tile.y - 1);
+                    var shouldBeFalling = !belowTile && tile.y > 1 && tile.canMove();
+
+                    // if I'm resting on a hovering tile, copy the hover attribute
+                    if(belowTile && belowTile.isHovering)
+                    {
+                        tile.isHovering = true;
+                        tile.hoverFrameCount = belowTile.hoverFrameCount;
+
+                        // hovering always maintains chaining
+                        tile.isChaining = belowTile.isChaining || tile.isChaining;
+                    }
+
+                    // resting ontop a tile
+                    // queue this tile to stop chaining, 
+                    // but only if we're not swapping underneath
+                    if((!shouldBeFalling && !tile.isHovering) &&
+                        (tile.isChaining && !belowTile.isSwapping) &&
+                        (!belowTile.isChaining || tilesToEndChain.indexOf(belowTile) != -1))
+                    {
+                        tilesToEndChain.push(tile);
+                    }
+
+                    // just landed
+                    if(tile.isFalling && !shouldBeFalling)
+                    {
+                        tile.isFalling = false;
+                    }
+
+                    // continue to fall
+                    else if(tile.isFalling && shouldBeFalling)
+                    {
+                        tile.isFalling = true;
+                        var space = this.getBoardSpace(tile.x, tile.y);
+                        space.removeTile(tile);
+
+                        tile.y--;
+                        space = this.getBoardSpace(tile.x, tile.y);
+                        space.addTile(tile);
+                    }
+
+                    // just started to hover
+                    else if(!tile.isFalling && shouldBeFalling)
+                    {
+                        tile.hoverStart();
+                    }
+                }
+            }
+        }
+
+        var lastRow = [];
+        var currentRow = [];
+        var allComboTiles = [];
+
+        // ---------------------------------
+        // find comboing tiles
+        // ---------------------------------
+        for(var i = 0; i < this.boardSpaces.length; i++)
+        {
+            for(var j = 0; j < this.boardSpaces[i].length; j++)
+            {
+                var tile = this.getTileAtSpace(j, i);
+
+                // any of these exciting things happening?
+                this.stopBoardFromGrowing = this.stopBoardFromGrowing ||
+                    (tile && (tile.isHovering || tile.isFalling || tile.isComboing))
+
+                // ignore these tiles
+                if(!tile || tile.y == 0 || !tile.canMove() || tile.isFalling)
+                {
+                    // mark this row as a 0
+                    lastRow[j] = currentRow[j];
+                    currentRow[j] = 0;
+                }
+                else if(tile.isAttackBlock)
+                {
+                    // don't combo
+                    lastRow[j] = currentRow[j];
+                    currentRow[j] = tile.type;
+                }
+                else
+                {
+                    // combo left and leftx2
+                    if(j >= 2 && tile.type == currentRow[j - 1] && tile.type == currentRow[j - 2])
+                    {
+                        var left = this.getTileAtSpace(j - 1, i);
+                        var leftleft = this.getTileAtSpace(j - 2, i);
+                        allComboTiles[leftleft.id] = leftleft;
+                        allComboTiles[left.id] = left;
+                        allComboTiles[tile.id] = tile;
+                    }
+
+                    // combo down and downx2
+                    if(i >= 3 && tile.type == currentRow[j] && tile.type == lastRow[j])
+                    {
+                        var down = this.getTileAtSpace(j, i - 1);
+                        var downdown = this.getTileAtSpace(j, i - 2);
+                        allComboTiles[downdown.id] = downdown;
+                        allComboTiles[down.id] = down;
+                        allComboTiles[tile.id] = tile;
+                    }
+
+                    // remember last 2 rows
+                    lastRow[j] = currentRow[j];
+                    currentRow[j] = tile.type;
+                }
+            }
+        }
+
+        // ---------------------------------
+        // Resolve any Chains and Combos for this frame
+        // ---------------------------------
+
+        // Create a 'combo' of all of these tiles
+        var wasChainFormedThisFrame = false;
+        var keys = Object.keys(allComboTiles);
+
+        // find comboing attack blocks
+        this.allAttackBlocksCombodThisFrame = [];
+        keys.forEach(
+            (key) =>
+            {
+                this.checkForAdjacentAttackBlocks(allComboTiles[key]);
+            });
+
+        // total combo length of both (attack and non attack tiles) and (plain tiles)
+        var totalComboDelay = (keys.length + this.allAttackBlocksCombodThisFrame.length) * this.comboDelayResetPerTile + this.comboDelayReset;
+        var basicComboDelay = keys.length * this.comboDelayResetPerTile + this.comboDelayReset;
+        keys.forEach(
+            (key) =>
+            {
+                var tile = allComboTiles[key];
+                tile.comboStart(basicComboDelay, false);
+                wasChainFormedThisFrame = wasChainFormedThisFrame || tile.isChaining;
+
+                // hacky, stop growing for one frame
+                this.stopBoardFromGrowing = true;
+            });
+
+        // go through the attack block and generate tiles for the bottom rows
+        if(this.allAttackBlocksCombodThisFrame.length > 0)
+        {
+            for(var i = this.boardSpaces.length - 1; i >= 0; i--)
+            {
+                this.lastRowOfTileTypes = [];
+                for(var j = 0; j < this.boardSpaces[i].length; j++)
+                {
+                    var tile = this.getTileAtSpace(j, i);
+
+                    if(tile != null && tile.isComboJustStarted && tile.isAttackBlock)
+                    {
+                        tile.comboStart(totalComboDelay, true);
+
+                        if(!tile.isConnectedDown)
+                        {
+                            if(tile.isConnectedUp)
+                            {
+                                this.getTileAtSpace(tile.x, tile.y + 1).isConnectedDown = false;
+                            }
+                            
+                            // generate the tile type, cannot be 3 same in a row
+                            var ignoreTypes = [];
+                            if(this.lastRowOfTileTypes[j - 2] == this.lastRowOfTileTypes[j - 1])
+                            {
+                                ignoreTypes.push(this.lastRowOfTileTypes[j - 2]);
+                            }
+                            var newType = this.getNextRandomTile(ignoreTypes);
+
+                            // remove attack tile
+                            var boardSpace = this.getBoardSpace(tile.x, tile.y);
+                            boardSpace.removeTile(tile);
+                            this.tiles.splice(this.tiles.indexOf(tile), 1);
+
+                            // replace with new basic tile
+                            // todo some ignore generation logic
+                            var newBasicTile = new Tile(tile.x, tile.y, newType, this);
+                            newBasicTile.comboStart(totalComboDelay, true);
+                            newBasicTile.isChaining = true;
+                            boardSpace.addTile(newBasicTile);
+                            this.tiles.push(newBasicTile);
+
+                            this.lastRowOfTileTypes[j] = newBasicTile.type;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Tiles that just landed should not be chaining anymore, unless....
+        tilesToEndChain.forEach(
+            (tile) =>
+            {
+                tile.isChaining = false;
+            });
+
+        // If a chain was formed this frame, The whole combo is now 'chaining'
+        // therefore tiles that just landed, can be chaining again!
+        if(wasChainFormedThisFrame)
+        {
+            this.globalChainCounter++;
+            keys.forEach(
+                (key) =>
+                {
+                    allComboTiles[key].isChaining = true;
+                });
+        }
+
+        // chain ends if no tiles are chaining
+        if(this.globalChainCounter > 1)
+        {
+            var isStillChaining = false;
+            this.tiles.forEach(
+                (tile) =>
+                {
+                    isStillChaining = isStillChaining || tile.isChaining;
+                });
+
+            if(!isStillChaining)
+            {
+                // attack other player -- chains are strong!
+                this.sendChainAttack(this.globalChainCounter);
+                this.globalChainCounter = 1;
+            }
+        }
+
+        // attack other player -- weak combos will be ignored
+        this.sendComboAttack(keys.length);
+    }
+
+    hurtAttackBlock = (tile: Tile) =>
+    {
+        if(tile && tile.isAttackBlock)
+        {
+            if(this.allAttackBlocksCombodThisFrame.indexOf(tile) == -1)
+            {
+                this.allAttackBlocksCombodThisFrame.push(tile);
+                this.hurtAttackBlock(this.getTileAtSpace(tile.x + 1, tile.y));
+                this.hurtAttackBlock(this.getTileAtSpace(tile.x - 1, tile.y));
+                this.hurtAttackBlock(this.getTileAtSpace(tile.x, tile.y + 1));
+                this.hurtAttackBlock(this.getTileAtSpace(tile.x, tile.y - 1));
+                tile.isComboJustStarted = true;
+            }
+        }
+    }
+
+    checkForAdjacentAttackBlocks = (tile: Tile) =>
+    {
+        this.hurtAttackBlock(this.getTileAtSpace(tile.x + 1, tile.y));
+        this.hurtAttackBlock(this.getTileAtSpace(tile.x, tile.y + 1));
+        this.hurtAttackBlock(this.getTileAtSpace(tile.x, tile.y - 1));
+        this.hurtAttackBlock(this.getTileAtSpace(tile.x - 1, tile.y));
+    }
+
+    updateSwapDelay = () =>
+    {
+        this.swapDelayCount = Math.max(-1, this.swapDelayCount - 1);
+    }
+
+    killTiles = (tilesToKill: Array<Tile>) =>
+    {
+        if(!tilesToKill || tilesToKill.length == 0)
+        {
+            return;
+        }
+        
+        // remove from board spaces
+        tilesToKill.forEach(
+            (tile) =>
+            {
+                var boardSpace = this.getBoardSpace(tile.x, tile.y);
+                boardSpace.removeTile(tile);
+            });
+
+        // delete these tiles by constructing a new list
+        var newListOfTiles = [];
+        this.tiles.forEach(
+            (tile) =>
+            {
+                // if we are not killing the tile
+                // save in new list
+                if(tilesToKill.indexOf(tile) == -1)
+                {
+                    newListOfTiles.push(tile);
+                }
+            });
+        
+        this.tiles = newListOfTiles;
+    }
+
+    getBoardSpace = (x: number, y: number) =>
+    {
+        if(y >= 0 && y < this.boardSpaces.length)
+        {
+            if(x >= 0 && x < this.boardSpaces[y].length)
+            {
+                return this.boardSpaces[y][x];
+            }
+        }
+
+        return null;
+    }
+
+    getTileAtSpace = (x: number, y: number) =>
+    {
+        var space = this.getBoardSpace(x, y);
+        if(space)
+        {
+            return space.getTile();
+        }
+
+        return null;
+    }
+
+    wasAttackedByOtherPlayer = (attackBlock: AttackBlock) =>
+    {
+        this.attackBlocksInWait.push(attackBlock);
+    }
+
+    releaseAttackBlockIntoBoard = (attackBlock: AttackBlock) =>
+    {
+        // todo handle... stacks too tall for the board
+        // todo handle 2 blocks on the same frame
+        for(var i = 0; i < attackBlock.tilesHigh; i++)
+        {
+            for(var j = 0; j < attackBlock.tilesWide; j++)
+            {
+                var tile = new Tile(j, GameEngine.Instance.attackBlockAllowedHeight + 1 + i, attackBlock.attackType, this);
+                tile.isAttackBlock = true;
+                tile.isConnectedRight = j < attackBlock.tilesWide - 1;
+                tile.isConnectedLeft = j > 0;
+                tile.isConnectedUp = i < attackBlock.tilesHigh - 1;
+                tile.isConnectedDown = i > 0;
+                tile.isFalling = true;
+
+                var boardSpace = this.getBoardSpace(tile.x, tile.y);
+                boardSpace.addTile(tile);
+                this.tiles.push(tile);
+            }
+        }
+    }
+
+    updateWaitingAttackBlocks = () =>
+    {
+        for(var i = 0; i < this.attackBlocksInWait.length; i++)
+        {
+            var attackBlock = this.attackBlocksInWait[i];
+            attackBlock.framesLeftUntilDrop--;
+
+            // if the tile is ready to fall
+            // remove it from queue and fall
+            if(attackBlock.framesLeftUntilDrop <= 0 && !this.stopBoardFromGrowing &&
+                this.highestTileHeight <= GameEngine.Instance.attackBlockAllowedHeight)
+            {
+                // only one attack per frame
+                this.releaseAttackBlockIntoBoard(attackBlock);
+                this.attackBlocksInWait.splice(i, 1);
+                break;
+            }
+        }
+    }
+
+    // todo - see if combos are queued up alongside chains, and if they are all sent at once
+    sendComboAttack = (comboSize: number) =>
+    {
+        if(comboSize >= 4)
+        {
+            // combo patterns are predetermined i.e:
+            // an 8-combo will always generate a size-3 block and a size-4 block.
+            var comboIndex = Math.min(comboSize, GameEngine.Instance.comboAttackPatterns.length - 1);
+            var comboPattern = GameEngine.Instance.comboAttackPatterns[comboIndex];
+
+            // multiple blocks can be generated from one combo.
+            for(var i = 0; i < comboPattern.length; i++)
+            {
+                GameEngine.Instance.attackOtherPlayer(
+                    this.playerIndex, 
+                    new AttackBlock(comboPattern[i], 1, this.attackBlockType));
+            }
+        }
+    }
+
+    sendChainAttack = (chainSize: number) =>
+    {
+        // chain attacks are always the width of the board
+        // the height grows as the chain grows
+        GameEngine.Instance.attackOtherPlayer(
+            this.playerIndex,
+            new AttackBlock(GameEngine.Instance.colCount, chainSize - 1, this.attackBlockType));
+    }
+
+    getNextRandomTile = (ignoreList: Array<number>) =>
+    {
+        while(true)
+        {
+            var type = GameEngine.Instance.basicTileTypeStartIndex +
+                Math.floor(this.randomNumberGenerator.next() * GameEngine.Instance.basicTileTypeCount);
+            if(!ignoreList || ignoreList.indexOf(type) == -1)
+            {
+                return type;
+            }
+        }
+    }
+
+    generateRow = (rowNum) =>
+    {
+        var row = new Array();
+        for(var i = 0; i < GameEngine.Instance.colCount; i++)
+        {
+            // no type can repeat in adjacent rows
+            var ignoreTypes = [this.lastRowOfTileTypes[i]];
+
+            // no type can repeat 3x in a row
+            if(i >= 2)
+            {
+                if(this.lastRowOfTileTypes[i - 2] == this.lastRowOfTileTypes[i - 1])
+                {
+                    ignoreTypes.push(this.lastRowOfTileTypes[i - 2]);
+                }
+            }
+
+            // get next tile, following rules
+            var type = this.getNextRandomTile(ignoreTypes);
+            row[i] = new Tile(i, rowNum, type, this);
+            this.lastRowOfTileTypes[i] = type;
+        }
+        return row;
+    }
+
+
+    updateBoardHeight = () =>
+    {
+        if(this.stopBoardFromGrowing)
+        {
+            return;
+        }
+
+        if(this.fastElevate)
+        {
+            // reset the frame count
+            this.yOffsetFrameCount = this.yOffsetFrameReset;
+
+            // move up a notch
+            this.yOffset += this.fastElevateHeightPerFrame;
+
+            // a new row has formed, cancel elevate
+            if(this.yOffset >= this.yOffsetMax)
+            {
+                this.yOffset = 0;
+                this.fastElevate = false;
+                this.updateBoardNewHeight();
+            }
+        }
+        else
+        {
+            // if so many frames pass
+            // shift all tiles up a bit
+            this.yOffsetFrameCount--;
+            if(this.yOffsetFrameCount <= 0)
+            {
+                this.yOffsetFrameCount = this.yOffsetFrameReset;
+                this.yOffset++;
+
+                // a new row has formed
+                if(this.yOffset >= this.yOffsetMax)
+                {
+                    this.yOffset = 0;
+                    this.updateBoardNewHeight();
+                }
+            }
+        }
+    }
+
+    updateBoardNewHeight = () =>
+    {
+        //copy the contents of the space below
+        for(var i = GameEngine.Instance.rowCount - 1; i > 0; i--)
+        {
+            for(var j = 0; j < GameEngine.Instance.colCount; j++)
+            {
+                this.boardSpaces[i][j].contents = this.boardSpaces[i-1][j].contents;
+            }
+        }
+
+        // send all tiles up a notch
+        for(var i = 0; i < this.tiles.length; i++)
+        {
+            this.tiles[i].y++;
+        }
+        
+        // clear previous row and add a new bottom row
+        var newRow = this.generateRow(0);
+        this.tiles = this.tiles.concat(newRow);
+        for(var i = 0; i < newRow.length; i++)
+        {
+            var tile = newRow[i];
+            var boardSpace = this.getBoardSpace(tile.x, tile.y)
+            boardSpace.clear();
+            boardSpace.addTile(tile);
+        }
+
+        this.cursor.y++;
+    }
+
+    swapAction = () =>
+    {
+        // can't swap too quickly
+        if(this.swapDelayCount >= 0)
+        {
+            this.queuedUpSwapAction = true;
+            return;
+        }
+        this.queuedUpSwapAction = false;
+
+        // get tile at cursor x,y and x+1,y
+        var leftSpace = this.getBoardSpace(this.cursor.x, this.cursor.y);
+        var rightSpace = this.getBoardSpace(this.cursor.x + 1, this.cursor.y);
+        var leftTile = leftSpace.getTile();
+        var rightTile = rightSpace.getTile();
+        
+        var leftUpTile = this.getTileAtSpace(this.cursor.x, this.cursor.y + 1);
+        var rightUpTile = this.getTileAtSpace(this.cursor.x + 1, this.cursor.y + 1);
+
+        // can't swap unmovable tiles
+        // ignore input
+        if(leftTile != null && (!leftTile.canMove() || leftTile.isAttackBlock))
+        {
+            return;
+        }
+        if(rightTile != null && (!rightTile.canMove() || rightTile.isAttackBlock))
+        {
+            return;
+        }
+
+        // can't swap when a tile is hovering right above you!
+        // ignore input
+        if(leftUpTile != null && leftUpTile.isHovering)
+        {
+            return;
+        }
+        if(rightUpTile != null && rightUpTile.isHovering)
+        {
+            return;
+        }
+
+        // physically move left tile
+        if(leftTile != null)
+        {
+            // will occupy both adjacent spaces for now
+            rightSpace.addTile(leftTile);
+            leftTile.swapStart(1);
+            this.swapDelayCount = this.swapDelayReset;
+        }
+
+        // physically move right tile
+        if(rightTile != null)
+        {
+            // will occupy both adjacent spaces for now
+            leftSpace.addTile(rightTile);
+            rightTile.swapStart(-1);
+            this.swapDelayCount = this.swapDelayReset;
+        }
+    }
+
+    readInputs = (inputs) =>
+    {
+        if(inputs != null)
+        {
+            if(inputs.indexOf(GameEngine.Instance.inputTypes.Up) != -1)
+            {
+                this.cursor.y = Math.min(this.cursor.y + 1, GameEngine.Instance.rowCountInBounds);
+            }
+            if(inputs.indexOf(GameEngine.Instance.inputTypes.Down) != -1)
+            {
+                this.cursor.y = Math.max(this.cursor.y - 1, 1);
+            }
+            if(inputs.indexOf(GameEngine.Instance.inputTypes.Left) != -1)
+            {
+                this.cursor.x = Math.max(this.cursor.x - 1, 0);
+            }
+            if(inputs.indexOf(GameEngine.Instance.inputTypes.Right) != -1)
+            {
+                this.cursor.x = Math.min(this.cursor.x + 1, GameEngine.Instance.colCount - 2);
+            }
+            if(inputs.indexOf(GameEngine.Instance.inputTypes.Swap) != -1 ||
+                this.queuedUpSwapAction)
+            {
+                this.swapAction();
+            }
+            if(inputs.indexOf(GameEngine.Instance.inputTypes.Elevate) != -1)
+            {
+                this.fastElevate = true;
+            }
+        }
+    }
+    
+    incrementTileId = () =>
+    {
+        this.lastTileId++;
+        return "id:" + this.lastTileId;
+    }
+}
+
+/*
+* AttackBlock object.
+* Represents an attack block that is waiting to fall
+*/
+class AttackBlock
+{
+    framesLeftUntilDrop : number;
+    
+    constructor(
+        public tilesWide: number,
+        public tilesHigh: number,
+        public attackType: number)
+    {
+        this.framesLeftUntilDrop = GameEngine.Instance.attackBlockDelay;
+    }
+}
+
+/*
+* Tile object.
+* Represents a tile on the board.
+*/
+class Tile
+{
+    constructor(
+        public x: number,
+        public y: number,
+        public type: number,
+        public board: Board)
+    {
+        this.id = board.incrementTileId();
+        this.swappingFrameReset = board.swapDelayReset;
+        this.hoverFrameReset = board.fallDelayReset;
+    }
+    
+    id: string;
+    xShift = 0;
+
+    isSwapping = false;
+    swappingFrameCount = 0;
+    swappingFrameReset: number;
+
+    isComboing = false;
+    isComboJustFinished = false;
+    isChaining = false;
+    comboFrameCount = 0;
+    persistAfterCombo = false;
+
+    isFalling = false;
+    isHovering = false;
+    hoverFrameCount = 0;
+    hoverFrameReset: number;
+
+    isAttackBlock = false;
+    isConnectedRight = false;
+    isConnectedLeft = false;
+    isConnectedUp = false;
+    isConnectedDown = false;
+    isComboJustStarted = false;
+    
+    canMove = () =>
+    {
+        return !(this.isComboing || this.isSwapping || this.isHovering);
+    }
+
+    swapStart = (xShift: number) =>
+    {
+        // some frames to wait
+        this.xShift = xShift;
+        this.swappingFrameCount = this.swappingFrameReset;
+        this.isSwapping = true;
+    }
+
+    comboStart = (totalDelay: number, persistAfterCombo: boolean) =>
+    {
+        this.comboFrameCount = totalDelay;
+        this.isComboing = true;
+        this.persistAfterCombo = persistAfterCombo;
+    }
+
+    hoverStart = () =>
+    {
+        this.hoverFrameCount = this.hoverFrameReset;
+        this.isHovering = true;
+    }
+
+    update = () =>
+    {
+        // swap --
+        this.swappingFrameCount = Math.max(-1, this.swappingFrameCount - 1);
+
+        // just finished swapping, check for combos
+        if(this.swappingFrameCount == 0)
+        {
+            // used to be occupying two spaces, now remove old occupancy
+            var oldSpace = this.board.getBoardSpace(this.x, this.y);
+            oldSpace.removeTile(this);
+
+            this.x += this.xShift;
+            this.xShift = 0;
+            this.isSwapping = false;
+        }
+
+        // combo --
+        this.comboFrameCount = Math.max(-1, this.comboFrameCount - 1);
+
+        // just finished comboing, time to die
+        if(this.comboFrameCount == 0)
+        {
+            this.isComboJustFinished = true;
+            this.isComboing = false;
+        }
+
+        // hover --
+        this.hoverFrameCount = Math.max(-1, this.hoverFrameCount - 1);
+
+        // just finished hovering, time to fall
+        if(this.hoverFrameCount == 0)
+        {
+            this.isFalling = true;
+            this.isHovering = false;
+        }
+    }
+}

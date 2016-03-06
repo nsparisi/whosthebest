@@ -3,7 +3,16 @@
 </div>
 
 <!-- Game canvas will be rendered here -->
+<canvas id="gameCanvas" ></canvas>
 <div id="game" ></div>
 
+<!-- Set some variables to connect to the server -->
+<script>window.userToken = "1234";</script>
+<script>window.lastGameId = "4444";</script>
+
+<!-- Import the game socket -->
+<script> require("web/static/js/game_socket")</script>
+
 <!-- Import the game --> 
-<script>require("web/static/js/test/test_game")</script>
+<script src='<%= static_path(@conn, "/js/game.js") %>'>
+</script>
