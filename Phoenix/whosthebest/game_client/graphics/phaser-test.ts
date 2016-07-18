@@ -3,6 +3,16 @@ Debug.log("phaser-test.ts");
 
 module PhaserTest
 {
+    class MainMenu
+    {
+        background: Phaser.Sprite;
+        titleText: Phaser.Text;
+        
+        constructor()
+        {
+        }
+    }
+    
     export function CreateTest()
     {
         var sprite : Phaser.Sprite;
@@ -25,6 +35,8 @@ module PhaserTest
             sprite = game.add.sprite(0,0,"icon");
             sprite.width = 50;
             sprite.height = 50;
+            
+            
         }
         function update()
         {

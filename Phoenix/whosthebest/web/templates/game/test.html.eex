@@ -7,11 +7,11 @@
 <div id="game" ></div>
 
 <!-- Set some variables to connect to the server -->
-<script>window.userToken = "1234";</script>
+<script>window.userToken = "g3QAAAACZAAEZGF0YWEBZAAGc2lnbmVkbgYAXjC1VFMB--cdUaCnLaPvW4MMzz4mKvy_CNbFY=";</script>
 <script>window.lastGameId = "4444";</script>
 
 <!-- Import the game socket -->
-<script> require("web/static/js/game_socket")</script>
+<!--<script> require("web/static/js/game_socket")</script>-->
 
 <!-- Import the game --> 
 <script src='<%= static_path(@conn, "/js/game.js") %>'>
