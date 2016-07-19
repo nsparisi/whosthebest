@@ -109,6 +109,9 @@ class ServerTranslator
         }
     }
 
+    // ************************************
+    // Send information to client
+    // ************************************
     toClientDebug = (payload) =>
     {
     }

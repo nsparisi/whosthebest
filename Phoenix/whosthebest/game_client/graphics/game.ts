@@ -1,4 +1,4 @@
-module Whosthebest
+module Whosthebest.Graphics
 {
     export class Game_WhosTheBest extends Phaser.Game
     {
@@ -9,8 +9,25 @@ module Whosthebest
             this.state.add("Boot", State_Boot);
             this.state.add("Preloader", State_Preloader);
             this.state.add("GameLobby", State_GameLobby);
+            this.state.add("Game", State_Game);
+            this.state.add("Menu", State_Menu);
 
             this.state.start("Boot");
+        }
+
+        switchToGameLobby = () => 
+        {
+            this.state.start("GameLobby");
+        }
+
+        switchToGame = () => 
+        {
+            this.state.start("Game");
+        }
+
+        switchToMenu = () =>
+        {
+            this.state.start("Menu");
         }
     }
 
@@ -49,14 +66,81 @@ module Whosthebest
             // Load all additional game assets from this screen
             // Can use this option to load all assets up front
             // May consider loading before a game, like starcraft
-            this.load.spritesheet("images/GameLobby/btn_back.png", "images/GameLobby/btn_back.png", 51, 50);
-            this.load.spritesheet("images/GameLobby/btn_ready.png", "images/GameLobby/btn_ready.png", 120, 52);
-            this.load.image("images/GameLobby/img_avatar.png", "images/GameLobby/img_avatar.png");
+            this.load.spritesheet("images/menu/btn_back.png", "images/menu/btn_back.png", 51, 50);
+            this.load.spritesheet("images/menu/btn_ready.png", "images/menu/btn_ready.png", 120, 52);
+            this.load.spritesheet("images/menu/btn_friend.png", "images/menu/btn_friend.png", 120, 52);
+            this.load.spritesheet("images/menu/btn_play.png", "images/menu/btn_play.png", 120, 52);
+            this.load.spritesheet("images/menu/btn_quick.png", "images/menu/btn_quick.png", 120, 52);
+            this.load.image("images/menu/img_avatar.png", "images/menu/img_avatar.png");
         }
 
         create()
         {
-            this.game.state.start("GameLobby")
+            GAME_INSTANCE.switchToMenu();
+        }
+    }
+
+    export class State_Menu extends Phaser.State
+    {
+        buttonPlay: Phaser.Button;
+        buttonQuick: Phaser.Button;
+        buttonFriend: Phaser.Button;
+        buttonBack: Phaser.Button;
+
+        create()
+        {
+            this.buttonPlay = this.add.button(
+                this.game.width / 2 - 60, 
+                60, 
+                "images/menu/btn_play.png", this.play_pressed, this, 1, 0, 2);
+
+            this.buttonBack = this.add.button(
+                13, 300, "images/menu/btn_back.png", this.back_pressed, this, 1, 0, 2);
+            this.buttonQuick = this.add.button(
+                this.game.width / 2 - 60, 
+                60, 
+                "images/menu/btn_quick.png", this.quick_pressed, this, 1, 0, 2);
+            this.buttonFriend = this.add.button(
+                this.game.width / 2 - 60, 
+                60 + 60, 
+                "images/menu/btn_friend.png", this.friend_pressed, this, 1, 0, 2);
+
+            this.showTitleMenu();
+        }
+
+        showTitleMenu = () =>
+        {
+            this.buttonPlay.exists = true;
+            this.buttonBack.exists = false;
+            this.buttonQuick.exists = false;
+            this.buttonFriend.exists = false;
+        }
+
+        showPlayMenu = () =>
+        {
+            this.buttonPlay.exists = false;
+            this.buttonBack.exists = true;
+            this.buttonQuick.exists = true;
+            this.buttonFriend.exists = true;
+        }
+
+        back_pressed()
+        {
+            this.showTitleMenu();
+        }
+
+        play_pressed()
+        {
+            this.showPlayMenu();
+        }
+
+        quick_pressed()
+        {
+        }
+
+        friend_pressed()
+        {
+            GAME_INSTANCE.switchToGameLobby();
         }
     }
 
@@ -76,16 +160,16 @@ module Whosthebest
 
         create()
         {
-            this.spriteAvatar1 = this.add.sprite(13, 78, "images/GameLobby/img_avatar.png");
-            this.spriteAvatar2 = this.add.sprite(0, 78, "images/GameLobby/img_avatar.png");
+            this.spriteAvatar1 = this.add.sprite(13, 78, "images/menu/img_avatar.png");
+            this.spriteAvatar2 = this.add.sprite(0, 78, "images/menu/img_avatar.png");
             this.spriteAvatar2.x = this.game.width - 13 - this.spriteAvatar2.width;
 
             this.buttonBack = this.add.button(
-                13, 300, "images/GameLobby/btn_back.png", this.back_pressed, this, 1, 0, 2);
+                13, 300, "images/menu/btn_back.png", this.back_pressed, this, 1, 0, 2);
             this.buttonReady = this.add.button(
                 this.game.width / 2 - 60, 
                 this.game.height - 60, 
-                "images/GameLobby/btn_ready.png", this.ready_pressed, this, 1, 0, 2);
+                "images/menu/btn_ready.png", this.ready_pressed, this, 1, 0, 2);
                 
             this.textTitle = this.add.text(
                 this.game.width / 2, 
@@ -132,12 +216,26 @@ module Whosthebest
 
         back_pressed()
         {
-            Debug.log("State_GameLobby back_pressed")
+            GAME_INSTANCE.switchToMenu();
         }
 
         ready_pressed()
         {
-            Debug.log("State_GameLobby ready_pressed")
+        }
+    }
+
+    export class State_Game extends Phaser.State
+    {
+        textTitle: Phaser.Text;
+
+        create()
+        {
+            this.textTitle = this.add.text(
+                this.game.width / 2, 
+                5, 
+                "Play Game", 
+                {font: "40pt Arial", fill: "#000"});
+            this.textTitle.anchor.set(0.5, 0);
         }
     }
 }

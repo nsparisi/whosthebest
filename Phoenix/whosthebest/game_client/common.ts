@@ -28,4 +28,4 @@ var deltaTimeMs = 0;
 //PhaserTest.CreateTest();
 
 // real deal
-const game = new Whosthebest.Game_WhosTheBest();
+const GAME_INSTANCE = new Whosthebest.Graphics.Game_WhosTheBest();
