@@ -4,7 +4,7 @@
 
 <!-- Game canvas will be rendered here -->
 <canvas id="gameCanvas" ></canvas>
-<div id="game" ></div>
+<div id="gameDiv" ></div>
 
 <!-- Set some variables to connect to the server -->
 <script>window.userToken = "g3QAAAACZAAEZGF0YWEBZAAGc2lnbmVkbgYAXjC1VFMB--cdUaCnLaPvW4MMzz4mKvy_CNbFY=";</script>

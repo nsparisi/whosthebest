@@ -1,8 +1,8 @@
 /// <reference path="references.ts" />
 Debug.log("common.ts");
 
-const CANVAS_WIDTH = 480;
-const CANVAS_HEIGHT = 360;
+const CANVAS_WIDTH = 0;
+const CANVAS_HEIGHT = 0;
 
 var canvasElement = <HTMLCanvasElement> document.getElementById("gameCanvas");
 canvasElement.width = CANVAS_WIDTH;
@@ -24,7 +24,8 @@ var deltaTimeMs = 0;
 // var main = new Main();
 // main.begin();
 
-var bootstrapper = new Bootstrap.Bootstrapper();
-bootstrapper.start();
+// Screen saver test
+//PhaserTest.CreateTest();
 
-PhaserTest.CreateTest();
+// real deal
+const game = new Whosthebest.Game_WhosTheBest();

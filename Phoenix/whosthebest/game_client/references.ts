@@ -2,7 +2,7 @@
 /// <reference path="debug.ts" />
 /// <reference path="util.ts" />
 
-/// <reference path="graphics/bootstrap.ts" />
+/// <reference path="graphics/game.ts" />
 /// <reference path="graphics/phaser-test.ts" />
 
 /// <reference path="input.ts" />

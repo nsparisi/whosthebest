@@ -19,7 +19,7 @@ module PhaserTest
         var backwards = false;
         var direction = new Phaser.Point(2, 2);
 
-        const game = new Phaser.Game(400,320, Phaser.AUTO, "phaserParent", 
+        const game = new Phaser.Game(480,360, Phaser.AUTO, "phaserParent", 
         {
             preload: preload, create: create, update: update
         })
