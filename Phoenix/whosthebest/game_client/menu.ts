@@ -145,11 +145,11 @@ class MainMenu
 
     getWebSocketText = () =>
     {
-        if(!ServerTranslator.Instance.serverConnection)
+        if(!ServerTranslator.Instance.connectionToGameServer)
         {
             return;
         }
 
-        return ServerTranslator.Instance.serverConnection.getChannelState();
+        return ServerTranslator.Instance.connectionToGameServer.getChannelState();
     }
 }

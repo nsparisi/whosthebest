@@ -32,6 +32,7 @@
                     <%= else %>
                         <li><a href="<%= login_path @conn, :login %>">Login</a></li>
                     <%= end %>
+                    <li><a href="<%= game_path @conn, :test %>">Test</a></li>
                 </ul>
                 </nav>
             </div>

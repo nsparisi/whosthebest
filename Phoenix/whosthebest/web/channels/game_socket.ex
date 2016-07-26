@@ -1,9 +1,11 @@
 defmodule Whosthebest.GameSocket do
   use Phoenix.Socket
+  alias Whosthebest.Debug
   import Ecto.Repo
 
   ## Channels
   channel "game:*", Whosthebest.GameChannel
+  channel "lobby:*", Whosthebest.LobbyChannel
 
   ## Transports
   transport :websocket, Phoenix.Transports.WebSocket
@@ -20,10 +22,10 @@ defmodule Whosthebest.GameSocket do
   #
   # See `Phoenix.Token` documentation for examples in
   # performing token verification on connect.
-  def connect(%{"user_token" => token}, socket) do
-  
+  def connect(%{"user_token" => token}, socket) do  
+    # TODO, remove some 0's here
     # max_age: 1209600 is equivalent to two weeks in seconds
-    case Phoenix.Token.verify(socket, "user_id", token, max_age: 1209600) do
+    case Phoenix.Token.verify(socket, "user_id", token, max_age: 120960000) do
         {:ok, verified_user_id} ->            
             # add relevant info to the socket
             socket = assign(socket, :user_id, verified_user_id)            

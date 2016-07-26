@@ -11,7 +11,7 @@
 <script>window.lastGameId = "4444";</script>
 
 <!-- Import the game socket -->
-<!--<script> require("web/static/js/game_socket")</script>-->
+<script> require("web/static/js/game_socket")</script>
 
 <!-- Import the game --> 
 <script src='<%= static_path(@conn, "/js/game.js") %>'>

@@ -5,5 +5,10 @@ module Debug
     {
         console.log("[debug]" + message);
     }
+    
+    export var logError = (message) =>
+    {
+        console.log("[error]" + message);
+    }
 }
 Debug.log("debug.ts");

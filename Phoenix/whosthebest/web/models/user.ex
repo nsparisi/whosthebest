@@ -1,7 +1,7 @@
 defmodule Whosthebest.User do
   use Whosthebest.Web, :model
   
-  alias Openmaize.Signup
+  alias Whosthebest.OpenmaizeEcto
 
   schema "users" do
     field :username, :string
@@ -12,6 +12,13 @@ defmodule Whosthebest.User do
     field :role, :string
     field :password, :string, virtual: true
     field :password_hash, :string
+    field :confirmed_at, Ecto.DateTime
+    field :confirmation_token, :string
+    field :confirmation_sent_at, Ecto.DateTime
+    field :reset_token, :string
+    field :reset_sent_at, Ecto.DateTime
+    field :otp_required, :boolean
+    field :otp_secret, :string
 
     timestamps
   end
@@ -43,6 +50,12 @@ defmodule Whosthebest.User do
   def auth_changeset(model, params) do
     model
     |> changeset(params)
-    |> Signup.create_user(params, [min_length: 6, max_length: 80])
+    |> OpenmaizeEcto.add_password_hash(params)
+  end
+
+  def reset_changeset(model, params, key) do
+    model
+    |> cast(params, ~w(email), [])
+    |> OpenmaizeEcto.add_reset_token(key)
   end
 end

@@ -5,21 +5,80 @@ Debug.log("server_translator.ts");
 // window.Socket = new Socket(..)
 declare var SOCKET: any;
 
+class LobbyConnection
+{
+    channel: any;
+    
+    openChannelToLobby = () =>
+    {
+        var channelName = "lobby:main";
+        Debug.log("joining channel. " + channelName);
+        this.channel = SOCKET.channel(channelName, {});
+        this.channel.join()
+            .receive("ok", resp => { onJoin(resp); })
+            .receive("error", resp => { onFail(resp); });
+
+        var onJoin = (resp) =>
+        {
+            Debug.log("The lobby connection to the server was opened.");
+            Debug.log(this.channel);
+        }
+
+        var onFail = (resp) =>
+        {
+            Debug.log("Unable to join lobby: " + resp);
+        }
+        
+        this.channel.on("lobby:message", payload => {
+            Debug.log("IN lobby:message. ${payload.from_id} -> ${payload.message}")
+            ServerTranslator.Instance.toClientLobbyMessage(payload.from_id, payload.message);
+        });
+        
+        this.channel.on("lobby:ask", payload => {
+            Debug.log("IN lobby:ask. ${payload.from_id} -> ${payload.to_id}")
+            ServerTranslator.Instance.toClientAskUser(payload.from_id, payload.to_id);
+        });
+        
+        this.channel.on("lobby:response", payload => {     
+            Debug.log("IN lobby:response. ${payload.from_id} -> ${payload.to_id} : ${payload.accepted}")
+            ServerTranslator.Instance.toClientRespondToUser(payload.from_id, payload.to_id, payload.accepted);   
+        });
+          
+        this.channel.on("lobby:start_game", payload => {
+            Debug.log("IN lobby:start_game. ${payload.from_id} -> ${payload.to_id} : ${payload.game_id}")
+            ServerTranslator.Instance.toClientStartGame(payload.from_id, payload.to_id, payload.game_id);
+        });
+    }
+
+    toServerAskUser = (to_id: string) =>
+    {
+        Debug.log("OUT lobby:ask. ${to_id}")
+        this.channel.push("lobby:ask", {to_id: to_id});
+    }
+    
+    toServerRespondToUser = (to_id: string, accepted: boolean) =>
+    {
+        Debug.log("OUTIN lobby:response. ${to_id} : ${accepted}")
+        this.channel.push("lobby:response", {to_id: to_id, accepted: accepted});
+    }
+
+}
+
 /**
  * Represents the connection to the server. Responsible for setting up a channel 
  * and sending and receiving messages across the channel. 
  */
-class ServerConnection
+class GameConnection
 {
     channel: any;
-    socket: any;
-    
-    initialize = () =>
+
+    openChannelToGame = (game_id: string) =>
     {
         // join a channel, this will be the game server with game id
-        var channelName = "game:" + window["lastGameId"];
+        // window["lastGameId"]
+        var channelName = "game:" + game_id;
         Debug.log("joining channel. " + channelName);
-        this.channel = SOCKET.channel("game:" + window["lastGameId"], {});
+        this.channel = SOCKET.channel(channelName, {});
         this.channel.join()
             .receive("ok", resp => { onJoin(); })
             .receive("error", resp => { Debug.log("Unable to join" + resp) });
@@ -48,7 +107,7 @@ class ServerConnection
             Debug.log(this.channel);
         }
     }
-    
+
     toServerGameReady = () =>
     {
         this.channel.push("game:ready", {});
@@ -93,7 +152,8 @@ class ServerTranslator
     }
 
     // handler for web socket
-    serverConnection: ServerConnection;
+    connectionToGameServer: GameConnection;
+    connectionToLobbyServer: LobbyConnection;
 
     PACKET_DELIMITER = "|";
     FRAME_DELIMETER = "~";
@@ -101,16 +161,65 @@ class ServerTranslator
 
     initialize = () =>
     {
-        if(!this.serverConnection)
+        if(!this.connectionToLobbyServer)
         {
             Debug.log("ServerTranslator initialize");
-            this.serverConnection = new ServerConnection();
-            this.serverConnection.initialize();
+            this.connectionToLobbyServer = new LobbyConnection();
+            this.connectionToLobbyServer.openChannelToLobby();
+        }
+    }
+
+    connectToGame = (game_id: string) =>
+    {
+        if(!this.connectionToGameServer)
+        {
+            this.connectionToGameServer = new GameConnection();
+            this.connectionToGameServer.openChannelToGame(game_id);
+        }
+        else 
+        {
+            Debug.logError("ServerTranslator: already connected to a game.");
         }
     }
 
     // ************************************
-    // Send information to client
+    // LOBBY: Send information to client
+    // ************************************
+    toClientLobbyMessage = (from_id: string, message: string) =>
+    {
+        Debug.log("[${from_id}]: ${message}");
+    }
+
+    toClientAskUser = (from_id: string, to_id: string) =>
+    {
+        Debug.log("${from_id}: do you want to play a game?");
+    }
+    
+    toClientRespondToUser = (from_id: string, to_id: string, accepted: boolean) =>
+    {
+        Debug.log("${from_id}: I have chosen ${accepted}?.");
+    }
+    
+    toClientStartGame = (from_id: string, to_id: string, game_id: string) =>
+    {
+        this.connectToGame(game_id);
+    }
+    
+    // ************************************
+    // LOBBY: Send information to server
+    // ************************************
+    toServerAskUser = (to_id: string) =>
+    {
+        this.connectionToLobbyServer.toServerAskUser(to_id);
+    }
+    
+    toServerRespondToUser = (to_id: string, accepted: boolean) =>
+    {
+        this.connectionToLobbyServer.toServerRespondToUser(to_id, accepted);
+    }
+
+    // ************************************
+    // GAME: Send information to client 
     // ************************************
     toClientDebug = (payload) =>
     {
@@ -140,11 +249,11 @@ class ServerTranslator
     }
 
     // ************************************
-    // Send information to server
+    // GAME: Send information to server
     // ************************************
     toServerQueueForMatch = () =>
     {
-        this.serverConnection.toServerGameReady();
+        this.connectionToGameServer.toServerGameReady();
     }
 
     toServerFrame = (frame, playerInputs) =>
@@ -160,12 +269,12 @@ class ServerTranslator
             payload += playerInputs[i];
         }
 
-        this.serverConnection.toServerGameFrame(payload);
+        this.connectionToGameServer.toServerGameFrame(payload);
     }
     
     toServerGameEnd = () =>
     {
-        this.serverConnection.toServerGameEnd();
+        this.connectionToGameServer.toServerGameEnd();
     }
     
     toServerDebug = (message: string) =>

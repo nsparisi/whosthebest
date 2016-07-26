@@ -1,11 +1,11 @@
 defmodule Whosthebest.AdminController do
     use Whosthebest.Web, :controller
 
-    import Openmaize.AccessControl
+    import Whosthebest.Authorize
     alias Whosthebest.User
 
     # only users with the admin role can access resources in this module
-    plug :authorize, roles: ["admin"]
+    plug :role_check, roles: ["admin"]
 
     def index(conn, _params) do
         users = Repo.all(User)
