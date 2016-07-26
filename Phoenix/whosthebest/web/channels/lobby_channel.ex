@@ -1,5 +1,6 @@
 defmodule Whosthebest.LobbyChannel do
     use Phoenix.Channel
+    alias Whosthebest.Presence
     alias Whosthebest.Debug
   
     # **************************
@@ -13,7 +14,8 @@ defmodule Whosthebest.LobbyChannel do
 
         # After joining (leave the function) 
         # broadcast to the channel you're online.
-        send(self, {:after_join, %{user: user.username, from: user_id}})
+        #send(self, {:setup_presence, %{user: user.username, from: user_id}})
+        send self, :setup_presence
 
         # Always return OK
         {:ok, socket}
@@ -23,9 +25,32 @@ defmodule Whosthebest.LobbyChannel do
         {:error, %{reason: "unauthorized"}}
     end
     
-    # broadcasts to other members of channel
-    def handle_info({:after_join, message}, socket) do
-        broadcast_from! socket, "lobby:online", message
+    # :setup_presence after a user has joined
+    # this will set up Presence to track the connection state of the user
+    def handle_info(:setup_presence, socket) do
+        user_id = socket.assigns[:user_id]
+        online_at = inspect(System.system_time(:seconds))
+        Debug.log ":setup_presence #{user_id} | #{online_at}"
+        
+        # the presence_state event will contain all connected users 
+        # whenever there is a change in presence, the presence_diff event will convey the delta info of users.
+        {:ok, _} = Presence.track(socket, user_id,  %{online_at: online_at})
+        push socket,"presence_state", Presence.list(socket)
+
+        #broadcast_from! socket, "lobby:online", message
+        #Process.send_after(self, :update_presence, 5000)
+        {:noreply, socket}
+    end
+
+    # :update_presence is called on an interval
+    # this will update the state of the Presence of connected users 
+    def handle_info(:update_presence, socket) do
+        user_id = socket.assigns[:user_id]
+        online_at = inspect(System.system_time(:seconds))
+        Debug.log ":update_presence #{user_id} | #{online_at}"
+        
+        Presence.update(socket, user_id, %{online_at: online_at})
+        Process.send_after(self, :update_presence, 5000)
         {:noreply, socket}
     end
     

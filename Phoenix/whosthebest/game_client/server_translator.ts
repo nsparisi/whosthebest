@@ -29,6 +29,18 @@ class LobbyConnection
             Debug.log("Unable to join lobby: " + resp);
         }
         
+        this.channel.on("presence_state", payload => {
+            Debug.log("IN presence_state.")
+            console.log(payload)
+            ServerTranslator.Instance.toClientLobbyMessage(payload.from_id, payload.message);
+        });
+        
+        this.channel.on("presence_diff", payload => {
+            Debug.log("IN presence_diff.")
+            console.log(payload)
+            ServerTranslator.Instance.toClientLobbyMessage(payload.from_id, payload.message);
+        });
+
         this.channel.on("lobby:message", payload => {
             Debug.log("IN lobby:message. ${payload.from_id} -> ${payload.message}")
             ServerTranslator.Instance.toClientLobbyMessage(payload.from_id, payload.message);

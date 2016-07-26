@@ -9,11 +9,17 @@ defmodule Whosthebest do
     children = [
       # Start the endpoint when the application starts
       supervisor(Whosthebest.Endpoint, []),
+
       # Start the Ecto repository
       worker(Whosthebest.Repo, []),
+
       # Here you could define other workers and supervisors as children
       # worker(Whosthebest.Worker, [arg1, arg2, arg3]),
-      worker(Whosthebest.GameManager, [[name: Whosthebest.GameManager]])
+      worker(Whosthebest.GameManager, [[name: Whosthebest.GameManager]]),
+
+      # Following the Phoenix.Presence documentation,
+      # adding a supervisor for this
+      supervisor(Whosthebest.Presence, []),
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html

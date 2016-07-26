@@ -15,13 +15,6 @@ defmodule Whosthebest.GameController do
         # get the full user from the DB
         user = Repo.get(Whosthebest.User, user.id)
         
-        # if they are not logged in, redirect
-        if !user.last_game_id do
-            conn
-                |> put_flash(:error, "Need to be matched to play.")
-                |> redirect(to: page_path(conn, :index))
-        end
-        
         # generate a token based on the user unique id
         token = Phoenix.Token.sign(conn, "user_id", user.id)
         conn = assign(conn, :user_token, token)
