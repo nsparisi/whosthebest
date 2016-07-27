@@ -8,6 +8,7 @@ declare var SOCKET: any;
 class LobbyConnection
 {
     channel: any;
+    users: Array<Array<string>> = new Array();
     
     openChannelToLobby = () =>
     {
@@ -28,31 +29,91 @@ class LobbyConnection
         {
             Debug.log("Unable to join lobby: " + resp);
         }
+
+        var userJoined = (username, phx_ref) => 
+        {
+            Debug.log(`Player has joined: ${username}`);
+            if(!(username in this.users))
+            {
+                this.users[username] = new Array();
+            }
+
+            if(this.users[username].indexOf(phx_ref) < 0)
+            {
+                this.users[username].push(phx_ref);
+            }
+        }
+
+        var userLeft = (username, phx_ref) => 
+        {
+            Debug.log(`Player has left: ${username}`);
+            if(username in this.users && 
+                this.users[username].indexOf(phx_ref) >= 0)
+            {
+                var index = this.users[username].indexOf(phx_ref);
+                this.users[username].splice(index, 1);
+            }
+
+            if(username in this.users && this.users[username].length == 0)
+            {
+                delete this.users[username];
+            }
+        }
         
         this.channel.on("presence_state", payload => {
-            Debug.log("IN presence_state.")
-            console.log(payload)
-            ServerTranslator.Instance.toClientLobbyMessage(payload.from_id, payload.message);
+            for(var key in payload)
+            {
+                // metas contains an entry for each connection by the same user
+                var metas = payload[key]["metas"];
+                for(var metakey in metas)
+                {
+                    var username = metas[metakey]["username"];
+                    var phx_ref = metas[metakey]["phx_ref"];
+                    userJoined(username, phx_ref);
+                }
+            }
+
+            ServerTranslator.Instance.toClientLobbyUserListUpdate(this.users);
         });
         
-        this.channel.on("presence_diff", payload => {
-            Debug.log("IN presence_diff.")
-            console.log(payload)
-            ServerTranslator.Instance.toClientLobbyMessage(payload.from_id, payload.message);
+        this.channel.on("presence_diff", payload => {            
+            for(var key in payload["leaves"])
+            {
+                var metas = payload["leaves"][key]["metas"];
+                for(var metakey in metas)
+                {
+                    var username = metas[metakey]["username"];
+                    var phx_ref = metas[metakey]["phx_ref"];
+                    userLeft(username, phx_ref);
+                }
+            }
+            
+            for(var key in payload["joins"])
+            {
+                var metas = payload["joins"][key]["metas"];
+                for(var metakey in metas)
+                {
+                    var username = metas[metakey]["username"];
+                    var phx_ref = metas[metakey]["phx_ref"];
+                    userJoined(username, phx_ref);
+                }
+            }
+
+            ServerTranslator.Instance.toClientLobbyUserListUpdate(this.users);
         });
 
         this.channel.on("lobby:message", payload => {
-            Debug.log("IN lobby:message. ${payload.from_id} -> ${payload.message}")
+            Debug.log(`IN lobby:message. ${payload.from_id} -> ${payload.message}`)
             ServerTranslator.Instance.toClientLobbyMessage(payload.from_id, payload.message);
         });
         
         this.channel.on("lobby:ask", payload => {
-            Debug.log("IN lobby:ask. ${payload.from_id} -> ${payload.to_id}")
+            Debug.log(`IN lobby:ask. ${payload.from_id} -> ${payload.to_id}`)
             ServerTranslator.Instance.toClientAskUser(payload.from_id, payload.to_id);
         });
         
         this.channel.on("lobby:response", payload => {     
-            Debug.log("IN lobby:response. ${payload.from_id} -> ${payload.to_id} : ${payload.accepted}")
+            Debug.log(`IN lobby:response. ${payload.from_id} -> ${payload.to_id} : ${payload.accepted}`)
             ServerTranslator.Instance.toClientRespondToUser(payload.from_id, payload.to_id, payload.accepted);   
         });
           
@@ -197,19 +258,24 @@ class ServerTranslator
     // ************************************
     // LOBBY: Send information to client
     // ************************************
+    toClientLobbyUserListUpdate = (users) =>
+    {
+        console.log(users);
+    }
+
     toClientLobbyMessage = (from_id: string, message: string) =>
     {
-        Debug.log("[${from_id}]: ${message}");
+        Debug.log(`hello [${from_id}]: ${message}`);
     }
 
     toClientAskUser = (from_id: string, to_id: string) =>
     {
-        Debug.log("${from_id}: do you want to play a game?");
+        Debug.log(`${from_id}: do you want to play a game?`);
     }
     
     toClientRespondToUser = (from_id: string, to_id: string, accepted: boolean) =>
     {
-        Debug.log("${from_id}: I have chosen ${accepted}?.");
+        Debug.log(`${from_id}: I have chosen ${accepted}?.`);
     }
     
     toClientStartGame = (from_id: string, to_id: string, game_id: string) =>

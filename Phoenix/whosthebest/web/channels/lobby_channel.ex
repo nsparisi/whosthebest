@@ -10,7 +10,10 @@ defmodule Whosthebest.LobbyChannel do
         # We have their user ID from socket.connect, so
         # use that to retrieve their DB info
         user_id = socket.assigns[:user_id]
+
+        # retrieve the user, so we can add any additional user info to the presence
         user = Whosthebest.Repo.get(Whosthebest.User, user_id) 
+        socket = assign(socket, :username, user.username)
 
         # After joining (leave the function) 
         # broadcast to the channel you're online.
@@ -29,12 +32,13 @@ defmodule Whosthebest.LobbyChannel do
     # this will set up Presence to track the connection state of the user
     def handle_info(:setup_presence, socket) do
         user_id = socket.assigns[:user_id]
+        username = socket.assigns[:username]
         online_at = inspect(System.system_time(:seconds))
         Debug.log ":setup_presence #{user_id} | #{online_at}"
         
         # the presence_state event will contain all connected users 
         # whenever there is a change in presence, the presence_diff event will convey the delta info of users.
-        {:ok, _} = Presence.track(socket, user_id,  %{online_at: online_at})
+        {:ok, _} = Presence.track(socket, user_id,  %{online_at: online_at, username: username})
         push socket,"presence_state", Presence.list(socket)
 
         #broadcast_from! socket, "lobby:online", message
@@ -46,10 +50,11 @@ defmodule Whosthebest.LobbyChannel do
     # this will update the state of the Presence of connected users 
     def handle_info(:update_presence, socket) do
         user_id = socket.assigns[:user_id]
+        username = socket.assigns[:username]
         online_at = inspect(System.system_time(:seconds))
         Debug.log ":update_presence #{user_id} | #{online_at}"
         
-        Presence.update(socket, user_id, %{online_at: online_at})
+        Presence.update(socket, user_id, %{online_at: online_at, username: username})
         Process.send_after(self, :update_presence, 5000)
         {:noreply, socket}
     end

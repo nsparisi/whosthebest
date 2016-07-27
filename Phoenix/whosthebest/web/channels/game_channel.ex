@@ -13,7 +13,7 @@ defmodule Whosthebest.GameChannel do
         # use that to retrieve their DB info
         user_id = socket.assigns[:user_id]
         user = Whosthebest.Repo.get(Whosthebest.User, user_id) 
-        
+
         # and validate that they entered the right room
         case user.last_game_id == game_id do
             true ->
