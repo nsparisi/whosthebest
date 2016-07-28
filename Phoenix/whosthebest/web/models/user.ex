@@ -40,8 +40,8 @@ defmodule Whosthebest.User do
     model
     |> cast(params, @required_fields, @optional_fields)
     |> validate_length(:username, min: 3)
-    |> validate_length(:username, max: 20)
-    |> validate_length(:password, min: 6)
+    |> validate_length(:username, max: 12)
+    |> validate_length(:password, min: 4)
     |> validate_length(:password, max: 80)
     |> validate_confirmation(:password, message: "passwords do not match")
     |> unique_constraint(:username)

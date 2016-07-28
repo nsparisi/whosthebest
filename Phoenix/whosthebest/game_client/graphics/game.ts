@@ -15,6 +15,15 @@ module Whosthebest.Graphics
             this.state.start("Boot");
         }
 
+        refreshLobbyUsers = (usernames: Array<Array<string>>) =>
+        {
+            if(this.state.current == "Menu")
+            {
+                var menu = this.state.getCurrentState() as State_Menu;
+                menu.refreshUsers(usernames);
+            }
+        }
+
         switchToGameLobby = () => 
         {
             this.state.start("GameLobby");
@@ -87,6 +96,42 @@ module Whosthebest.Graphics
         buttonFriend: Phaser.Button;
         buttonBack: Phaser.Button;
 
+        chatWindow: Phaser.Sprite;
+        chatField: Phaser.Sprite;
+        usersWindow: Phaser.Sprite;
+
+        userGroup: Phaser.Group;
+        userTexts: Array<Phaser.Text> = new Array();
+
+
+        refreshUsers = (usernames: Array<Array<string>>) =>
+        {
+            var x = this.usersWindow.x + 10;
+            var y = this.usersWindow.y + 10;
+            var y_offset = 15;
+
+            for (var userText of this.userTexts) 
+            {
+                userText.destroy();   
+            }
+            
+            this.userTexts = new Array();
+
+            var index = 0;
+            for (var username in usernames) 
+            {
+                var userText = this.add.text(
+                        x, 
+                        y + index * y_offset,
+                        username, 
+                        {font: "bold 10pt Arial", fill: "#000"});
+                this.userTexts.push(userText);
+                this.userGroup.add(userText);
+                    
+                index++;
+            }
+        }
+
         create()
         {
             this.buttonPlay = this.add.button(
@@ -95,33 +140,71 @@ module Whosthebest.Graphics
                 "images/menu/btn_play.png", this.play_pressed, this, 1, 0, 2);
 
             this.buttonBack = this.add.button(
-                13, 300, "images/menu/btn_back.png", this.back_pressed, this, 1, 0, 2);
+                430, 
+                315, 
+                "images/menu/btn_back.png", this.back_pressed, this, 1, 0, 2);
             this.buttonQuick = this.add.button(
-                this.game.width / 2 - 60, 
-                60, 
+                310, 
+                315, 
                 "images/menu/btn_quick.png", this.quick_pressed, this, 1, 0, 2);
             this.buttonFriend = this.add.button(
                 this.game.width / 2 - 60, 
                 60 + 60, 
                 "images/menu/btn_friend.png", this.friend_pressed, this, 1, 0, 2);
 
+            var graphics = this.add.graphics(0,0);
+            graphics.lineStyle(2, 0x222222, 1);
+            graphics.beginFill(0xFFFFFF, 1);
+            graphics.drawRect(0,0,290,300);
+            graphics.endFill();
+            this.chatWindow =  this.add.sprite(10,10, graphics.generateTexture());
+            graphics.destroy();
+
+            graphics = this.add.graphics(0,0);
+            graphics.lineStyle(2, 0x222222, 1);
+            graphics.beginFill(0xFFFFFF, 1);
+            graphics.drawRect(0,0,160,300);
+            graphics.endFill();
+            this.usersWindow =  this.add.sprite(310,10, graphics.generateTexture());
+            graphics.destroy();
+            
+            graphics = this.add.graphics(0,0);
+            graphics.lineStyle(2, 0x222222, 1);
+            graphics.beginFill(0xFFFFFF, 1);
+            graphics.drawRect(0,0,290,30);
+            graphics.endFill();
+            this.chatField =  this.add.sprite(10,320, graphics.generateTexture());
+            graphics.destroy();            
+
+            this.userGroup = this.add.group();
+
             this.showTitleMenu();
         }
 
         showTitleMenu = () =>
         {
+            ServerTranslator.Instance.disconnectFromLobby();
             this.buttonPlay.exists = true;
             this.buttonBack.exists = false;
             this.buttonQuick.exists = false;
             this.buttonFriend.exists = false;
+            this.chatWindow.exists = false;
+            this.usersWindow.exists = false;
+            this.chatField.exists = false;
+            this.userGroup.visible = false;
         }
 
-        showPlayMenu = () =>
+        showLobbyMenu = () =>
         {
+            ServerTranslator.Instance.connectToLobby();
             this.buttonPlay.exists = false;
             this.buttonBack.exists = true;
             this.buttonQuick.exists = true;
-            this.buttonFriend.exists = true;
+            this.buttonFriend.exists = false;
+            this.chatWindow.exists = true;
+            this.usersWindow.exists = true;
+            this.chatField.exists = true;
+            this.userGroup.visible = true;
         }
 
         back_pressed()
@@ -131,7 +214,7 @@ module Whosthebest.Graphics
 
         play_pressed()
         {
-            this.showPlayMenu();
+            this.showLobbyMenu();
         }
 
         quick_pressed()

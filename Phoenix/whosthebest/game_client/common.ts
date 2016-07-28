@@ -16,13 +16,12 @@ var deltaTimeMs = 0;
 //********************
 // Main engines
 //********************
-ServerTranslator.Instance;
-MainControl.Instance.initialize();
-InputEngine.Instance.initialize(bodyElement);
+// MainControl.Instance.initialize();
+// InputEngine.Instance.initialize(bodyElement);
 
 // // Run the game -- executed when the script is loaded
-var main = new Main();
-main.begin();
+// var main = new Main();
+// main.begin();
 
 // Screen saver test
 //PhaserTest.CreateTest();

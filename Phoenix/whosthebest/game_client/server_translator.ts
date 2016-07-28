@@ -10,6 +10,20 @@ class LobbyConnection
     channel: any;
     users: Array<Array<string>> = new Array();
     
+    closeChannelToLobby = () =>
+    {
+        if(this.channel)
+        {
+            // TODO, it seems this doesn't update Presence.
+            Debug.log("leaving channel. ");
+            this.channel.leave()
+                .receive("ok", () => { Debug.log("ACK left channel. "); } );
+            this.channel = null;
+
+            this.users = new Array();
+        }
+    }
+
     openChannelToLobby = () =>
     {
         var channelName = "lobby:main";
@@ -135,6 +149,7 @@ class LobbyConnection
         this.channel.push("lobby:response", {to_id: to_id, accepted: accepted});
     }
 
+
 }
 
 /**
@@ -234,11 +249,26 @@ class ServerTranslator
 
     initialize = () =>
     {
+
+    }
+
+    connectToLobby = () =>
+    {
+        Debug.log("ServerTranslator connectToLobby");
         if(!this.connectionToLobbyServer)
         {
-            Debug.log("ServerTranslator initialize");
             this.connectionToLobbyServer = new LobbyConnection();
-            this.connectionToLobbyServer.openChannelToLobby();
+        }
+
+        this.connectionToLobbyServer.openChannelToLobby();
+    }
+
+    disconnectFromLobby = () =>
+    {
+        Debug.log("ServerTranslator disconnectFromLobby");
+        if(this.connectionToLobbyServer)
+        {
+            this.connectionToLobbyServer.closeChannelToLobby();
         }
     }
 
@@ -258,9 +288,10 @@ class ServerTranslator
     // ************************************
     // LOBBY: Send information to client
     // ************************************
-    toClientLobbyUserListUpdate = (users) =>
+    toClientLobbyUserListUpdate = (users: Array<Array<string>>) =>
     {
         console.log(users);
+        GAME_INSTANCE.refreshLobbyUsers(users);
     }
 
     toClientLobbyMessage = (from_id: string, message: string) =>
