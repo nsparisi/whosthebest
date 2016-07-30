@@ -9,6 +9,7 @@ class LobbyConnection
 {
     channel: any;
     users: Array<Array<string>> = new Array();
+    useridToUsername = new Array();
     
     closeChannelToLobby = () =>
     {
@@ -36,7 +37,7 @@ class LobbyConnection
         var onJoin = (resp) =>
         {
             Debug.log("The lobby connection to the server was opened.");
-            Debug.log(this.channel);
+            ServerTranslator.Instance.toClientJoined(resp.username);
         }
 
         var onFail = (resp) =>
@@ -44,7 +45,7 @@ class LobbyConnection
             Debug.log("Unable to join lobby: " + resp);
         }
 
-        var userJoined = (username, phx_ref) => 
+        var userJoined = (username: string, phx_ref: string, user_id: string) => 
         {
             Debug.log(`Player has joined: ${username}`);
             if(!(username in this.users))
@@ -56,9 +57,12 @@ class LobbyConnection
             {
                 this.users[username].push(phx_ref);
             }
+
+            // update dictionary of id > username
+            this.useridToUsername[user_id] = username;
         }
 
-        var userLeft = (username, phx_ref) => 
+        var userLeft = (username: string, phx_ref: string) => 
         {
             Debug.log(`Player has left: ${username}`);
             if(username in this.users && 
@@ -73,6 +77,16 @@ class LobbyConnection
                 delete this.users[username];
             }
         }
+
+        var safeGetUsername = (user_id: string) =>
+        {
+            if(this.useridToUsername[user_id])
+            {
+                return this.useridToUsername[user_id];
+            }
+
+            return "unknown";
+        }
         
         this.channel.on("presence_state", payload => {
             for(var key in payload)
@@ -83,7 +97,7 @@ class LobbyConnection
                 {
                     var username = metas[metakey]["username"];
                     var phx_ref = metas[metakey]["phx_ref"];
-                    userJoined(username, phx_ref);
+                    userJoined(username, phx_ref, key);
                 }
             }
 
@@ -109,7 +123,7 @@ class LobbyConnection
                 {
                     var username = metas[metakey]["username"];
                     var phx_ref = metas[metakey]["phx_ref"];
-                    userJoined(username, phx_ref);
+                    userJoined(username, phx_ref, key);
                 }
             }
 
@@ -117,39 +131,43 @@ class LobbyConnection
         });
 
         this.channel.on("lobby:message", payload => {
-            Debug.log(`IN lobby:message. ${payload.from_id} -> ${payload.message}`)
-            ServerTranslator.Instance.toClientLobbyMessage(payload.from_id, payload.message);
+            Debug.log(`IN lobby:message. ${payload.from_id} -> ${payload.message}`);
+            ServerTranslator.Instance.toClientLobbyMessage(safeGetUsername(payload.from_id), payload.message);
         });
         
         this.channel.on("lobby:ask", payload => {
-            Debug.log(`IN lobby:ask. ${payload.from_id} -> ${payload.to_id}`)
+            Debug.log(`IN lobby:ask. ${payload.from_id} -> ${payload.to_id}`);
             ServerTranslator.Instance.toClientAskUser(payload.from_id, payload.to_id);
         });
         
         this.channel.on("lobby:response", payload => {     
-            Debug.log(`IN lobby:response. ${payload.from_id} -> ${payload.to_id} : ${payload.accepted}`)
+            Debug.log(`IN lobby:response. ${payload.from_id} -> ${payload.to_id} : ${payload.accepted}`);
             ServerTranslator.Instance.toClientRespondToUser(payload.from_id, payload.to_id, payload.accepted);   
         });
           
         this.channel.on("lobby:start_game", payload => {
-            Debug.log("IN lobby:start_game. ${payload.from_id} -> ${payload.to_id} : ${payload.game_id}")
+            Debug.log(`IN lobby:start_game. ${payload.from_id} -> ${payload.to_id} : ${payload.game_id}`);
             ServerTranslator.Instance.toClientStartGame(payload.from_id, payload.to_id, payload.game_id);
         });
     }
 
+    toServerLobbyMessage = (message: string) =>
+    {
+        Debug.log(`OUT lobby:message. ${message}`);
+        this.channel.push("lobby:message", {message: message});
+    }
+
     toServerAskUser = (to_id: string) =>
     {
-        Debug.log("OUT lobby:ask. ${to_id}")
+        Debug.log(`OUT lobby:ask. ${to_id}`);
         this.channel.push("lobby:ask", {to_id: to_id});
     }
     
     toServerRespondToUser = (to_id: string, accepted: boolean) =>
     {
-        Debug.log("OUTIN lobby:response. ${to_id} : ${accepted}")
+        Debug.log(`OUT lobby:response. ${to_id} : ${accepted}`);
         this.channel.push("lobby:response", {to_id: to_id, accepted: accepted});
     }
-
-
 }
 
 /**
@@ -288,15 +306,20 @@ class ServerTranslator
     // ************************************
     // LOBBY: Send information to client
     // ************************************
+    toClientJoined = (username: string) =>
+    {
+        GAME_INSTANCE.LOGGED_IN_USERNAME = username;
+    }
+
     toClientLobbyUserListUpdate = (users: Array<Array<string>>) =>
     {
         console.log(users);
         GAME_INSTANCE.refreshLobbyUsers(users);
     }
 
-    toClientLobbyMessage = (from_id: string, message: string) =>
+    toClientLobbyMessage = (username: string, message: string) =>
     {
-        Debug.log(`hello [${from_id}]: ${message}`);
+        GAME_INSTANCE.addLobbyChatMessage(username, message);
     }
 
     toClientAskUser = (from_id: string, to_id: string) =>
@@ -317,6 +340,11 @@ class ServerTranslator
     // ************************************
     // LOBBY: Send information to server
     // ************************************
+    toServerLobbyMessage = (message: string) =>
+    {
+        this.connectionToLobbyServer.toServerLobbyMessage(message);
+    }
+    
     toServerAskUser = (to_id: string) =>
     {
         this.connectionToLobbyServer.toServerAskUser(to_id);

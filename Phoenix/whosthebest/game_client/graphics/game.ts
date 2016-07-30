@@ -2,6 +2,8 @@ module Whosthebest.Graphics
 {
     export class Game_WhosTheBest extends Phaser.Game
     {
+        LOGGED_IN_USERNAME: string;
+
         constructor()
         {
             super(480, 360, Phaser.AUTO, 'gameDiv');
@@ -21,6 +23,15 @@ module Whosthebest.Graphics
             {
                 var menu = this.state.getCurrentState() as State_Menu;
                 menu.refreshUsers(usernames);
+            }
+        }
+
+        addLobbyChatMessage = (username: string, message: string) =>
+        {
+            if(this.state.current == "Menu")
+            {
+                var menu = this.state.getCurrentState() as State_Menu;
+                menu.addChatMessage(username, message);
             }
         }
 
@@ -103,37 +114,46 @@ module Whosthebest.Graphics
         userGroup: Phaser.Group;
         userTexts: Array<Phaser.Text> = new Array();
 
-
-        refreshUsers = (usernames: Array<Array<string>>) =>
-        {
-            var x = this.usersWindow.x + 10;
-            var y = this.usersWindow.y + 10;
-            var y_offset = 15;
-
-            for (var userText of this.userTexts) 
-            {
-                userText.destroy();   
-            }
-            
-            this.userTexts = new Array();
-
-            var index = 0;
-            for (var username in usernames) 
-            {
-                var userText = this.add.text(
-                        x, 
-                        y + index * y_offset,
-                        username, 
-                        {font: "bold 10pt Arial", fill: "#000"});
-                this.userTexts.push(userText);
-                this.userGroup.add(userText);
-                    
-                index++;
-            }
-        }
+        lobbyTextField: HTMLInputElement;
+        lobbyChat: HTMLElement;
+        lobbyUserList: HTMLElement;
 
         create()
         {
+            // TODO create this div here instead of keeping in html
+            this.lobbyTextField =  <HTMLInputElement>document.getElementById("lobbyTextField");
+            this.lobbyTextField.style.position = "absolute";
+            this.lobbyTextField.style.marginLeft = "10px";
+            this.lobbyTextField.style.marginTop = "320px";
+            this.lobbyTextField.style.width = "350px";
+            this.lobbyTextField.style.height = "30px";
+            this.lobbyTextField.onkeyup = (event) => 
+            {
+                event.preventDefault();
+                if(event.keyCode == 13 && this.lobbyTextField.value.length > 0)
+                {
+                    ServerTranslator.Instance.toServerLobbyMessage(this.lobbyTextField.value)
+                    this.lobbyTextField.value = "";
+                }
+            }
+
+            this.lobbyChat =  document.getElementById("lobbyChat");
+            this.lobbyChat.style.position = "absolute";
+            this.lobbyChat.style.marginLeft = "10px";
+            this.lobbyChat.style.marginTop = "10px";
+            this.lobbyChat.style.width = "350px";
+            this.lobbyChat.style.height = "300px";
+            this.lobbyChat.style.backgroundColor = "#ffffff";
+            this.lobbyChat.style.overflowY = "auto";
+
+            this.lobbyUserList =  document.getElementById("lobbyUserList");
+            this.lobbyUserList.style.position = "absolute";
+            this.lobbyUserList.style.marginLeft = "370px";
+            this.lobbyUserList.style.marginTop = "10px";
+            this.lobbyUserList.style.width = "100px";
+            this.lobbyUserList.style.height = "300px";
+            this.lobbyUserList.style.backgroundColor = "#ffffff";
+
             this.buttonPlay = this.add.button(
                 this.game.width / 2 - 60, 
                 60, 
@@ -152,31 +172,14 @@ module Whosthebest.Graphics
                 60 + 60, 
                 "images/menu/btn_friend.png", this.friend_pressed, this, 1, 0, 2);
 
-            var graphics = this.add.graphics(0,0);
-            graphics.lineStyle(2, 0x222222, 1);
-            graphics.beginFill(0xFFFFFF, 1);
-            graphics.drawRect(0,0,290,300);
-            graphics.endFill();
-            this.chatWindow =  this.add.sprite(10,10, graphics.generateTexture());
-            graphics.destroy();
-
-            graphics = this.add.graphics(0,0);
-            graphics.lineStyle(2, 0x222222, 1);
-            graphics.beginFill(0xFFFFFF, 1);
-            graphics.drawRect(0,0,160,300);
-            graphics.endFill();
-            this.usersWindow =  this.add.sprite(310,10, graphics.generateTexture());
-            graphics.destroy();
-            
-            graphics = this.add.graphics(0,0);
-            graphics.lineStyle(2, 0x222222, 1);
-            graphics.beginFill(0xFFFFFF, 1);
-            graphics.drawRect(0,0,290,30);
-            graphics.endFill();
-            this.chatField =  this.add.sprite(10,320, graphics.generateTexture());
-            graphics.destroy();            
-
-            this.userGroup = this.add.group();
+            // Example of creating a sprite using graphics tools
+            // var graphics = this.add.graphics(0,0);
+            // graphics.lineStyle(2, 0x222222, 1);
+            // graphics.beginFill(0xFFFFFF, 1);
+            // graphics.drawRect(0,0,290,300);
+            // graphics.endFill();
+            // this.chatWindow =  this.add.sprite(10,10, graphics.generateTexture());
+            // graphics.destroy();
 
             this.showTitleMenu();
         }
@@ -188,10 +191,10 @@ module Whosthebest.Graphics
             this.buttonBack.exists = false;
             this.buttonQuick.exists = false;
             this.buttonFriend.exists = false;
-            this.chatWindow.exists = false;
-            this.usersWindow.exists = false;
-            this.chatField.exists = false;
-            this.userGroup.visible = false;
+
+            this.lobbyTextField.hidden = true;
+            this.lobbyChat.hidden = true;
+            this.lobbyUserList.hidden = true;
         }
 
         showLobbyMenu = () =>
@@ -201,10 +204,10 @@ module Whosthebest.Graphics
             this.buttonBack.exists = true;
             this.buttonQuick.exists = true;
             this.buttonFriend.exists = false;
-            this.chatWindow.exists = true;
-            this.usersWindow.exists = true;
-            this.chatField.exists = true;
-            this.userGroup.visible = true;
+            
+            this.lobbyTextField.hidden = false;
+            this.lobbyChat.hidden = false;
+            this.lobbyUserList.hidden = false;
         }
 
         back_pressed()
@@ -224,6 +227,125 @@ module Whosthebest.Graphics
         friend_pressed()
         {
             GAME_INSTANCE.switchToGameLobby();
+        }
+
+        clearChatMessages = () =>
+        {
+            // clear list
+            while(this.lobbyChat.firstChild)
+            {
+                this.lobbyChat.removeChild(this.lobbyChat.firstChild);
+            }
+        }
+
+        addSystemMessage = (message: string) =>
+        {
+            var usernameDiv = document.createElement("div");
+            usernameDiv.innerHTML = "";
+            usernameDiv.style.display = "inline";
+            usernameDiv.style.cssFloat = "left";
+            usernameDiv.style.padding = "0 10px 0 0";
+            usernameDiv.style.fontStyle = "italic";
+            usernameDiv.style.color = "#2255aa";
+
+            var messageDiv = document.createElement("div");
+            messageDiv.innerHTML = message;
+            messageDiv.style.display = "inline";
+            messageDiv.style.cssFloat = "left";
+            messageDiv.style.fontStyle = "italic";
+            messageDiv.style.color = "#3366cc";
+
+            this.internalAddMessage([usernameDiv, messageDiv]);
+        }
+
+        addChatMessage = (username: string, message: string) =>
+        {
+            var usernameDiv = document.createElement("div");
+            usernameDiv.innerHTML = username;
+            usernameDiv.style.display = "inline";
+            usernameDiv.style.cssFloat = "left";
+            usernameDiv.style.padding = "0 10px 0 0";
+            usernameDiv.style.color = "#6699ff";
+
+            var messageDiv = document.createElement("div");
+            messageDiv.innerHTML = message;
+            messageDiv.style.display = "inline";
+            messageDiv.style.cssFloat = "left";
+
+            this.internalAddMessage([usernameDiv, messageDiv]);
+        }
+
+        usernameList = new Array<string>();
+        refreshUsers = (usernames: Array<Array<string>>) =>
+        {
+            // clear list
+            while(this.lobbyUserList.firstChild)
+            {
+                this.lobbyUserList.removeChild(this.lobbyUserList.firstChild);
+            }
+
+            // populate list
+            var newUsernameList = new Array<string>();
+            for(var username in usernames)
+            {
+                var userDiv = document.createElement("div");
+                userDiv.style.padding = "5px 0 0 5px";
+                userDiv.innerHTML = username;
+                this.lobbyUserList.appendChild(userDiv);
+
+                newUsernameList.push(username);
+            }
+
+            // figure out users that joined
+            for(var username of newUsernameList)
+            {
+                if(GAME_INSTANCE.LOGGED_IN_USERNAME != username &&
+                    this.usernameList.indexOf(username) == -1)
+                {
+                    this.addSystemMessage(`${username} has come online.`)
+                }
+            }
+            
+            // figure out users that left
+            for(var username of this.usernameList)
+            {
+                if(GAME_INSTANCE.LOGGED_IN_USERNAME != username &&
+                    newUsernameList.indexOf(username) == -1)
+                {
+                    this.addSystemMessage(`${username} has gone offline.`)
+                }
+            }
+
+            this.usernameList = newUsernameList;
+        }
+        
+        private internalAddMessage = (messageDivs: Array<HTMLElement>) =>
+        {
+            // check if the chat is scrolled to the bottom
+            var shouldScroll = false;
+            var maxScroll = this.lobbyChat.scrollHeight - parseInt(this.lobbyChat.style.height);
+            if(maxScroll == this.lobbyChat.scrollTop)
+            {
+                shouldScroll = true;
+            }
+
+            // create a container for the chat row
+            var rowDiv = document.createElement("div");
+            rowDiv.style.padding = "5px 0 0 5px";
+            rowDiv.style.clear = "both";
+            
+            // add the chat message elements to the row
+            for(var messageDiv of messageDivs)
+            {
+                rowDiv.appendChild(messageDiv);
+            }
+            this.lobbyChat.appendChild(rowDiv);
+            
+            // scroll the chat box automatically
+            if(shouldScroll)
+            {
+                rowDiv.scrollIntoView();
+            }
         }
     }
 

@@ -10,6 +10,12 @@
 <script>window.userToken = "<%= assigns[:user_token] %>";</script>
 <script>window.lastGameId = "<%= @last_game_id %>";</script>
 
+<div id="gameDiv" >
+    <input type="text" id="lobbyTextField" style="position:absolute;"></input>
+    <div id="lobbyChat" style="position:absolute;"></div>
+    <div id="lobbyUserList" style="position:absolute;"></div>
+</div>
+
 <!-- Import the game socket -->
 <script> require("web/static/js/game_socket")</script>
 

@@ -21,7 +21,7 @@ defmodule Whosthebest.LobbyChannel do
         send self, :setup_presence
 
         # Always return OK
-        {:ok, socket}
+        {:ok, %{user_id: user_id, username: user.username}, socket}
     end
 
     def join("lobby:" <> _private_subtopic, _message, _socket) do
