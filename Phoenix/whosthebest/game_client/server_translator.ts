@@ -10,6 +10,7 @@ class LobbyConnection
     channel: any;
     users: Array<Array<string>> = new Array();
     useridToUsername = new Array();
+    usernameToUserid = new Array();
     
     closeChannelToLobby = () =>
     {
@@ -60,6 +61,7 @@ class LobbyConnection
 
             // update dictionary of id > username
             this.useridToUsername[user_id] = username;
+            this.usernameToUserid[username] = user_id;
         }
 
         var userLeft = (username: string, phx_ref: string) => 
@@ -76,16 +78,6 @@ class LobbyConnection
             {
                 delete this.users[username];
             }
-        }
-
-        var safeGetUsername = (user_id: string) =>
-        {
-            if(this.useridToUsername[user_id])
-            {
-                return this.useridToUsername[user_id];
-            }
-
-            return "unknown";
         }
         
         this.channel.on("presence_state", payload => {
@@ -132,22 +124,32 @@ class LobbyConnection
 
         this.channel.on("lobby:message", payload => {
             Debug.log(`IN lobby:message. ${payload.from_id} -> ${payload.message}`);
-            ServerTranslator.Instance.toClientLobbyMessage(safeGetUsername(payload.from_id), payload.message);
+            ServerTranslator.Instance.toClientLobbyMessage(
+                this.safeGetUsername(payload.from_id), 
+                payload.message);
         });
         
         this.channel.on("lobby:ask", payload => {
             Debug.log(`IN lobby:ask. ${payload.from_id} -> ${payload.to_id}`);
-            ServerTranslator.Instance.toClientAskUser(payload.from_id, payload.to_id);
+            ServerTranslator.Instance.toClientAskUser(
+                this.safeGetUsername(payload.from_id), 
+                this.safeGetUsername(payload.to_id));
         });
         
         this.channel.on("lobby:response", payload => {     
             Debug.log(`IN lobby:response. ${payload.from_id} -> ${payload.to_id} : ${payload.accepted}`);
-            ServerTranslator.Instance.toClientRespondToUser(payload.from_id, payload.to_id, payload.accepted);   
+            ServerTranslator.Instance.toClientRespondToUser(
+                this.safeGetUsername(payload.from_id), 
+                this.safeGetUsername(payload.to_id), 
+                payload.accepted);   
         });
           
         this.channel.on("lobby:start_game", payload => {
             Debug.log(`IN lobby:start_game. ${payload.from_id} -> ${payload.to_id} : ${payload.game_id}`);
-            ServerTranslator.Instance.toClientStartGame(payload.from_id, payload.to_id, payload.game_id);
+            ServerTranslator.Instance.toClientStartGame(
+                this.safeGetUsername(payload.from_id), 
+                this.safeGetUsername(payload.to_id), 
+                payload.game_id);
         });
     }
 
@@ -157,16 +159,38 @@ class LobbyConnection
         this.channel.push("lobby:message", {message: message});
     }
 
-    toServerAskUser = (to_id: string) =>
+    toServerAskUser = (to_username: string) =>
     {
+        var to_id = this.safeGetUserid(to_username);
         Debug.log(`OUT lobby:ask. ${to_id}`);
         this.channel.push("lobby:ask", {to_id: to_id});
     }
     
-    toServerRespondToUser = (to_id: string, accepted: boolean) =>
+    toServerRespondToUser = (to_username: string, accepted: boolean) =>
     {
+        var to_id = this.safeGetUserid(to_username);
         Debug.log(`OUT lobby:response. ${to_id} : ${accepted}`);
         this.channel.push("lobby:response", {to_id: to_id, accepted: accepted});
+    }
+
+    safeGetUsername = (user_id: string) =>
+    {
+        if(this.useridToUsername[user_id])
+        {
+            return this.useridToUsername[user_id];
+        }
+
+        return "unknown";
+    }
+
+    safeGetUserid = (username: string) =>
+    {
+        if(this.usernameToUserid[username])
+        {
+            return this.usernameToUserid[username];
+        }
+
+        throw "username not found.";
     }
 }
 
@@ -322,19 +346,19 @@ class ServerTranslator
         GAME_INSTANCE.addLobbyChatMessage(username, message);
     }
 
-    toClientAskUser = (from_id: string, to_id: string) =>
+    toClientAskUser = (from_username: string, to_username: string) =>
     {
-        Debug.log(`${from_id}: do you want to play a game?`);
+        GAME_INSTANCE.receivedAsk(from_username, to_username);
     }
     
-    toClientRespondToUser = (from_id: string, to_id: string, accepted: boolean) =>
+    toClientRespondToUser = (from_username: string, to_username: string, accepted: boolean) =>
     {
-        Debug.log(`${from_id}: I have chosen ${accepted}?.`);
+        GAME_INSTANCE.receivedResponse(from_username, to_username, accepted);
     }
     
-    toClientStartGame = (from_id: string, to_id: string, game_id: string) =>
+    toClientStartGame = (from_username: string, to_username: string, game_id: string) =>
     {
-        this.connectToGame(game_id);
+        // this.connectToGame(game_id);
     }
     
     // ************************************
@@ -345,14 +369,14 @@ class ServerTranslator
         this.connectionToLobbyServer.toServerLobbyMessage(message);
     }
     
-    toServerAskUser = (to_id: string) =>
+    toServerAskUser = (to_username: string) =>
     {
-        this.connectionToLobbyServer.toServerAskUser(to_id);
+        this.connectionToLobbyServer.toServerAskUser(to_username);
     }
     
-    toServerRespondToUser = (to_id: string, accepted: boolean) =>
+    toServerRespondToUser = (to_username: string, accepted: boolean) =>
     {
-        this.connectionToLobbyServer.toServerRespondToUser(to_id, accepted);
+        this.connectionToLobbyServer.toServerRespondToUser(to_username, accepted);
     }
 
     // ************************************

@@ -35,6 +35,45 @@ module Whosthebest.Graphics
             }
         }
 
+        receivedAsk = (from_username: string, to_username: string) =>
+        {
+            if(to_username != this.LOGGED_IN_USERNAME)
+            {
+                Debug.log("receivedAsk: Received invalid message.")
+                return;
+            }
+
+            if(this.state.current == "Menu")
+            {
+                var menu = this.state.getCurrentState() as State_Menu;
+                var response = window.confirm(`${from_username} has challenged you to a match!`);
+                ServerTranslator.Instance.toServerRespondToUser(from_username, response);
+            }
+        }
+
+        receivedResponse = (from_username: string, to_username: string, accepted: boolean) =>
+        {
+            if(to_username != this.LOGGED_IN_USERNAME)
+            {
+                Debug.log("receivedResponse: Received invalid message.")
+                return;
+            }
+
+            if(this.state.current == "Menu")
+            {
+                var menu = this.state.getCurrentState() as State_Menu;
+                if(accepted)
+                {
+                    Debug.log("they accepted your invite!");
+                }
+                else
+                {
+                    Debug.log("they declined your invite!");
+                }
+            }
+        }
+
+
         switchToGameLobby = () => 
         {
             this.state.start("GameLobby");
@@ -117,6 +156,9 @@ module Whosthebest.Graphics
         lobbyTextField: HTMLInputElement;
         lobbyChat: HTMLElement;
         lobbyUserList: HTMLElement;
+
+        currentSelectedUserName: string;
+        usernameList = new Array<string>();
 
         create()
         {
@@ -222,11 +264,15 @@ module Whosthebest.Graphics
 
         quick_pressed()
         {
+            if(this.currentSelectedUserName != GAME_INSTANCE.LOGGED_IN_USERNAME)
+            {
+                ServerTranslator.Instance.toServerAskUser(this.currentSelectedUserName);
+            }
         }
 
         friend_pressed()
         {
-            GAME_INSTANCE.switchToGameLobby();
+            // GAME_INSTANCE.switchToGameLobby();
         }
 
         clearChatMessages = () =>
@@ -275,7 +321,6 @@ module Whosthebest.Graphics
             this.internalAddMessage([usernameDiv, messageDiv]);
         }
 
-        usernameList = new Array<string>();
         refreshUsers = (usernames: Array<Array<string>>) =>
         {
             // clear list
@@ -289,11 +334,14 @@ module Whosthebest.Graphics
             for(var username in usernames)
             {
                 var userDiv = document.createElement("div");
+                userDiv.style.backgroundColor = "#ffffff";
                 userDiv.style.padding = "5px 0 0 5px";
                 userDiv.innerHTML = username;
+                userDiv.setAttribute("user_id", username);
                 this.lobbyUserList.appendChild(userDiv);
-
                 newUsernameList.push(username);
+
+                userDiv.onclick = this.userNameOnClick;
             }
 
             // figure out users that joined
@@ -317,6 +365,19 @@ module Whosthebest.Graphics
             }
 
             this.usernameList = newUsernameList;
+        }
+
+        private userNameOnClick = (event: MouseEvent) =>
+        {
+            for(var i = 0; i < this.lobbyUserList.children.length; i++)
+            { 
+                var childElement = (<HTMLElement>this.lobbyUserList.children.item(i));
+                childElement.style.backgroundColor = "#ffffff";
+            }
+
+            var clickedDiv = <HTMLElement>event.target;
+            clickedDiv.style.backgroundColor = "#aaaaaa";
+            this.currentSelectedUserName = clickedDiv.getAttribute("user_id");
         }
         
         private internalAddMessage = (messageDivs: Array<HTMLElement>) =>

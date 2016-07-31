@@ -68,7 +68,9 @@ defmodule Whosthebest.LobbyChannel do
         Debug.log "LobbyChannel IN lobby:message #{from_id} | #{message}"
 
         # Boardcast the message to everyone in the lobby
-        broadcast! socket, "lobby:message", %{"from_id" => from_id, "message" => message}
+        broadcast! socket, "lobby:message", %{
+            from_id: to_string(from_id), 
+            message: message}
 
         {:noreply, socket}
     end
@@ -80,7 +82,9 @@ defmodule Whosthebest.LobbyChannel do
         
         # Broadcast the ask, then add an INTERCEPT, to filter who actually pushes.
         # TODO - run some checks to see if ask is even possible (user is in a game?)
-        broadcast! socket, "lobby:ask", %{"from_id" => from_id, "to_id" => to_id}
+        broadcast! socket, "lobby:ask", %{
+            from_id: to_string(from_id), 
+            to_id: to_string(to_id) }
         
         {:noreply, socket}
     end
@@ -93,9 +97,15 @@ defmodule Whosthebest.LobbyChannel do
 
         if(accepted) do
             game_id = UUID.uuid4()
-            broadcast! socket, "lobby:start_game", %{"from_id" => from_id, "to_id" => to_id, "game_id" => game_id}
+            broadcast!  socket, "lobby:start_game", %{
+                from_id: to_string(from_id), 
+                to_id: to_string(to_id), 
+                game_id: to_string(game_id)}
         else
-            broadcast_from! socket, "lobby:response", %{"from_id" => from_id, "to_id" => to_id, "accepted" => accepted}
+            broadcast! socket, "lobby:response", %{
+                from_id: to_string(from_id), 
+                to_id: to_string(to_id), 
+                accepted: accepted}
         end
 
         {:noreply, socket}
@@ -103,14 +113,14 @@ defmodule Whosthebest.LobbyChannel do
     
     # **************************
     # Handle OUTs
+    intercept ["lobby:message","lobby:ask","lobby:response", "lobby:start_game"]
 
     # lobby:message - send a chat message to the lobby
     # message: %{"from_id", "message"}
     # push: %{"from_id", "message"}
-    intercept ["lobby:message"]
     def handle_out("lobby:message", message, socket) do
-        user_id = socket.assigns[:user_id]
-        Debug.log "LobbyChannel OUT lobby:message #{user_id} | from #{message.from_id} | from #{message.to_id}"
+        user_id = to_string(socket.assigns[:user_id])
+        Debug.log "LobbyChannel OUT lobby:message #{user_id} from #{message.from_id} | #{message.message}"
 
         # Push the message
         push socket, "lobby:message", %{"from_id" =>  message.from_id, "message" => message.message}
@@ -121,9 +131,8 @@ defmodule Whosthebest.LobbyChannel do
     # lobby:ask - prompts the to_id if they want to play a game
     # message: %{"from_id", "to_id"}
     # push: %{"from_id", "to_id"}
-    intercept ["lobby:ask"]
     def handle_out("lobby:ask", message, socket) do
-        user_id = socket.assigns[:user_id]
+        user_id = to_string(socket.assigns[:user_id])
         Debug.log "LobbyChannel OUT lobby:ask #{user_id} | from #{message.from_id} | to #{message.to_id}"
 
         # Push the message, only if we're being spoken to.
@@ -137,13 +146,12 @@ defmodule Whosthebest.LobbyChannel do
     # lobby:response - notifies the to_id that the from_id has responded
     # message: %{"from_id", "to_id", "accepted"}
     # push: %{"from_id", "to_id", "accepted"}
-    intercept ["lobby:response"]
     def handle_out("lobby:response", message, socket) do
-        user_id = socket.assigns[:user_id]
-        Debug.log "LobbyChannel OUT lobby:response to #{user_id} | from #{message.from_id}"
+        user_id = to_string(socket.assigns[:user_id])
+        Debug.log "LobbyChannel OUT lobby:response #{user_id} from #{message.from_id} | to #{message.to_id}"
 
         # Push the message, only if we're being spoken to.
-        if(message.to_id == user_id) do
+        if(message.to_id == user_id || message.from_id == user_id) do
             push socket, "lobby:response", %{"from_id" => message.from_id, "to_id" => message.to_id, "accepted" => message.accepted}
         end
 
@@ -153,10 +161,9 @@ defmodule Whosthebest.LobbyChannel do
     # lobby:start_game - notifies to_id and from_id that they should enter a match
     # message: %{"from_id", "to_id", "game_id"}
     # push: %{"from_id", "to_id", "game_id"}
-    intercept ["lobby:start_game"]
     def handle_out("lobby:start_game", message, socket) do
-        user_id = socket.assigns[:user_id]
-        Debug.log "LobbyChannel OUT lobby:start_game to #{user_id} | from #{message.from_id} | from #{message.to_id} | from #{message.game_id}"
+        user_id = to_string(socket.assigns[:user_id])
+        Debug.log "LobbyChannel OUT lobby:start_game #{user_id} from #{message.from_id} | to #{message.to_id} | game #{message.game_id}"
 
         # Push the message, only if we're being spoken to.
         if(message.to_id == user_id || message.from_id == user_id) do
