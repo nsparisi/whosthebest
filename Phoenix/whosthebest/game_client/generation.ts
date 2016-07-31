@@ -31,7 +31,8 @@ class GenerationEngine
     
     initialize = () =>
     {
-
+        this.frameCount = 0;
+        this.expectedFrame = 0;
     }
 
     update = () =>

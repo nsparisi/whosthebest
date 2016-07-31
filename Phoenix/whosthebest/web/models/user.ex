@@ -58,4 +58,11 @@ defmodule Whosthebest.User do
     |> cast(params, ~w(email), [])
     |> OpenmaizeEcto.add_reset_token(key)
   end
+
+  def update_game_id(model, game_id) do
+    changeset = cast(model, %{last_game_id: game_id}, [:last_game_id])
+    if changeset.valid? do
+      Whosthebest.Repo.update!(changeset)
+    end
+  end
 end

@@ -37,7 +37,7 @@ class MainControl
     {
         if(this.currentGameState == GameStateType.MainMenu)
         {
-            MainMenu.Instance.update();
+            //MainMenu.Instance.update();
         }
         else if(this.currentGameState == GameStateType.Match)
         {
@@ -49,7 +49,7 @@ class MainControl
     {
         if(this.currentGameState == GameStateType.MainMenu)
         {
-            MainMenu.Instance.render();
+            //MainMenu.Instance.render();
         }
         else if(this.currentGameState == GameStateType.Match)
         {
@@ -68,8 +68,8 @@ class MainControl
 
     switchToMenu = () =>
     {
+        // REMOVED
         this.currentGameState = GameStateType.MainMenu;
-
-        MainMenu.Instance.initialize();
+        // MainMenu.Instance.initialize();
     }
 }

@@ -96,12 +96,21 @@ defmodule Whosthebest.LobbyChannel do
         Debug.log "LobbyChannel IN lobby:response #{accepted} | to #{to_id} | from #{from_id}"
 
         if(accepted) do
+            # Start a new game between these two users
+            # create a game ID, and save to each player.
             game_id = UUID.uuid4()
+            from_user = Whosthebest.Repo.get(Whosthebest.User, from_id) 
+            to_user = Whosthebest.Repo.get(Whosthebest.User, to_id) 
+            Whosthebest.User.update_game_id(from_user, game_id)
+            Whosthebest.User.update_game_id(to_user, game_id)
+
+            # Let each player know the game has started
             broadcast!  socket, "lobby:start_game", %{
                 from_id: to_string(from_id), 
                 to_id: to_string(to_id), 
                 game_id: to_string(game_id)}
         else
+            # Let the player know the invitation was declined
             broadcast! socket, "lobby:response", %{
                 from_id: to_string(from_id), 
                 to_id: to_string(to_id), 

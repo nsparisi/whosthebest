@@ -3,6 +3,8 @@ module Whosthebest.Graphics
     export class Game_WhosTheBest extends Phaser.Game
     {
         LOGGED_IN_USERNAME: string;
+        GAME_ID: string;
+        OPPONENT_USERNAME: string;
 
         constructor()
         {
@@ -53,15 +55,15 @@ module Whosthebest.Graphics
 
         receivedResponse = (from_username: string, to_username: string, accepted: boolean) =>
         {
-            if(to_username != this.LOGGED_IN_USERNAME)
+            if( to_username != this.LOGGED_IN_USERNAME &&
+                from_username != this.LOGGED_IN_USERNAME)
             {
                 Debug.log("receivedResponse: Received invalid message.")
                 return;
-            }
+            }            
 
             if(this.state.current == "Menu")
             {
-                var menu = this.state.getCurrentState() as State_Menu;
                 if(accepted)
                 {
                     Debug.log("they accepted your invite!");
@@ -73,15 +75,36 @@ module Whosthebest.Graphics
             }
         }
 
-
-        switchToGameLobby = () => 
+        switchToGameLobby = (from_username: string, to_username: string, game_id: string) => 
         {
+            if( to_username != this.LOGGED_IN_USERNAME &&
+                from_username != this.LOGGED_IN_USERNAME)
+            {
+                Debug.log("receivedResponse: Received invalid message.")
+                return;
+            }   
+
+            this.OPPONENT_USERNAME = 
+                from_username != this.LOGGED_IN_USERNAME ? 
+                from_username : 
+                to_username;
+
+            this.GAME_ID = game_id;
+                            
+            ServerTranslator.Instance.connectToGame(game_id);
             this.state.start("GameLobby");
         }
 
-        switchToGame = () => 
+        switchToGame = (randomSeed: number) => 
         {
             this.state.start("Game");
+            
+            // TODO clean up, change to PHASER
+            //MainControl.Instance.initialize();
+            InputEngine.Instance.initialize(bodyElement);
+            main = new Main();
+            main.begin();
+            MainControl.Instance.switchToGame(randomSeed);
         }
 
         switchToMenu = () =>
@@ -160,6 +183,13 @@ module Whosthebest.Graphics
         currentSelectedUserName: string;
         usernameList = new Array<string>();
 
+        shutdown()
+        {
+            ServerTranslator.Instance.disconnectFromLobby();
+            
+            this.toggleHtmlElements(false);
+        }
+
         create()
         {
             // TODO create this div here instead of keeping in html
@@ -234,9 +264,7 @@ module Whosthebest.Graphics
             this.buttonQuick.exists = false;
             this.buttonFriend.exists = false;
 
-            this.lobbyTextField.hidden = true;
-            this.lobbyChat.hidden = true;
-            this.lobbyUserList.hidden = true;
+            this.toggleHtmlElements(false);
         }
 
         showLobbyMenu = () =>
@@ -247,9 +275,14 @@ module Whosthebest.Graphics
             this.buttonQuick.exists = true;
             this.buttonFriend.exists = false;
             
-            this.lobbyTextField.hidden = false;
-            this.lobbyChat.hidden = false;
-            this.lobbyUserList.hidden = false;
+            this.toggleHtmlElements(true);
+        }
+
+        toggleHtmlElements = (toggle) =>
+        {
+            this.lobbyTextField.hidden = !toggle;
+            this.lobbyChat.hidden = !toggle;
+            this.lobbyUserList.hidden = !toggle;
         }
 
         back_pressed()
@@ -447,14 +480,14 @@ module Whosthebest.Graphics
             this.textName1 = this.add.text(
                 13, 
                 57,
-                "ScarramangaScarramanga", 
+                GAME_INSTANCE.LOGGED_IN_USERNAME, 
                 {font: "12pt Arial", fill: "#000"});
             this.textName1.anchor.set(0, 0);
                 
             this.textName2 = this.add.text(
                 this.game.width - 13, 
                 57,
-                "PositronicPositronic", 
+                GAME_INSTANCE.OPPONENT_USERNAME, 
                 {font: "12pt Arial", fill: "#000"});
             this.textName2.anchor.set(1, 0);
                 
@@ -482,11 +515,13 @@ module Whosthebest.Graphics
 
         back_pressed()
         {
+            ServerTranslator.Instance.disconnectFromGame();
             GAME_INSTANCE.switchToMenu();
         }
 
         ready_pressed()
         {
+            ServerTranslator.Instance.toServerGameReady();
         }
     }
 
@@ -496,12 +531,20 @@ module Whosthebest.Graphics
 
         create()
         {
-            this.textTitle = this.add.text(
-                this.game.width / 2, 
-                5, 
-                "Play Game", 
-                {font: "40pt Arial", fill: "#000"});
-            this.textTitle.anchor.set(0.5, 0);
+            // this.textTitle = this.add.text(
+            //     this.game.width / 2, 
+            //     5, 
+            //     "Play Game", 
+            //     {font: "40pt Arial", fill: "#000"});
+            // this.textTitle.anchor.set(0.5, 0);
+            
+            canvasElement.hidden = false;
+        }
+
+        shutdown()
+        {
+            canvasElement.hidden = true;
+            ServerTranslator.Instance.disconnectFromGame();
         }
     }
 }

@@ -16,10 +16,9 @@ class LobbyConnection
     {
         if(this.channel)
         {
-            // TODO, it seems this doesn't update Presence.
-            Debug.log("leaving channel. ");
+            Debug.log("leaving channel lobby:main. ");
             this.channel.leave()
-                .receive("ok", () => { Debug.log("ACK left channel. "); } );
+                .receive("ok", () => { Debug.log("response, left channel lobby:main. "); } );
             this.channel = null;
 
             this.users = new Array();
@@ -37,7 +36,7 @@ class LobbyConnection
 
         var onJoin = (resp) =>
         {
-            Debug.log("The lobby connection to the server was opened.");
+            Debug.log("The lobby connection to the server was opened. " + channelName + " : " + resp.username);
             ServerTranslator.Instance.toClientJoined(resp.username);
         }
 
@@ -202,6 +201,18 @@ class GameConnection
 {
     channel: any;
 
+    closeChannelToGame = () =>
+    {
+        if(this.channel)
+        {
+            Debug.log("leaving channel. ");
+            this.channel.leave()
+                .receive("ok", () => { Debug.log("response, left channel game:. "); } );
+                
+            this.channel = null;
+        }
+    }
+
     openChannelToGame = (game_id: string) =>
     {
         // join a channel, this will be the game server with game id
@@ -210,32 +221,39 @@ class GameConnection
         Debug.log("joining channel. " + channelName);
         this.channel = SOCKET.channel(channelName, {});
         this.channel.join()
-            .receive("ok", resp => { onJoin(); })
-            .receive("error", resp => { Debug.log("Unable to join" + resp) });
+            .receive("ok", resp => { onJoin(resp); })
+            .receive("error", resp => { onFail(resp); });
+
+        var onJoin = (resp) =>
+        {
+            Debug.log("The lobby connection to the server was opened. " + channelName);
+        }
+
+        var onFail = (resp) =>
+        {
+            Debug.log("Unable to join lobby: " + resp);
+        }
 
         this.channel.on("game:ready", payload => {
-            Debug.log("game:ready!")
+            Debug.log(`IN game:ready seed: ${payload.random_seed}`);
             
-            // todo real random seed
-            var dummyPayload = 1234;
-            ServerTranslator.Instance.toClientStartMatch(dummyPayload);
+            ServerTranslator.Instance.toClientStartMatch(payload.random_seed);
         });
         
         this.channel.on("game:frame", payload => {        
             // todo real timestamp
             var dummyTimestamp = "0";
-            ServerTranslator.Instance.toClientFrame(dummyTimestamp, payload.payload)
+            ServerTranslator.Instance.toClientFrame(dummyTimestamp, payload.payload);
         });
           
-        this.channel.on("user_joined", payload => {
-            Debug.log("User has joined : " + payload.user)
+        this.channel.on("game:joined", payload => {
+            Debug.log("IN game:joined : " + payload.user);
         });
-        
-        var onJoin = () =>
-        {
-            Debug.log("The connection to the server was opened.");
-            Debug.log(this.channel);
-        }
+          
+        this.channel.on("game:end", payload => {
+            Debug.log("IN game:end");
+            ServerTranslator.Instance.toClientMatchEnd();
+        });
     }
 
     toServerGameReady = () =>
@@ -250,12 +268,10 @@ class GameConnection
     
     toServerGameEnd = () =>
     {
-        this.channel.push("game:end", {});
-    }
-
-    close = () =>
-    {
-        // todo send disconnect
+        if(this.channel)
+        {
+            this.channel.push("game:end", {});
+        }
     }
     
     getChannelState = () =>
@@ -312,6 +328,8 @@ class ServerTranslator
         {
             this.connectionToLobbyServer.closeChannelToLobby();
         }
+        
+        this.connectionToLobbyServer = null;
     }
 
     connectToGame = (game_id: string) =>
@@ -327,17 +345,28 @@ class ServerTranslator
         }
     }
 
+    disconnectFromGame = () =>
+    {
+        Debug.log("ServerTranslator disconnectFromGame");
+        if(this.connectionToGameServer)
+        {
+            this.connectionToGameServer.closeChannelToGame();
+        }
+
+        this.connectionToGameServer = null;
+    }
+
     // ************************************
     // LOBBY: Send information to client
     // ************************************
     toClientJoined = (username: string) =>
     {
+        Debug.log("setting LOGGED_IN_USERNAME " + username);
         GAME_INSTANCE.LOGGED_IN_USERNAME = username;
     }
 
     toClientLobbyUserListUpdate = (users: Array<Array<string>>) =>
     {
-        console.log(users);
         GAME_INSTANCE.refreshLobbyUsers(users);
     }
 
@@ -358,7 +387,7 @@ class ServerTranslator
     
     toClientStartGame = (from_username: string, to_username: string, game_id: string) =>
     {
-        // this.connectToGame(game_id);
+        GAME_INSTANCE.switchToGameLobby(from_username, to_username, game_id);
     }
     
     // ************************************
@@ -386,9 +415,9 @@ class ServerTranslator
     {
     }
 
-    toClientStartMatch = (payload) =>
+    toClientStartMatch = (random_seed: number) =>
     {
-        MainControl.Instance.switchToGame(payload);
+        GAME_INSTANCE.switchToGame(random_seed);
     }
 
     toClientFrame = (timestamp: string, payload: string) =>
@@ -409,10 +438,15 @@ class ServerTranslator
         }
     }
 
+    toClientMatchEnd = () =>
+    {
+        GAME_INSTANCE.switchToMenu();
+    }
+
     // ************************************
     // GAME: Send information to server
     // ************************************
-    toServerQueueForMatch = () =>
+    toServerGameReady = () =>
     {
         this.connectionToGameServer.toServerGameReady();
     }

@@ -33,7 +33,7 @@ defmodule Whosthebest.GameChannel do
     
     # broadcasts to other members of channel
     def handle_info({:after_join, message}, socket) do
-        broadcast_from! socket, "user_joined", message
+        broadcast_from! socket, "game:joined", message
         {:noreply, socket}
     end
     
@@ -43,13 +43,15 @@ defmodule Whosthebest.GameChannel do
     # "game:ready" is called when the client is finished 
     # loading game assets and page is fully loaded.
     def handle_in("game:ready", %{}, socket) do
-        Debug.log "GameChannel game:ready " <> to_string(socket.assigns[:user_id])
+        Debug.log "GameChannel IN game:ready  #{socket.assigns[:user_id]}"
         game = socket.assigns[:game]
         GameServer.join_user(game, to_string(socket.assigns[:user_id]))
         GameServer.clear_frames(game)
         
         if :ready == GameServer.get_game_state(game) do
-            broadcast! socket, "game:ready", %{}
+            :random.seed(:erlang.now())
+            random_seed = to_string(:random.uniform() * 1000000)
+            broadcast! socket, "game:ready", %{"random_seed" => random_seed}
         end
         
         {:noreply, socket}
@@ -73,7 +75,7 @@ defmodule Whosthebest.GameChannel do
     # "game:end" is called when the game is over.
     # TODO at some point this will be determined by the server, not client
     def handle_in("game:end", %{}, socket) do
-        Debug.log "GameChannel game:end " <> to_string(socket.assigns[:user_id])
+        Debug.log "GameChannel IN game:end  #{socket.assigns[:user_id]}"
         GameServer.reset(socket.assigns[:game])
         broadcast! socket, "game:end", %{}
         {:noreply, socket}
@@ -82,14 +84,14 @@ defmodule Whosthebest.GameChannel do
     # **************************
     # Handle OUTs
     # This is unused for now, since I learned about broadcast_from
-    #intercept ["user_joined"]
-    #def handle_out("user_joined", message, socket) do
+    #intercept ["game:joined"]
+    #def handle_out("game:joined", message, socket) do
     #    # ignore messages sent from ourself
     #    user_id = socket.assigns[:user_id]
     #    if(message.from == user_id) do
     #        {:noreply, socket}
     #    else
-    #        push socket, "user_joined", %{user: message.user}
+    #        push socket, "game:joined", %{user: message.user}
     #        {:noreply, socket}
     #    end
     #end

@@ -118,7 +118,7 @@ class MainMenu
     debug1 = () =>
     {
         Debug.log("[menu]queue");
-        ServerTranslator.Instance.toServerQueueForMatch();
+        ServerTranslator.Instance.toServerGameReady();
         this.menuText2.text = "Waiting for players..."
     }
     
