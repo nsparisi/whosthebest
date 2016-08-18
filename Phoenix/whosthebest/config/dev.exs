@@ -36,7 +36,7 @@ config :phoenix, :stacktrace_depth, 20
 config :whosthebest, Whosthebest.Repo,
   adapter: Ecto.Adapters.Postgres,
   username: "postgres",
-  password: "postgres",
+  password: "!!123abc",
   database: "whosthebest_dev",
   hostname: "localhost",
   pool_size: 10
