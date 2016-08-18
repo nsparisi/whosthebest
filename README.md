@@ -1,3 +1,10 @@
+# Prerequisites
+
+  1. Elixir 1.3.2 with Erlang OTP 19
+  2. Node JS 4.4.7 x64
+  3. PostgreSQL 9.6.0
+  4. Python 2.7.12
+
 # Whosthebest
 
 To start your Phoenix app:
