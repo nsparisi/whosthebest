@@ -57,13 +57,15 @@ class MainControl
         }
     }
 
-    switchToGame =  (randomSeed: number) =>
+    switchToGame =  (randomSeed: number, isPracticeGame: boolean) =>
     {
-        this.currentGameState = GameStateType.Match;
-
         GameEngine.Instance.initialize(randomSeed);
         GenerationEngine.Instance.initialize();
         GraphicsEngine.Instance.initialize();
+
+        GenerationEngine.Instance.setAsPracticeGame(isPracticeGame);
+
+        this.currentGameState = GameStateType.Match;
     }
 
     switchToMenu = () =>

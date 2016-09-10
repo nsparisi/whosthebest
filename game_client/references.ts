@@ -3,7 +3,11 @@
 /// <reference path="util.ts" />
 
 /// <reference path="graphics/game.ts" />
-/// <reference path="graphics/phaser-test.ts" />
+/// <reference path="graphics/state_boot.ts" />
+/// <reference path="graphics/state_game.ts" />
+/// <reference path="graphics/state_gamelobby.ts" />
+/// <reference path="graphics/state_menu.ts" />
+/// <reference path="graphics/state_preloader.ts" />
 
 /// <reference path="input.ts" />
 /// <reference path="server_translator.ts" />

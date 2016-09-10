@@ -20,6 +20,8 @@ class GenerationEngine
         GenerationEngine.Instance = this;
     }
 
+    isPracticeGame = false;
+
     frameRate = 20;
     elapsed = 0;
     threshold = 1000 / this.frameRate;
@@ -33,6 +35,11 @@ class GenerationEngine
     {
         this.frameCount = 0;
         this.expectedFrame = 0;
+    }
+
+    setAsPracticeGame = (isPracticeGame: boolean) =>
+    {
+        this.isPracticeGame = isPracticeGame;
     }
 
     update = () =>
@@ -69,10 +76,28 @@ class GenerationEngine
 
     sendFrameToServer = () =>
     {
-        // send frame data to server
-        ServerTranslator.Instance.toServerFrame(
-            this.frameCount, 
-            this.currentInput);
+        if(!this.isPracticeGame)
+        {
+            // send frame data to server
+            ServerTranslator.Instance.toServerFrame(
+                this.frameCount, 
+                this.currentInput);
+        }
+        else 
+        {
+            // bypass server entirely for practice
+            if( GameEngine.Instance.currentGameState == 
+                GameEngine.Instance.gameStateTypes.Ended)
+            {
+                GAME_INSTANCE.switchToMenu();
+            }
+            else 
+            {
+                this.generatePracticeData(
+                    this.frameCount, 
+                    this.currentInput);
+            }
+        }
 
         // drains input buffer
         this.drainInput();
@@ -80,6 +105,27 @@ class GenerationEngine
         // update frame count
         // todo wrap around
         this.frameCount++;
+    }
+
+    generatePracticeData = (frame: number, playerInputs: any[]) =>
+    {
+        var inputs = [];
+
+        // set player 0 as our own input
+        var playerInputAsString = "";
+        for(var i = 0; i < playerInputs.length; i++)
+        {
+            playerInputAsString += ServerTranslator.Instance.PLAYERINPUT_DELIMETER;
+            playerInputAsString += playerInputs[i];
+        }
+        inputs.push(playerInputAsString);
+
+        // TODO set player 1 with random inputs
+        inputs.push("");
+
+        // bypass server call, and send data back to client
+        var data = new FrameData("test", frame.toString(), inputs);
+        this.receiveFrameFromServer(data);
     }
 
     receiveFrameFromServer = (frameData) =>
