@@ -8,6 +8,9 @@ module Whosthebest.Graphics
         fpsText: Phaser.Text;
         gameBoards: GameBoard[];
 
+        static sfxChainMild: Phaser.Sound;
+        static sfxChainIntense: Phaser.Sound;
+
         static TILE_SPRITE_KEYS = [
             "images/game/tile_0.png",
             "images/game/tile_1.png",
@@ -42,6 +45,9 @@ module Whosthebest.Graphics
                     State_Game.TILE_SPRITE_KEYS[i], 
                     15, 15);
             }
+
+            this.load.audio("audio/chain_intense.mp3","audio/chain_intense.mp3");
+            this.load.audio("audio/chain_mild.mp3", "audio/chain_mild.mp3");
         }
 
         create()
@@ -80,6 +86,9 @@ module Whosthebest.Graphics
                 "FPS", 
                 {font: "10pt Arial", fill: "#000"});
             this.fpsText.anchor.set(0.5, 0);
+
+            State_Game.sfxChainIntense = this.add.audio("audio/chain_intense.mp3");
+            State_Game.sfxChainMild = this.add.audio("audio/chain_mild.mp3");
         }
 
         shutdown()
@@ -209,6 +218,9 @@ module Whosthebest.Graphics
                 })
             });
 
+            // look for and update combo visuals
+            this.updateCombos();
+
             // tiles ticking upwards
             var yOffsetCurrentHeight = this.yOffsetAsHeight * this.gameEngineBoard.yOffset;
 
@@ -277,6 +289,117 @@ module Whosthebest.Graphics
             // Debug.log(`${index}: dead(${countDead}) living(${countLiving}) afterD(${countDAfter}) afterL(${countLAfter})`);
 
             return tile;
+        }
+
+        combos = [];
+        newCombo = [];
+        updateCombos =  () =>
+        {
+            this.removeOldCombos();
+            this.checkForNewCombos();
+        }
+        
+        removeOldCombos = () =>
+        {
+            for(var i = this.combos.length - 1; i >= 0; i--)
+            {
+                for(var j = 0; j < this.combos[i].length; j++)
+                {
+                    if(!this.combos[i][j].isComboing)
+                    {
+                        this.combos.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+        }
+
+        checkForNewCombos = () =>
+        {
+            // find all new combos occurring this frame
+            for(var i = this.gameEngineBoard.boardSpaces.length - 1; i >= 0 ; i--)
+            {
+                for(var j = 0; j < this.gameEngineBoard.boardSpaces[i].length; j++)
+                {
+                    var tile = this.gameEngineBoard.getTileAtSpace(j, i);
+
+                    if(tile && !tile.isAttackBlock && tile.isComboing && !this.isTileAlreadyInCombo(tile) && !tile.persistAfterCombo)
+                    {
+                        this.newCombo.push(tile);
+                    }
+                }
+            }
+
+            // determine if combo is worthy of a popup.
+            // combos are 4x tiles or more
+            // chains are isChaining property
+            if(this.newCombo.length > 0)
+            {
+                this.combos.push(this.newCombo);
+
+                if(this.newCombo.length > 3)
+                {
+                    // popup visually!
+                    this.addComboPopup(
+                        this.newCombo[0].x,
+                        this.newCombo[0].y,
+                        this.newCombo.length,
+                        false);
+                }
+
+                if(this.newCombo[0].isChaining && this.gameEngineBoard.globalChainCounter > 1)
+                {
+                    var tileY = this.newCombo.length > 3 ? this.newCombo[0].y + 1 : this.newCombo[0].y;
+
+                    // popup visually!
+                    this.addComboPopup(
+                        this.newCombo[0].x,
+                        tileY,
+                        this.gameEngineBoard.globalChainCounter,
+                        true);
+                }
+
+                this.newCombo = [];
+            }
+        }
+
+        isTileAlreadyInCombo = (tile) =>
+        {
+            for(var i = 0; i < this.combos.length; i++)
+            {
+                if(this.combos[i].indexOf(tile) != -1)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        addComboPopup = (tileX, tileY, count, falseComboTrueChain) =>
+        {
+            // todo logic for visuals
+            var realX = tileX * GraphicsEngine.Instance.tileWidth;
+            var realY = this.height - tileY * GraphicsEngine.Instance.tileHeight -
+                this.yOffsetAsHeight * this.gameEngineBoard.yOffset;
+
+            if(falseComboTrueChain && count <= 3)
+            {
+               State_Game.sfxChainMild.play();
+            }
+            else if(falseComboTrueChain && count > 3)
+            {
+               State_Game.sfxChainIntense.play();
+            }
+        }
+
+        removeComboPopup = (popup) =>
+        {
+            var index = this.comboPopups.indexOf(popup);
+            if(index != -1)
+            {
+                this.comboPopups.splice(index, 1);
+            }
         }
     }
 }
