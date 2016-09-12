@@ -1,5 +1,4 @@
 /// <reference path="references.ts" />
-Debug.log("common.ts");
 
 const CANVAS_WIDTH = 480;
 const CANVAS_HEIGHT = 360;
@@ -20,12 +19,11 @@ var deltaTimeMs = 0;
 // MainControl.Instance.initialize();
 // InputEngine.Instance.initialize(bodyElement);
 
-// // Run the game -- executed when the script is loaded
+// create the game engines
+// handles Input, Game, Server logic
 var main = new Main();
-// main.begin();
+//main.begin();
 
-// Screen saver test
-//PhaserTest.CreateTest();
-
-// real deal
+// create the Phaser game instance
+// handles Graphics logic
 const GAME_INSTANCE = new Whosthebest.Graphics.Game_WhosTheBest();

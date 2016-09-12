@@ -1,5 +1,4 @@
 /// <reference path="references.ts" />
-Debug.log("main.ts");
 
 /**
  * Main entry point for the game

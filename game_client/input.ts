@@ -1,4 +1,3 @@
-Debug.log("input.ts");
 
 /**
  * InputEngine is responsible for maintaining keysCurrent and keysPrevious tables.

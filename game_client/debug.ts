@@ -11,4 +11,3 @@ module Debug
         console.log("[error]" + message);
     }
 }
-Debug.log("debug.ts");

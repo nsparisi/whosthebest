@@ -18,5 +18,3 @@
 /// <reference path="common.ts" />
 /// <reference path="main.ts" />
 /// <reference path="graphics.ts" />
-
-Debug.log("references.ts");

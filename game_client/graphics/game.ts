@@ -111,13 +111,12 @@ module Whosthebest.Graphics
         {
             this.state.start("Game");
             InputEngine.Instance.initialize(bodyElement);
-            main = new Main();
-            main.begin();
             MainControl.Instance.switchToGame(123456, true);
         }
 
         switchToMenu = () =>
         {
+            MainControl.Instance.switchToMenu();
             this.state.start("Menu");
         }
     }

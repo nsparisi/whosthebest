@@ -1,5 +1,4 @@
 /// <reference path="references.ts" />
-Debug.log("main_control.ts");
 
 enum GameStateType
     {

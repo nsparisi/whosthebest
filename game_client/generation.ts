@@ -1,5 +1,4 @@
 /// <reference path="references.ts" />
-Debug.log("generation.ts");
 
 /**
  * Generation Engine is responsible for handling frame advancement for the game engine.

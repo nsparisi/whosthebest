@@ -14,6 +14,9 @@ module Whosthebest.Graphics
             this.stage.disableVisibilityChange = true;
             this.stage.backgroundColor = "#6495ED"
 
+            // various phaser settings
+            this.game.time.advancedTiming = true;
+
             // immediately jump to the preloader
             this.game.state.start("Preloader");
         }

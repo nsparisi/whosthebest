@@ -1,5 +1,4 @@
 /// <reference path="references.ts" />
-Debug.log("game.ts");
 
 /**
 * GameEngine Object
@@ -266,7 +265,7 @@ class Board
         y: 1
     }
 
-    tiles = [];
+    tiles: Tile[] = [];
     boardSpaces = [];
     lastRowOfTileTypes = [];
     attackBlocksInWait = [];

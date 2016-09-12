@@ -1,5 +1,4 @@
 /// <reference path="references.ts" />
-Debug.log("graphics.ts");
 
 /**
  * Handles all graphical related actions for a game.

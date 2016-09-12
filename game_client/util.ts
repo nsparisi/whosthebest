@@ -1,5 +1,4 @@
 /// <reference path="references.ts" />
-Debug.log("util.ts");
 
 /**
  * Provides a seed-capable random number generator.

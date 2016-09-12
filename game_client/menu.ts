@@ -1,5 +1,4 @@
 /// <reference path="references.ts" />
-Debug.log("menu.ts");
 
 class MainMenu
 {

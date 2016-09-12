@@ -1,5 +1,4 @@
 /// <reference path="references.ts" />
-Debug.log("server_translator.ts");
 
 // our socket connection is defined externally in game_socket.js
 // window.Socket = new Socket(..)
