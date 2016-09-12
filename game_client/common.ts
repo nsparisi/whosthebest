@@ -1,16 +1,7 @@
 /// <reference path="references.ts" />
 
-const CANVAS_WIDTH = 480;
-const CANVAS_HEIGHT = 360;
-
-var canvasElement = <HTMLCanvasElement> document.getElementById("gameCanvas");
-canvasElement.width = CANVAS_WIDTH;
-canvasElement.height = CANVAS_HEIGHT;
-canvasElement.hidden = true;
-
-var canvasContext = canvasElement.getContext("2d");
+// global vars used in various classes
 var bodyElement = document.getElementsByTagName("body")[0];
-   
 var deltaTimeMs = 0;
 
 //********************
@@ -22,7 +13,8 @@ var deltaTimeMs = 0;
 // create the game engines
 // handles Input, Game, Server logic
 var main = new Main();
-//main.begin();
+main.begin();
+MainControl.Instance.switchToMenu();
 
 // create the Phaser game instance
 // handles Graphics logic

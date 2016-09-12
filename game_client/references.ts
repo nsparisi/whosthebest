@@ -13,8 +13,8 @@
 /// <reference path="server_translator.ts" />
 /// <reference path="generation.ts" />
 /// <reference path="game.ts" />
-/// <reference path="menu.ts" />
 /// <reference path="main_control.ts" />
 /// <reference path="common.ts" />
 /// <reference path="main.ts" />
+// graphics.ts has been permanently removed
 /// <reference path="graphics.ts" />

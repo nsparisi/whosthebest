@@ -16,7 +16,7 @@ class Main {
     
     draw = () =>
     {
-        MainControl.Instance.render();
+        // deprecated
     }
     
     begin = () =>

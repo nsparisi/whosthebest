@@ -53,8 +53,8 @@ module Whosthebest.Graphics
 
             // player 1
             var board1 = new GameBoard(this.game, null, "board1", true);
-            board1.x = canvasElement.width / 4;
-            board1.y = canvasElement.height / 2;
+            board1.x = this.game.width / 4;
+            board1.y = this.game.height / 2;
             board1.x -= GameEngine.Instance.colCount * TILE_WIDTH / 2;
             board1.y -= GameEngine.Instance.rowCountInBounds * TILE_HEIGHT / 2;
             board1.initialize(GameEngine.Instance.boards[0]);
@@ -65,8 +65,8 @@ module Whosthebest.Graphics
             if(GameEngine.Instance.boards.length > 1)
             {
                 var board2 = new GameBoard(this.game, null, "board2", true);
-                board2.x = canvasElement.width * 3 / 4;
-                board2.y = canvasElement.height / 2
+                board2.x = this.game.width * 3 / 4;
+                board2.y = this.game.height / 2
                 board2.x -= GameEngine.Instance.colCount * TILE_WIDTH / 2;
                 board2.y -= GameEngine.Instance.rowCountInBounds * TILE_HEIGHT / 2;
                 board2.initialize(GameEngine.Instance.boards[1]);
@@ -80,19 +80,14 @@ module Whosthebest.Graphics
                 "FPS", 
                 {font: "10pt Arial", fill: "#000"});
             this.fpsText.anchor.set(0.5, 0);
-            
-            // show legacy graphics canvas
-            canvasElement.hidden = false;
         }
 
         shutdown()
         {
             // destroy all objects
+            // game objects are destroyed as long as they belong to this state
             //this.gameBoards.forEach((gameBoard) => {gameBoard.destroy()});
             //this.fpsText.destroy();
-
-            // hide legacy graphics canvas
-            canvasElement.hidden = true;
 
             ServerTranslator.Instance.disconnectFromGame();
         }

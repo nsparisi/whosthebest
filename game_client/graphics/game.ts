@@ -102,8 +102,6 @@ module Whosthebest.Graphics
             // TODO clean up, change to PHASER
             //MainControl.Instance.initialize();
             InputEngine.Instance.initialize(bodyElement);
-            main = new Main();
-            main.begin();
             MainControl.Instance.switchToGame(randomSeed, false);
         }
 

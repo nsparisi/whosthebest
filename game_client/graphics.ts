@@ -1,5 +1,17 @@
 /// <reference path="references.ts" />
 
+/*
+const CANVAS_WIDTH = 480;
+const CANVAS_HEIGHT = 360;
+var canvasElement = <HTMLCanvasElement> document.getElementById("gameCanvas");
+var canvasContext = canvasElement.getContext("2d");
+canvasElement.width = CANVAS_WIDTH;
+canvasElement.height = CANVAS_HEIGHT;
+canvasElement.hidden = true;
+*/
+var canvasElement = <HTMLCanvasElement> document.getElementById("gameCanvas");
+var canvasContext;
+
 /**
  * Handles all graphical related actions for a game.
  */

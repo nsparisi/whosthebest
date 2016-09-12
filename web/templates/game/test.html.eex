@@ -3,7 +3,6 @@
 </div>
 
 <!-- Game canvas will be rendered here -->
-<canvas id="gameCanvas" ></canvas>
 <div id="gameDiv" >
     <input type="text" id="lobbyTextField" style="position:absolute;"></input>
     <div id="lobbyChat" style="position:absolute;"></div>

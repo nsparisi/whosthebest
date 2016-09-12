@@ -2,9 +2,6 @@
     <h2>Game <%= @last_game_id %> !</h2>
     
 </div>
-
-<!-- The game canvas -->
-<canvas width="800" height="600" id="gameCanvas"></canvas>
     
 <!-- Set some variables to connect to the server -->
 <script>window.userToken = "<%= assigns[:user_token] %>";</script>

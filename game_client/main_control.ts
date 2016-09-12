@@ -46,21 +46,13 @@ class MainControl
 
     render = () =>
     {
-        if(this.currentGameState == GameStateType.MainMenu)
-        {
-            //MainMenu.Instance.render();
-        }
-        else if(this.currentGameState == GameStateType.Match)
-        {
-            GraphicsEngine.Instance.update();
-        }
+        // deprecated
     }
 
     switchToGame =  (randomSeed: number, isPracticeGame: boolean) =>
     {
         GameEngine.Instance.initialize(randomSeed);
         GenerationEngine.Instance.initialize();
-        GraphicsEngine.Instance.initialize();
 
         GenerationEngine.Instance.setAsPracticeGame(isPracticeGame);
 
