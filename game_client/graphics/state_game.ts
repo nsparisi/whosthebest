@@ -35,6 +35,16 @@ module Whosthebest.Graphics
 
         }
 
+        init(randomSeed: number, isPracticeGame: boolean)
+        {
+            Debug.log("state_game init: " + randomSeed + ":" + isPracticeGame);
+            InputEngine.Instance.initialize(bodyElement);    
+            GameEngine.Instance.initialize(randomSeed);
+            GenerationEngine.Instance.initialize();
+            GenerationEngine.Instance.setAsPracticeGame(isPracticeGame);
+            Main.Instance.isRunning = true;
+        }
+
         preload()
         {
             // load all TILE assets
@@ -98,10 +108,10 @@ module Whosthebest.Graphics
             //this.gameBoards.forEach((gameBoard) => {gameBoard.destroy()});
             //this.fpsText.destroy();
 
+            Main.Instance.isRunning = false;
             ServerTranslator.Instance.disconnectFromGame();
         }
 
-        frameCount = 0;
         update()
         {
             this.fpsText.text = this.game.time.fps.toString();
@@ -111,12 +121,6 @@ module Whosthebest.Graphics
             {
                 gameBoard.updateBoard();
             });
-
-            this.frameCount++;
-            if(this.frameCount > 100)
-            {
-                //throw "123";
-            }
         }    
     }
     
@@ -184,12 +188,12 @@ module Whosthebest.Graphics
             // use graphics tool to draw the cursor
             // the cursor is two squares [][]
              var graphics = this.game.add.graphics(0, 0);
-            graphics.lineStyle(3, 0x000000, 1);
+            graphics.lineStyle(2, 0xFFFFFF, 1);
             graphics.beginFill(0x000000, 0.0);
-            graphics.drawRect(0, 0, TILE_WIDTH - 3, TILE_HEIGHT);
+            graphics.drawRect(0, 0, TILE_WIDTH - 2, TILE_HEIGHT);
             graphics.endFill();
             graphics.beginFill(0x000000, 0.0);
-            graphics.drawRect(TILE_WIDTH, 0, TILE_WIDTH - 3, TILE_HEIGHT);
+            graphics.drawRect(TILE_WIDTH, 0, TILE_WIDTH - 2, TILE_HEIGHT);
             graphics.endFill();
             this.spriteCursor = this.add(
                 this.game.add.sprite(0, 0, graphics.generateTexture()));

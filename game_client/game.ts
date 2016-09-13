@@ -148,7 +148,6 @@ class GameEngine
             if(this.pressedRestartButton(inputs[0]))
             {
                 // this.initialize();
-                MainControl.Instance.switchToMenu();
                 ServerTranslator.Instance.toServerGameEnd();
             }
         }

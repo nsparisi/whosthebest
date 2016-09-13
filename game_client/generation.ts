@@ -66,8 +66,7 @@ class GenerationEngine
             // instead wait for the server to sync us up, then send out next frame
             if(this.frameCount < this.expectedFrame + 2)
             {
-                // set to 0, purposefully avoid queueing up many frames at once
-                this.elapsed = 0;
+                this.elapsed -= this.threshold;
                 this.sendFrameToServer();
             }
         }

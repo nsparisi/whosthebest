@@ -97,24 +97,28 @@ module Whosthebest.Graphics
 
         switchToGame = (randomSeed: number) => 
         {
-            this.state.start("Game");
-            
-            // TODO clean up, change to PHASER
-            //MainControl.Instance.initialize();
-            InputEngine.Instance.initialize(bodyElement);
-            MainControl.Instance.switchToGame(randomSeed, false);
+            this.state.start(
+                "Game",
+                true,
+                false, 
+                randomSeed,     // randomSeed parameter
+                false           // isPracticeGame parameter
+            );
         }
 
         switchToPractice = () =>
         {
-            this.state.start("Game");
-            InputEngine.Instance.initialize(bodyElement);
-            MainControl.Instance.switchToGame(123456, true);
+            this.state.start(
+                "Game",
+                true, 
+                false, 
+                123456,         // randomSeed parameter
+                true            // isPracticeGame parameter
+            );
         }
 
         switchToMenu = () =>
         {
-            MainControl.Instance.switchToMenu();
             this.state.start("Menu");
         }
     }

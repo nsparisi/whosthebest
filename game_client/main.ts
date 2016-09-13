@@ -3,45 +3,73 @@
 /**
  * Main entry point for the game
  */
-class Main {    
-    input = () =>
+class Main {   
+
+    // singleton implementation
+    static Instance = new Main();
+    constructor()
     {
-        InputEngine.Instance.update();
+        if(Main.Instance)
+        {
+            throw new Error("An instance of Main already exists.");
+        }
+        
+        Main.Instance = this;
     }
-    
-    update = () =>
+
+    public isRunning = false;
+    private isInitialized = false;
+
+    public begin = () =>
     {
-        MainControl.Instance.update();
-    }
-    
-    draw = () =>
-    {
-        // deprecated
-    }
-    
-    begin = () =>
-    {
-        // Set up game loop.
+        // only run once
+        if(this.isInitialized)
+        {
+            return;
+        }
+        this.isInitialized = true;
+
+        // setup time variables
+        var currentTime = 0;
         var lastUpdate = new Date().getTime();
         deltaTimeMs = 0;
+
+        // Set up game loop.
         var nextFrame = () =>
         {
-            var currentTime = new Date().getTime();
+            currentTime = new Date().getTime();
             deltaTimeMs = currentTime - lastUpdate;
             
-            // UPDATE
-            this.update();
-            
-            // INPUTS
-            this.input();
+            if(this.isRunning)
+            {
+                // UPDATE
+                GenerationEngine.Instance.update();
+                
+                // INPUTS
+                InputEngine.Instance.update();
+            }
             
             // RENDER
-            this.draw();
+            // rendering loop is handled by Phaser.
             
             lastUpdate = currentTime;
         }
         
+        // tells the browser to call the nextFrame 
+        // as fast as possible (1 ms interval)
         setInterval(nextFrame, 1);
     }
 }
+
+// global vars used in various classes
+var bodyElement = document.getElementsByTagName("body")[0];
+var deltaTimeMs = 0;
+
+// create the Phaser game instance
+const GAME_INSTANCE = new Whosthebest.Graphics.Game_WhosTheBest();
+
+// set up the generation and input engine loop.
+// this is a separate loop running outside of Phaser,
+// since we would like to see a framerate larger than 60fps if possible.
+Main.Instance.begin();
 
