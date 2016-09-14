@@ -4,7 +4,7 @@ module Whosthebest.Graphics
     {
         buttonPlay: Phaser.Button;
         buttonPractice: Phaser.Button;
-        buttonQuick: Phaser.Button;
+        buttonInvite: Phaser.Button;
         buttonFriend: Phaser.Button;
         buttonBack: Phaser.Button;
 
@@ -35,8 +35,8 @@ module Whosthebest.Graphics
             this.lobbyTextField =  <HTMLInputElement>document.getElementById("lobbyTextField");
             this.lobbyTextField.style.position = "absolute";
             this.lobbyTextField.style.marginLeft = "10px";
-            this.lobbyTextField.style.marginTop = "320px";
-            this.lobbyTextField.style.width = "350px";
+            this.lobbyTextField.style.marginTop = "300px";
+            this.lobbyTextField.style.width = "300px";
             this.lobbyTextField.style.height = "30px";
             this.lobbyTextField.onkeyup = (event) => 
             {
@@ -53,7 +53,7 @@ module Whosthebest.Graphics
             this.lobbyChat.style.marginLeft = "10px";
             this.lobbyChat.style.marginTop = "10px";
             this.lobbyChat.style.width = "350px";
-            this.lobbyChat.style.height = "300px";
+            this.lobbyChat.style.height = "280px";
             this.lobbyChat.style.backgroundColor = "#ffffff";
             this.lobbyChat.style.overflowY = "auto";
 
@@ -62,7 +62,7 @@ module Whosthebest.Graphics
             this.lobbyUserList.style.marginLeft = "370px";
             this.lobbyUserList.style.marginTop = "10px";
             this.lobbyUserList.style.width = "100px";
-            this.lobbyUserList.style.height = "300px";
+            this.lobbyUserList.style.height = "280px";
             this.lobbyUserList.style.backgroundColor = "#ffffff";
 
             this.buttonPlay = this.add.button(
@@ -77,12 +77,18 @@ module Whosthebest.Graphics
 
             this.buttonBack = this.add.button(
                 430, 
-                315, 
+                300, 
                 "images/menu/btn_back.png", this.back_pressed, this, 1, 0, 2);
-            this.buttonQuick = this.add.button(
-                310, 
-                315, 
-                "images/menu/btn_quick.png", this.quick_pressed, this, 1, 0, 2);
+            this.buttonBack.width = this.buttonBack.width - 10;
+            this.buttonBack.height = this.buttonBack.height - 10;
+
+            this.buttonInvite = this.add.button(
+                322, 
+                300, 
+                "images/menu/btn_invite.png", this.invite_pressed, this, 1, 0, 2);
+            this.buttonInvite.width = this.buttonInvite.width - 20;
+            this.buttonInvite.height = this.buttonInvite.height - 10;
+
             this.buttonFriend = this.add.button(
                 this.game.width / 2 - 60, 
                 60 + 60, 
@@ -106,7 +112,7 @@ module Whosthebest.Graphics
             this.buttonPlay.exists = true;
             this.buttonPractice.exists = true;
             this.buttonBack.exists = false;
-            this.buttonQuick.exists = false;
+            this.buttonInvite.exists = false;
             this.buttonFriend.exists = false;
 
             this.toggleHtmlElements(false);
@@ -118,7 +124,7 @@ module Whosthebest.Graphics
             this.buttonPlay.exists = false;
             this.buttonPractice.exists = false;
             this.buttonBack.exists = true;
-            this.buttonQuick.exists = true;
+            this.buttonInvite.exists = true;
             this.buttonFriend.exists = false;
             
             this.toggleHtmlElements(true);
@@ -146,9 +152,10 @@ module Whosthebest.Graphics
             GAME_INSTANCE.switchToPractice();
         }
 
-        quick_pressed()
+        invite_pressed()
         {
-            if(this.currentSelectedUserName != GAME_INSTANCE.LOGGED_IN_USERNAME)
+            if( this.currentSelectedUserName != null &&
+                this.currentSelectedUserName != GAME_INSTANCE.LOGGED_IN_USERNAME)
             {
                 ServerTranslator.Instance.toServerAskUser(this.currentSelectedUserName);
             }
