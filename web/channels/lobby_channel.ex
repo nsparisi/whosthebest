@@ -15,6 +15,9 @@ defmodule Whosthebest.LobbyChannel do
         user = Whosthebest.Repo.get(Whosthebest.User, user_id) 
         socket = assign(socket, :username, user.username)
 
+        # mark the user as "available" for game invites
+        socket = assign(socket, :is_available, true)
+
         # After joining (leave the function) 
         # broadcast to the channel you're online.
         #send(self, {:setup_presence, %{user: user.username, from: user_id}})
@@ -78,14 +81,20 @@ defmodule Whosthebest.LobbyChannel do
     # lobby:ask is a request from the client to play a game against user_id
     def handle_in("lobby:ask", %{"to_id" => to_id}, socket) do
         from_id = socket.assigns[:user_id]
-        Debug.log "LobbyChannel IN lobby:ask #{from_id} | #{to_id}"
-        
-        # Broadcast the ask, then add an INTERCEPT, to filter who actually pushes.
-        # TODO - run some checks to see if ask is even possible (user is in a game?)
-        broadcast! socket, "lobby:ask", %{
-            from_id: to_string(from_id), 
-            to_id: to_string(to_id) }
-        
+        is_available = socket.assigns[:is_available]
+        Debug.log "LobbyChannel IN lobby:ask #{from_id} | #{to_id} | #{is_available}"
+
+        if(is_available) do
+            # the user is now blocked from future game invites
+            socket = assign(socket, :is_available, false)
+
+            # Broadcast the ask, then add an INTERCEPT, to filter who actually pushes.
+            # TODO - run some checks to see if ask is even possible (user is in a game?)
+            broadcast! socket, "lobby:ask", %{
+                from_id: to_string(from_id), 
+                to_id: to_string(to_id) }
+        end
+
         {:noreply, socket}
     end
     
@@ -122,7 +131,7 @@ defmodule Whosthebest.LobbyChannel do
     
     # **************************
     # Handle OUTs
-    intercept ["lobby:message","lobby:ask","lobby:response", "lobby:start_game"]
+    intercept ["lobby:message", "lobby:ask", "lobby:response", "lobby:start_game"]
 
     # lobby:message - send a chat message to the lobby
     # message: %{"from_id", "message"}
@@ -142,11 +151,27 @@ defmodule Whosthebest.LobbyChannel do
     # push: %{"from_id", "to_id"}
     def handle_out("lobby:ask", message, socket) do
         user_id = to_string(socket.assigns[:user_id])
+        is_available = socket.assigns[:is_available]
         Debug.log "LobbyChannel OUT lobby:ask #{user_id} | from #{message.from_id} | to #{message.to_id}"
 
         # Push the message, only if we're being spoken to.
         if(message.to_id == user_id) do
-            push socket, "lobby:ask", %{"from_id" =>  message.from_id, "to_id" => message.to_id}
+
+            if(is_available) do
+                # the user is now blocked from game invites
+                # until they respond to the ask
+                socket = assign(socket, :is_available, false)
+
+                # push the ask down to the client
+                push socket, "lobby:ask", %{"from_id" =>  message.from_id, "to_id" => message.to_id}
+            else
+                # respond back that the user is busy
+                # use _from here, so we avoid being notified
+                broadcast_from! socket, "lobby:response", %{
+                    from_id: to_string(message.to_id), 
+                    to_id: to_string(message.from_id), 
+                    accepted: false}
+            end
         end
 
         {:noreply, socket}
@@ -161,6 +186,10 @@ defmodule Whosthebest.LobbyChannel do
 
         # Push the message, only if we're being spoken to.
         if(message.to_id == user_id || message.from_id == user_id) do
+            if(!message.accepted) do
+                # the user is now un-blocked for game invites
+                socket = assign(socket, :is_available, true)
+            end
             push socket, "lobby:response", %{"from_id" => message.from_id, "to_id" => message.to_id, "accepted" => message.accepted}
         end
 

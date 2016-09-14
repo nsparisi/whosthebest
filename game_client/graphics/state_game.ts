@@ -114,7 +114,7 @@ module Whosthebest.Graphics
 
         update()
         {
-            this.fpsText.text = this.game.time.fps.toString();
+            this.fpsText.text = deltaTimeMs.toString(); //this.game.time.fps.toString();
 
             this.gameBoards.forEach(
                 (gameBoard) =>
