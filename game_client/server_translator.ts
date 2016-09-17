@@ -236,13 +236,13 @@ class GameConnection
         this.channel.on("game:ready", payload => {
             Debug.log(`IN game:ready seed: ${payload.random_seed}`);
             
-            ServerTranslator.Instance.toClientStartMatch(payload.random_seed);
+            ServerTranslator.Instance.toClientStartMatch(
+                payload.random_seed, payload.user_index);
         });
         
-        this.channel.on("game:frame", payload => {        
-            // todo real timestamp
-            var dummyTimestamp = "0";
-            ServerTranslator.Instance.toClientFrame(dummyTimestamp, payload.payload);
+        this.channel.on("game:frame", payload => {     
+            ServerTranslator.Instance.toClientFrame(
+                payload.payload, payload.out_time);
         });
           
         this.channel.on("game:joined", payload => {
@@ -300,7 +300,7 @@ class ServerTranslator
     connectionToGameServer: GameConnection;
     connectionToLobbyServer: LobbyConnection;
 
-    PACKET_DELIMITER = "|";
+    TIME_DELIMITER = "|";
     FRAME_DELIMETER = "~";
     PLAYERINPUT_DELIMETER = ",";
 
@@ -414,14 +414,16 @@ class ServerTranslator
     {
     }
 
-    toClientStartMatch = (random_seed: number) =>
+    toClientStartMatch = (random_seed: number, user_index: number) =>
     {
-        GAME_INSTANCE.switchToGame(random_seed);
+        Debug.log("toClientStartMatch: I am player " + user_index);
+        GAME_INSTANCE.switchToGame(random_seed, user_index);
     }
 
-    toClientFrame = (timestamp: string, payload: string) =>
+    toClientFrame = (payload: string, serverOutTime: number) =>
     {
-        //frame~,player,1,inputs~player,2,inputs
+        //frame~,player,1,inputs|in_timestamp~player,2,inputs|in_timestamp
+        var serverInTime: number;
         var parts = payload.split(this.FRAME_DELIMETER);
         if(parts.length >= 2)
         {
@@ -429,10 +431,16 @@ class ServerTranslator
             var inputs = [];
             for(var i = 1; i < parts.length; i++)
             {
-                inputs.push(parts[i]);
+                // need to strip out the timestamp
+                var inputsAndTime = parts[i].split(this.TIME_DELIMITER);
+                inputs.push(inputsAndTime[0]);
+                if(i - 1 == GAME_INSTANCE.USER_INDEX)
+                {
+                    serverInTime = parseInt(inputsAndTime[1]);
+                }
             }
 
-            var data = new FrameData(timestamp, frame, inputs);
+            var data = new FrameData(serverInTime, serverOutTime, frame, inputs);
             GenerationEngine.Instance.receiveFrameFromServer(data);
         }
     }
@@ -483,7 +491,8 @@ class ServerTranslator
 class FrameData
 {
     constructor(
-        public time: string, 
+        public serverTimeIn: number, 
+        public serverTimeOut: number, 
         public frame: string, 
         public inputs: Array<string>)
         {

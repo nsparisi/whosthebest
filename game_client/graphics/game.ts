@@ -5,10 +5,11 @@ module Whosthebest.Graphics
         LOGGED_IN_USERNAME: string;
         GAME_ID: string;
         OPPONENT_USERNAME: string;
+        USER_INDEX: number;
 
         constructor()
         {
-            super(480, 360, Phaser.AUTO, 'gameDiv');
+            super(640, 480, Phaser.AUTO, 'gameDiv');
 
             this.state.add("Boot", State_Boot);
             this.state.add("Preloader", State_Preloader);
@@ -95,8 +96,9 @@ module Whosthebest.Graphics
             this.state.start("GameLobby");
         }
 
-        switchToGame = (randomSeed: number) => 
+        switchToGame = (randomSeed: number, userIndex: number) => 
         {
+            this.USER_INDEX = userIndex;
             this.state.start(
                 "Game",
                 true,
@@ -108,6 +110,7 @@ module Whosthebest.Graphics
 
         switchToPractice = () =>
         {
+            this.USER_INDEX = 0;
             this.state.start(
                 "Game",
                 true, 

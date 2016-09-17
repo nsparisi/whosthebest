@@ -30,10 +30,14 @@ class GenerationEngine
     isPaused = false;
     frameAdvance = false;
     
+    // NETWORK_DEBUG
+    timemap: { [key: string]: FrameTimeData; } = { };
+    
     initialize = () =>
     {
         this.frameCount = 0;
         this.expectedFrame = 0;
+        this.timemap = {};
     }
 
     setAsPracticeGame = (isPracticeGame: boolean) =>
@@ -74,6 +78,10 @@ class GenerationEngine
 
     sendFrameToServer = () =>
     {
+        // keep track of all network statistics on the frame
+        this.timemap[this.frameCount] = new FrameTimeData(this.frameCount);
+        this.timemap[this.frameCount].timeSent = new Date();
+
         if(!this.isPracticeGame)
         {
             // send frame data to server
@@ -118,23 +126,34 @@ class GenerationEngine
         }
         inputs.push(playerInputAsString);
 
-        // TODO set player 1 with random inputs
+        // TODO set CPU player with random inputs
         inputs.push("");
 
         // bypass server call, and send data back to client
-        var data = new FrameData("test", frame.toString(), inputs);
+        var data = new FrameData(
+            new Date().getTime(), 
+            new Date().getTime(),
+            frame.toString(), 
+            inputs);
         this.receiveFrameFromServer(data);
     }
 
-    receiveFrameFromServer = (frameData) =>
+    receiveFrameFromServer = (frameData: FrameData) =>
     {
         // FrameData object
         // time : Long
         // frame : Integer
         // inputs : Array
-
-        if(frameData.frame == this.expectedFrame)
+        if(frameData.frame == this.expectedFrame.toString())
         {
+            // NETWORK_DEBUG
+            // finish up networking statistics
+            // the graphics layer will consume now.
+            this.timemap[frameData.frame].timeReceive = new Date();
+            this.timemap[frameData.frame].timeServerIn = frameData.serverTimeIn;
+            this.timemap[frameData.frame].timeServerOut = frameData.serverTimeOut;
+            this.timemap[frameData.frame].calculateDeltas();
+
             GameEngine.Instance.update(frameData.inputs);
             this.expectedFrame++;
         }
@@ -208,5 +227,32 @@ class GenerationEngine
     drainInput = () =>
     {
         this.currentInput = []
+    }
+}
+
+class FrameTimeData
+{
+    public frame: string;
+    public timeSent: Date = new Date();
+    public timeServerIn: number;
+    public timeServerOut: number;
+    public timeReceive: Date = new Date();
+
+    public deltaServerIn: string;
+    public deltaServerOut: string;
+    public deltaReceive: string;
+    public totalRoundTrip: string;
+
+    constructor(frame: number)
+        {
+            this.frame = frame.toString();
+        }
+
+    public calculateDeltas = () =>
+    {
+        this.deltaServerIn = (this.timeServerIn - this.timeSent.getTime()).toString();
+        this.deltaServerOut = (this.timeServerOut - this.timeServerIn).toString();
+        this.deltaReceive = (this.timeReceive.getTime() - this.timeServerOut).toString();
+        this.totalRoundTrip = (this.timeReceive.getTime() - this.timeSent.getTime()).toString();
     }
 }

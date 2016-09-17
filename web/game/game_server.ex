@@ -48,6 +48,13 @@ defmodule Whosthebest.GameServer do
     end
     
     @doc """
+    Gets the index of the provided user.
+    """
+    def get_user_index(server, user) do
+        GenServer.call(server, {:get_user_index, user})
+    end
+    
+    @doc """
     Clears the message buffers for every user in the game.
     """
     def clear_frames(server) do
@@ -135,6 +142,13 @@ defmodule Whosthebest.GameServer do
         {:reply, nil, state}
     end
     
+    def handle_call({:get_user_index, user}, _from, state) do
+        # TODO sort should not be copied from below.
+        all_users = Enum.sort(Map.keys(state[:user_frames]))
+        user_index = Enum.find_index(all_users, fn(x) -> x == user end)
+        {:reply, user_index, state}
+    end
+    
     #unused right now
     def handle_info(:refresh, state) do
         {:noreply, state}
@@ -143,21 +157,25 @@ defmodule Whosthebest.GameServer do
     # Payload structure is as follows.
     #
     # from server:
-    # <id>|<timestamp>|<type>|<payload>|<eom>
+    # <payload>
     # when type = StartMatch, payload = random seed
     # when type = Frame, payload = 
-    #   frame~,player,1,inputs~player,2,inputs
+    #   frame~,player,1,inputs|in_timestamp~player,2,inputs|in_timestamp
     #
     # from client:
-    # <id>|<timestamp>|<type>|<payload>|<eom>
+    # <payload>
     # payload = <frame>~,<input>,<input>
     
-    @packet_delimiter "|"
+    @time_delimiter "|"
     @frame_delimiter "~"
     @input_delimiter ","
     def to_server_frame_translation(payload) do
         split = String.split(payload, @frame_delimiter)        
-        %{frame: List.first(split), inputs: List.last(split)}
+        %{
+            frame: List.first(split), 
+            inputs: List.last(split), 
+            time: to_string(:os.system_time(:milli_seconds))
+        }
     end
     
     def process_queues(state) do
@@ -185,7 +203,7 @@ defmodule Whosthebest.GameServer do
             Enum.reduce(all_users, %{payload: peek_frame, state: state}, 
                 fn(user, acc) -> 
                     {:ok, message, current_state} = dequeue_message(acc[:state], user)
-                    current_payload = acc[:payload] <> @frame_delimiter <> message[:inputs]
+                    current_payload = acc[:payload] <> @frame_delimiter <> message[:inputs] <> @time_delimiter <> message[:time]
                     %{state: current_state, payload: current_payload}
                 end)
         {:ok, payload, state}

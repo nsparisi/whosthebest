@@ -324,7 +324,7 @@ class Board
         }
 
         // make first set of tiles
-        for(var i = 8; i >= 0; i--)
+        for(var i = 5; i >= 0; i--)
         {
             var newRow = this.generateRow(i);
             this.tiles = this.tiles.concat(newRow);

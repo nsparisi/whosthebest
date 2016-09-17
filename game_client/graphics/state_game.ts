@@ -6,6 +6,16 @@ module Whosthebest.Graphics
     export class State_Game extends Phaser.State
     {
         fpsText: Phaser.Text;
+        networkText1: Phaser.Text;
+        networkText2: Phaser.Text;
+        networkText3: Phaser.Text;
+        networkText4: Phaser.Text;
+        networkText5: Phaser.Text;
+        networkText1Label: Phaser.Text;
+        networkText2Label: Phaser.Text;
+        networkText3Label: Phaser.Text;
+        networkText4Label: Phaser.Text;
+        networkText5Label: Phaser.Text;
         gameBoards: GameBoard[];
 
         static sfxChainMild: Phaser.Sound;
@@ -65,6 +75,10 @@ module Whosthebest.Graphics
             TILE_WIDTH = Math.round(this.game.width * 0.05625);
             TILE_HEIGHT = Math.round(this.game.height * 0.0667);
 
+            // NETWORK_DEBUG
+            TILE_WIDTH *= 0.8;
+            TILE_HEIGHT *= 0.8;
+
             this.gameBoards = [];
 
             // player 1
@@ -85,6 +99,10 @@ module Whosthebest.Graphics
                 board2.y = this.game.height / 2
                 board2.x -= GameEngine.Instance.colCount * TILE_WIDTH / 2;
                 board2.y -= GameEngine.Instance.rowCountInBounds * TILE_HEIGHT / 2;
+
+                // NETWORK_DEBUG
+                board2.x -= GameEngine.Instance.colCount * TILE_WIDTH / 2;
+
                 board2.initialize(GameEngine.Instance.boards[1]);
                 this.gameBoards.push(board2);
                 this.add.existing(board2);
@@ -99,6 +117,28 @@ module Whosthebest.Graphics
 
             State_Game.sfxChainIntense = this.add.audio("audio/chain_intense.mp3");
             State_Game.sfxChainMild = this.add.audio("audio/chain_mild.mp3");
+
+            var addText = (x, y, label, xAnchor) =>
+            {
+                var text = this.add.text(
+                    x, 
+                    y, 
+                    label, 
+                    {font: "10pt Arial", fill: "#000"});
+                text.anchor.set(xAnchor, 0);
+                return text;
+            }
+
+            this.networkText1 = addText(this.game.width - 43, 5, "0", 1);
+            this.networkText2 = addText(this.game.width - 43, 20, "0", 1);
+            this.networkText3 = addText(this.game.width - 43, 35, "0", 1);
+            this.networkText4 = addText(this.game.width - 43, 50, "0", 1);
+            this.networkText5 = addText(this.game.width - 43, 65, "0", 1);
+            this.networkText1Label = addText(this.game.width - 40, 5, "FRM", 0);
+            this.networkText2Label = addText(this.game.width - 40, 20, "IN", 0);
+            this.networkText3Label = addText(this.game.width - 40, 35, "OUT", 0);
+            this.networkText4Label = addText(this.game.width - 40, 50, "REC", 0);
+            this.networkText5Label = addText(this.game.width - 40, 65, "RTT", 0);
         }
 
         shutdown()
@@ -116,12 +156,31 @@ module Whosthebest.Graphics
         {
             this.fpsText.text = deltaTimeMs.toString(); //this.game.time.fps.toString();
 
+            // NETWORK_DEBUG
+            this.updateNetworkInfo();
+
             this.gameBoards.forEach(
                 (gameBoard) =>
             {
                 gameBoard.updateBoard();
             });
         }    
+
+        updateNetworkInfo()
+        {
+            var data: FrameTimeData = 
+                GenerationEngine.Instance.timemap[
+                    GenerationEngine.Instance.expectedFrame - 1];
+
+            if(data)
+            {
+                this.networkText1.text = data.frame;
+                this.networkText2.text = data.deltaServerIn;
+                this.networkText3.text = data.deltaServerOut;
+                this.networkText4.text = data.deltaReceive;
+                this.networkText5.text = data.totalRoundTrip;
+            }
+        }
     }
     
     class GameBoard extends Phaser.Group
@@ -204,7 +263,7 @@ module Whosthebest.Graphics
                 this.game.add.text(
                     0, 0, "GameOver", 
                     {font: "10pt Arial", fill: "#000"}));
-            this.textGameOverCounter.anchor.set(0.5, 0);
+            this.textGameOverCounter.anchor.set(1, 0);
         }
 
         updateBoard = () =>
