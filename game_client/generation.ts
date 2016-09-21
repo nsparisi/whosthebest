@@ -22,22 +22,31 @@ class GenerationEngine
     isPracticeGame = false;
 
     frameRate = 20;
+    frameLengthInMs = 1000 / this.frameRate;
+    frameDelay = 20; // 1 second's worth for debugging
+
     elapsed = 0;
-    threshold = 1000 / this.frameRate;
     frameCount = 0;
     expectedFrame = 0;
+    currentFrameInGame = 0;
     currentInput = [];
     isPaused = false;
     frameAdvance = false;
     
+    receiveBuffer:Array<FrameData> = [];
+    
     // NETWORK_DEBUG
-    timemap: { [key: string]: FrameTimeData; } = { };
+    frameTimings: { [key: string]: FrameTimeData; } = { };
     
     initialize = () =>
     {
+        this.elapsed = 0;
         this.frameCount = 0;
         this.expectedFrame = 0;
-        this.timemap = {};
+        this.currentFrameInGame = 0;
+        this.frameTimings = {};
+        this.receiveBuffer = [];
+        this.drainInput();
     }
 
     setAsPracticeGame = (isPracticeGame: boolean) =>
@@ -51,36 +60,77 @@ class GenerationEngine
         this.updatePlayerInput();
     
         // pause
-        if(this.isPaused)
+        if(this.isPaused && !this.frameAdvance)
         {
-            if(this.frameAdvance)
-            {
-                this.frameAdvance = false;
-                this.sendFrameToServer();
-            }
-
             return;
         }
 
         // send packets to game on an interval
         this.elapsed += deltaTimeMs;
-        if(this.elapsed > this.threshold)
+        if(this.elapsed > this.frameLengthInMs || this.frameAdvance)
         {
-            // If the opponent is slow, we'll send frames out too fast.
-            // instead wait for the server to sync us up, then send out next frame
-            if(this.frameCount < this.expectedFrame + 2)
+            this.elapsed -= this.frameLengthInMs;
+            this.frameAdvance = false;
+
+            // if we haven't received any frames in the time window
+            // show errors / warn users etc.
+            // TODO need to reset or catch-up users here
+            if(this.expectedFrame <= this.frameCount - this.frameDelay)
             {
-                this.elapsed -= this.threshold;
-                this.sendFrameToServer();
+                //Debug.log("[generation]Buffer is empty.");
+                //Debug.log("[generation]    expectedFrame: " + this.expectedFrame);
+                //Debug.log("[generation]    frameCount: " + this.frameCount);
+                //Debug.log("[generation]    frameDelay: " + this.frameDelay);
+                return;
             }
+
+            // if we've buffered enough, dequeue a frame
+            // simulate the frame in the game
+            var dequeuedFrame: FrameData = null;
+            if( this.receiveBuffer[0] != null &&
+                this.currentFrameInGame <= this.frameCount - this.frameDelay)
+            {
+                dequeuedFrame = this.receiveBuffer.shift();
+                SERVER_GAME_ENGINE.update(dequeuedFrame.inputs);
+                this.currentFrameInGame++;
+            }
+
+            // client-side prediction for input
+            // create the array of inputs for each player.
+            // inject the local player's inputs with the latest set of input
+            var allInputs: string[] = [];
+            if(dequeuedFrame != null)
+            {
+                allInputs = dequeuedFrame.inputs;
+            }
+            else 
+            {
+                for(var i = 0; i < LOCAL_GAME_ENGINE.numberOfPlayers; i++)
+                {
+                    allInputs.push("");
+                }
+            }
+
+            var localInput = ServerTranslator.Instance.inputsToString(this.currentInput);
+            allInputs[GAME_INSTANCE.USER_INDEX] = localInput;
+            LOCAL_GAME_ENGINE.update(allInputs);
+
+            //Debug.log("local-" + allInputs[0] + "::::" + allInputs[1]);
+            if(dequeuedFrame != null)
+            {
+                    //Debug.log("server-" + dequeuedFrame.inputs[0] + "::::" + dequeuedFrame.inputs[1]);
+            }
+
+            // send the frame out to the server
+            this.sendFrameToServer();
         }
     }
 
     sendFrameToServer = () =>
     {
         // keep track of all network statistics on the frame
-        this.timemap[this.frameCount] = new FrameTimeData(this.frameCount);
-        this.timemap[this.frameCount].timeSent = new Date();
+        this.frameTimings[this.frameCount] = new FrameTimeData(this.frameCount);
+        this.frameTimings[this.frameCount].timeSent = new Date();
 
         if(!this.isPracticeGame)
         {
@@ -92,8 +142,8 @@ class GenerationEngine
         else 
         {
             // bypass server entirely for practice
-            if( GameEngine.Instance.currentGameState == 
-                GameEngine.Instance.gameStateTypes.Ended)
+            if( SERVER_GAME_ENGINE.currentGameState == 
+                SERVER_GAME_ENGINE.gameStateTypes.Ended)
             {
                 GAME_INSTANCE.switchToMenu();
             }
@@ -133,7 +183,7 @@ class GenerationEngine
         var data = new FrameData(
             new Date().getTime(), 
             new Date().getTime(),
-            frame.toString(), 
+            frame, 
             inputs);
         this.receiveFrameFromServer(data);
     }
@@ -144,21 +194,23 @@ class GenerationEngine
         // time : Long
         // frame : Integer
         // inputs : Array
-        if(frameData.frame == this.expectedFrame.toString())
+        if(frameData.frame == this.expectedFrame)
         {
             // NETWORK_DEBUG
             // finish up networking statistics
-            // the graphics layer will consume now.
-            this.timemap[frameData.frame].timeReceive = new Date();
-            this.timemap[frameData.frame].timeServerIn = frameData.serverTimeIn;
-            this.timemap[frameData.frame].timeServerOut = frameData.serverTimeOut;
-            this.timemap[frameData.frame].calculateDeltas();
+            // the graphics layer will consume this now.
+            this.frameTimings[frameData.frame].timeReceive = new Date();
+            this.frameTimings[frameData.frame].timeServerIn = frameData.serverTimeIn;
+            this.frameTimings[frameData.frame].timeServerOut = frameData.serverTimeOut;
+            this.frameTimings[frameData.frame].calculateDeltas();
 
-            GameEngine.Instance.update(frameData.inputs);
+            // add the frame to our local buffer
+            this.receiveBuffer.push(frameData);
             this.expectedFrame++;
         }
         else 
         {
+            // TODO handle out-of-order frames
             Debug.log("[generation]frame mismatch.");
             Debug.log("[generation]    Expected: " + this.expectedFrame);
             Debug.log("[generation]    Received: " + frameData.frame);
@@ -167,39 +219,42 @@ class GenerationEngine
     
     updatePlayerInput = () =>
     {
-        var inputDelimiter = GameEngine.Instance.inputDelimiter;
-        var inputTypes = GameEngine.Instance.inputTypes;
+        // ignore inputs for first couple frames
+        if(this.frameCount < 5)
+        {
+            return;
+        }
 
         if(InputEngine.Instance.justPressed("W"))
         {
-            this.currentInput.push(inputTypes.Up);
+            this.currentInput.push(SERVER_GAME_ENGINE.inputTypes.Up);
         }
         
         if(InputEngine.Instance.justPressed("S"))
         {
-            this.currentInput.push(inputTypes.Down);
+            this.currentInput.push(SERVER_GAME_ENGINE.inputTypes.Down);
         }
         
         if(InputEngine.Instance.justPressed("A"))
         {
-            this.currentInput.push(inputTypes.Left);
+            this.currentInput.push(SERVER_GAME_ENGINE.inputTypes.Left);
         }
         
         if(InputEngine.Instance.justPressed("D"))
         {
-            this.currentInput.push(inputTypes.Right);
+            this.currentInput.push(SERVER_GAME_ENGINE.inputTypes.Right);
         }
         
         if(InputEngine.Instance.justPressed("¿") || InputEngine.Instance.justClicked())
         {
-            this.currentInput.push(inputTypes.Swap);
+            this.currentInput.push(SERVER_GAME_ENGINE.inputTypes.Swap);
         }
 
         if( InputEngine.Instance.justPressed("Q") || 
             InputEngine.Instance.justPressed("E") || 
             InputEngine.Instance.justPressed(" "))
         {
-            this.currentInput.push(inputTypes.Elevate);
+            this.currentInput.push(SERVER_GAME_ENGINE.inputTypes.Elevate);
         }
 
         // debugging frame control
@@ -210,12 +265,12 @@ class GenerationEngine
         if(InputEngine.Instance.justPressed("k")) // +
         {
             this.frameRate = Math.min(this.frameRate + 3, 60);
-            this.threshold = 1000 / this.frameRate;
+            this.frameLengthInMs = 1000 / this.frameRate;
         }
         if(InputEngine.Instance.justPressed("m")) // -
         {
             this.frameRate = Math.max(this.frameRate - 3, 1);
-            this.threshold = 1000 / this.frameRate;
+            this.frameLengthInMs = 1000 / this.frameRate;
         }
         if(InputEngine.Instance.justPressed("Ü")) // '\'
         {

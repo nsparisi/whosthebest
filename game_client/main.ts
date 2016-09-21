@@ -68,6 +68,13 @@ var deltaTimeMs = 0;
 // create the Phaser game instance
 const GAME_INSTANCE = new Whosthebest.Graphics.Game_WhosTheBest();
 
+// create two game engines
+// local: client-side prediction. we will render this one.
+// server: accurate server game state.
+const SERVER_GAME_ENGINE = new GameEngine(); 
+const LOCAL_GAME_ENGINE = new GameEngine();
+LOCAL_GAME_ENGINE.isLocalGameInstance = true;
+
 // set up the generation and input engine loop.
 // this is a separate loop running outside of Phaser,
 // since we would like to see a framerate larger than 60fps if possible.

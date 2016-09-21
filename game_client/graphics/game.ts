@@ -9,7 +9,7 @@ module Whosthebest.Graphics
 
         constructor()
         {
-            super(640, 480, Phaser.AUTO, 'gameDiv');
+            super(800, 480, Phaser.AUTO, 'gameDiv');
 
             this.state.add("Boot", State_Boot);
             this.state.add("Preloader", State_Preloader);
@@ -110,13 +110,15 @@ module Whosthebest.Graphics
 
         switchToPractice = () =>
         {
+            // TODO investigate 2-attack bug 
+            // this seed is 333811.83127122704 found a bug on the first swap
             this.USER_INDEX = 0;
             this.state.start(
                 "Game",
                 true, 
                 false, 
-                123456,         // randomSeed parameter
-                true            // isPracticeGame parameter
+                333811.83127122704,     // randomSeed parameter
+                true                    // isPracticeGame parameter
             );
         }
 

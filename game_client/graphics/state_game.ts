@@ -11,11 +11,22 @@ module Whosthebest.Graphics
         networkText3: Phaser.Text;
         networkText4: Phaser.Text;
         networkText5: Phaser.Text;
+        networkText6: Phaser.Text;
+        networkText7: Phaser.Text;
+        networkText8: Phaser.Text;
+        networkText9: Phaser.Text;
+        networkText10: Phaser.Text;
+
         networkText1Label: Phaser.Text;
         networkText2Label: Phaser.Text;
         networkText3Label: Phaser.Text;
         networkText4Label: Phaser.Text;
         networkText5Label: Phaser.Text;
+        networkText6Label: Phaser.Text;
+        networkText7Label: Phaser.Text;
+        networkText8Label: Phaser.Text;
+        networkText9Label: Phaser.Text;
+        networkText10Label: Phaser.Text;
         gameBoards: GameBoard[];
 
         static sfxChainMild: Phaser.Sound;
@@ -49,7 +60,8 @@ module Whosthebest.Graphics
         {
             Debug.log("state_game init: " + randomSeed + ":" + isPracticeGame);
             InputEngine.Instance.initialize(bodyElement);    
-            GameEngine.Instance.initialize(randomSeed);
+            LOCAL_GAME_ENGINE.initialize(randomSeed);
+            SERVER_GAME_ENGINE.initialize(randomSeed);
             GenerationEngine.Instance.initialize();
             GenerationEngine.Instance.setAsPracticeGame(isPracticeGame);
             Main.Instance.isRunning = true;
@@ -72,40 +84,59 @@ module Whosthebest.Graphics
 
         create()
         {
-            TILE_WIDTH = Math.round(this.game.width * 0.05625);
-            TILE_HEIGHT = Math.round(this.game.height * 0.0667);
-
-            // NETWORK_DEBUG
-            TILE_WIDTH *= 0.8;
-            TILE_HEIGHT *= 0.8;
+            TILE_WIDTH = 20;
+            TILE_HEIGHT = 20;
+            // TILE_WIDTH = Math.round(this.game.width * 0.05625);
+            // TILE_HEIGHT = Math.round(this.game.height * 0.0667);
 
             this.gameBoards = [];
 
+            var boardWidth = LOCAL_GAME_ENGINE.colCount * TILE_WIDTH;
+
             // player 1
             var board1 = new GameBoard(this.game, null, "board1", true);
-            board1.x = this.game.width / 4;
+            board1.x = 50;
             board1.y = this.game.height / 2;
-            board1.x -= GameEngine.Instance.colCount * TILE_WIDTH / 2;
-            board1.y -= GameEngine.Instance.rowCountInBounds * TILE_HEIGHT / 2;
-            board1.initialize(GameEngine.Instance.boards[0]);
+            // board1.x -= LOCAL_GAME_ENGINE.colCount * TILE_WIDTH / 2;
+            board1.y -= LOCAL_GAME_ENGINE.rowCountInBounds * TILE_HEIGHT / 2;
+            board1.initialize(LOCAL_GAME_ENGINE.boards[0], true);
             this.gameBoards.push(board1);
             this.add.existing(board1);
 
             // player 2
-            if(GameEngine.Instance.boards.length > 1)
+            if(LOCAL_GAME_ENGINE.boards.length > 1)
             {
                 var board2 = new GameBoard(this.game, null, "board2", true);
-                board2.x = this.game.width * 3 / 4;
+                board2.x = board1.x + boardWidth + 20;
                 board2.y = this.game.height / 2
-                board2.x -= GameEngine.Instance.colCount * TILE_WIDTH / 2;
-                board2.y -= GameEngine.Instance.rowCountInBounds * TILE_HEIGHT / 2;
+                // board2.x -= LOCAL_GAME_ENGINE.colCount * TILE_WIDTH / 2;
+                board2.y -= LOCAL_GAME_ENGINE.rowCountInBounds * TILE_HEIGHT / 2;
 
-                // NETWORK_DEBUG
-                board2.x -= GameEngine.Instance.colCount * TILE_WIDTH / 2;
-
-                board2.initialize(GameEngine.Instance.boards[1]);
+                board2.initialize(LOCAL_GAME_ENGINE.boards[1], true);
                 this.gameBoards.push(board2);
                 this.add.existing(board2);
+            }
+
+            // NETWORK_DEBUG
+            // player 1
+            var serverBoard1 = new GameBoard(this.game, null, "serverBoard1", true);
+            serverBoard1.x = board2.x + boardWidth + 100;
+            serverBoard1.y = this.game.height / 2;
+            serverBoard1.y -= LOCAL_GAME_ENGINE.rowCountInBounds * TILE_HEIGHT / 2;
+            serverBoard1.initialize(SERVER_GAME_ENGINE.boards[0], false);
+            this.gameBoards.push(serverBoard1);
+            this.add.existing(serverBoard1);
+
+            // player 2
+            if(SERVER_GAME_ENGINE.boards.length > 1)
+            {
+                var serverBoard2 = new GameBoard(this.game, null, "serverBoard2", true);
+                serverBoard2.x = serverBoard1.x + boardWidth + 20;
+                serverBoard2.y = this.game.height / 2
+                serverBoard2.y -= LOCAL_GAME_ENGINE.rowCountInBounds * TILE_HEIGHT / 2;
+                serverBoard2.initialize(SERVER_GAME_ENGINE.boards[1], false);
+                this.gameBoards.push(serverBoard2);
+                this.add.existing(serverBoard2);
             }
 
             this.fpsText = this.add.text(
@@ -134,11 +165,21 @@ module Whosthebest.Graphics
             this.networkText3 = addText(this.game.width - 43, 35, "0", 1);
             this.networkText4 = addText(this.game.width - 43, 50, "0", 1);
             this.networkText5 = addText(this.game.width - 43, 65, "0", 1);
+            this.networkText6 = addText(this.game.width - 43, 100, "0", 1);
+            this.networkText7 = addText(this.game.width - 43, 115, "0", 1);
+            this.networkText8 = addText(this.game.width - 43, 130, "0", 1);
+            this.networkText9 = addText(this.game.width - 43, 145, "0", 1);
+            this.networkText10 = addText(this.game.width - 43, 160, "0", 1);
             this.networkText1Label = addText(this.game.width - 40, 5, "FRM", 0);
             this.networkText2Label = addText(this.game.width - 40, 20, "IN", 0);
             this.networkText3Label = addText(this.game.width - 40, 35, "OUT", 0);
             this.networkText4Label = addText(this.game.width - 40, 50, "REC", 0);
             this.networkText5Label = addText(this.game.width - 40, 65, "RTT", 0);
+            this.networkText6Label = addText(this.game.width - 40, 100, "BUF", 0);
+            this.networkText7Label = addText(this.game.width - 40, 115, "FOUT", 0);
+            this.networkText8Label = addText(this.game.width - 40, 130, "FIN", 0);
+            this.networkText9Label = addText(this.game.width - 40, 145, "GAME", 0);
+            this.networkText10Label = addText(this.game.width - 40, 160, "N/A", 0);
         }
 
         shutdown()
@@ -169,7 +210,7 @@ module Whosthebest.Graphics
         updateNetworkInfo()
         {
             var data: FrameTimeData = 
-                GenerationEngine.Instance.timemap[
+                GenerationEngine.Instance.frameTimings[
                     GenerationEngine.Instance.expectedFrame - 1];
 
             if(data)
@@ -180,6 +221,11 @@ module Whosthebest.Graphics
                 this.networkText4.text = data.deltaReceive;
                 this.networkText5.text = data.totalRoundTrip;
             }
+
+            this.networkText6.text = GenerationEngine.Instance.receiveBuffer.length.toString();
+            this.networkText7.text = GenerationEngine.Instance.frameCount.toString();
+            this.networkText8.text = GenerationEngine.Instance.expectedFrame.toString();
+            this.networkText9.text = GenerationEngine.Instance.currentFrameInGame.toString();
         }
     }
     
@@ -201,16 +247,19 @@ module Whosthebest.Graphics
 
         tilePools: Phaser.Group[];
 
+        playSfx: boolean = true;
+
         empty = () =>
         {
         }
 
-        initialize = (gameEngineBoard: Board) =>
+        initialize = (gameEngineBoard: Board, playSfx: boolean) =>
         {
+            this.playSfx = playSfx;
             this.gameEngineBoard = gameEngineBoard;
 
-            this.boardWidth = GameEngine.Instance.colCount * TILE_WIDTH;
-            this.boardHeight = GameEngine.Instance.rowCountInBounds * TILE_HEIGHT;
+            this.boardWidth = LOCAL_GAME_ENGINE.colCount * TILE_WIDTH;
+            this.boardHeight = LOCAL_GAME_ENGINE.rowCountInBounds * TILE_HEIGHT;
             this.yOffsetAsHeight = TILE_HEIGHT / gameEngineBoard.yOffsetMax;
 
             // use graphics tool to draw a border with a filled lightbox
@@ -292,7 +341,7 @@ module Whosthebest.Graphics
             {
                 // grab a sprite from the pool, with the tile type index
                 var tileSprite = this.getDeadOrNewTileSprite(
-                    tile.type - GameEngine.Instance.basicTileTypeStartIndex);
+                    tile.type - LOCAL_GAME_ENGINE.basicTileTypeStartIndex);
                 
                 // wake the tile from "dead" state and set x,y
                 var tileX = tile.x * TILE_WIDTH;
@@ -442,9 +491,14 @@ module Whosthebest.Graphics
         addComboPopup = (tileX, tileY, count, falseComboTrueChain) =>
         {
             // todo logic for visuals
-            var realX = tileX * GraphicsEngine.Instance.tileWidth;
-            var realY = this.height - tileY * GraphicsEngine.Instance.tileHeight -
+            var realX = tileX * TILE_WIDTH;
+            var realY = this.height - tileY * TILE_HEIGHT -
                 this.yOffsetAsHeight * this.gameEngineBoard.yOffset;
+
+            if(!this.playSfx)
+            {
+                return;
+            }
 
             if(falseComboTrueChain && count <= 3)
             {
