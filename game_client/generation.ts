@@ -21,9 +21,9 @@ class GenerationEngine
 
     isPracticeGame = false;
 
-    frameRate = 20;
+    frameRate = 30;
     frameLengthInMs = 1000 / this.frameRate;
-    frameDelay = 20; // 1 second's worth for debugging
+    frameDelay = 30;
 
     elapsed = 0;
     frameCount = 0;

@@ -53,7 +53,7 @@ class GameEngine
     numberOfPlayers = 2;
 
     // need to start keeping global timing values here
-    public static ATTACK_BLOCK_DELAY = 50 // about 150ish frames in 60fps
+    public static ATTACK_BLOCK_DELAY = 75 // about 150ish frames in 60fps
     
     // attack information
     // e.g. an 8-combo will attack with a 3-size and a 4-size block
@@ -290,24 +290,27 @@ class Board
     
     lastTileId = 0;
 
+    // yOffset represents the tiles slowly ticking upward
     yOffset = 0; 
     yOffsetMax = 16;
-    yOffsetFrameCount = 20; //todo frames
-    yOffsetFrameReset = 20;
+    yOffsetFrameCount = 30; //todo frames
+    yOffsetFrameReset = 30;
 
-    swapDelayReset = 2; //todo frames
+    // how long the swap animation lasts
+    // -1 means it's not swapping
+    swapDelayReset = 3; //todo frames
     swapDelayCount = -1;
     queuedUpSwapAction = false;
 
     // how long a combo lasts (44 + 25 - 9) / 60fps
-    comboDelayReset = 20;
-    comboDelayResetPerTile = 3;
+    comboDelayReset = 30;
+    comboDelayResetPerTile = 4;
 
     // how long to hang in the air before falling
-    fallDelayReset = 4; // roughly 2x swap delay
+    fallDelayReset = 6; // roughly 2x swap delay
 
     // the elevate command will advance the height until a new row is added
-    fastElevateHeightPerFrame = 3;
+    fastElevateHeightPerFrame = 2;
     fastElevate = false;
 
     // some actions will stop the board from progressing
@@ -318,8 +321,8 @@ class Board
 
     // game over
     isGameOver = false;
-    gameOverLeewayReset = 40; // todo frames
-    gameOverLeewayCount = 40; // how long until we really die
+    gameOverLeewayReset = 60; // todo frames
+    gameOverLeewayCount = 60; // how long until we really die
 
     highestTileHeight = 0;
 
