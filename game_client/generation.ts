@@ -107,7 +107,7 @@ class GenerationEngine
             {
                 for(var i = 0; i < LOCAL_GAME_ENGINE.numberOfPlayers; i++)
                 {
-                    allInputs.push("");
+                    allInputs.push("SKIP");
                 }
             }
 

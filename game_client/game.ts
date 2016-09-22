@@ -172,6 +172,15 @@ class GameEngine
             if(fromBoardIndex == GAME_INSTANCE.USER_INDEX)
             {
                 attackBlock.framesLeftUntilDrop += GenerationEngine.Instance.frameDelay;
+
+                if(GenerationEngine.Instance.frameCount < GenerationEngine.Instance.frameDelay)
+                {
+                    attackBlock.framesLeftUntilDrop -= 
+                        GenerationEngine.Instance.frameDelay - GenerationEngine.Instance.frameCount - 1;
+                    Debug.log("It's too early. subtracting " + 
+                        (GenerationEngine.Instance.frameDelay - GenerationEngine.Instance.frameCount - 1));
+                }
+                
                 Debug.log("I attacked them! " + attackBlock.framesLeftUntilDrop);
             } 
             else 
@@ -347,6 +356,15 @@ class Board
 
     update = (inputs) =>
     {
+        // This is a special case, where we instruct one of the boards to wait.
+        // This happens in our client-side prediction board.
+        // And during the beginning of the game, we don't want to run any frames
+        // for the opponent board.
+        if(inputs == "SKIP")
+        {
+            return;
+        }
+
         // tiles are moving upwards
         this.updateBoardHeight();
 
