@@ -76,7 +76,7 @@ module Whosthebest.Graphics
             }
         }
 
-        switchToGameLobby = (from_username: string, to_username: string, game_id: string) => 
+        switchToGameLobby = (from_username: string, to_username: string, game_id: string, game_token: string) => 
         {
             if( to_username != this.LOGGED_IN_USERNAME &&
                 from_username != this.LOGGED_IN_USERNAME)
@@ -92,7 +92,7 @@ module Whosthebest.Graphics
 
             this.GAME_ID = game_id;
                             
-            ServerTranslator.Instance.connectToGame(game_id);
+            ServerTranslator.Instance.connectToGame(game_id, game_token);
             this.state.start("GameLobby");
         }
 

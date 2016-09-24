@@ -65,4 +65,12 @@ defmodule Whosthebest.User do
       Whosthebest.Repo.update!(changeset)
     end
   end
+
+  def validate_guest(model, guest_name) do
+    model
+      |> cast(%{username: guest_name}, [:username])
+      |> validate_length(:username, min: 3)
+      |> validate_length(:username, max: 12)
+      |> unique_constraint(:username)
+  end
 end

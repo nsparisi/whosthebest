@@ -27,6 +27,7 @@ defmodule Whosthebest.Router do
         get "/login", PageController, :login, as: :login
         post "/login", PageController, :login_user, as: :login
         get "/logout", PageController, :logout, as: :logout
+        post "/guest_login", PageController, :guest_login, as: :login
 
         # /game will be the one and only game page
         get "/game", GameController, :index

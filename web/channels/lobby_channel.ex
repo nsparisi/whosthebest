@@ -10,10 +10,7 @@ defmodule Whosthebest.LobbyChannel do
         # We have their user ID from socket.connect, so
         # use that to retrieve their DB info
         user_id = socket.assigns[:user_id]
-
-        # retrieve the user, so we can add any additional user info to the presence
-        user = Whosthebest.Repo.get(Whosthebest.User, user_id) 
-        socket = assign(socket, :username, user.username)
+        username = socket.assigns[:username]
 
         # mark the user as "available" for game invites
         socket = assign(socket, :is_available, true)
@@ -24,7 +21,7 @@ defmodule Whosthebest.LobbyChannel do
         send self, :setup_presence
 
         # Always return OK
-        {:ok, %{user_id: user_id, username: user.username}, socket}
+        {:ok, %{user_id: user_id, username: username}, socket}
     end
 
     def join("lobby:" <> _private_subtopic, _message, _socket) do
@@ -106,18 +103,13 @@ defmodule Whosthebest.LobbyChannel do
 
         if(accepted) do
             # Start a new game between these two users
-            # create a game ID, and save to each player.
             game_id = UUID.uuid4()
-            from_user = Whosthebest.Repo.get(Whosthebest.User, from_id) 
-            to_user = Whosthebest.Repo.get(Whosthebest.User, to_id) 
-            Whosthebest.User.update_game_id(from_user, game_id)
-            Whosthebest.User.update_game_id(to_user, game_id)
 
             # Let each player know the game has started
             broadcast!  socket, "lobby:start_game", %{
                 from_id: to_string(from_id), 
                 to_id: to_string(to_id), 
-                game_id: to_string(game_id)}
+                game_id: game_id}
         else
             # Let the player know the invitation was declined
             broadcast! socket, "lobby:response", %{
@@ -198,14 +190,23 @@ defmodule Whosthebest.LobbyChannel do
 
     # lobby:start_game - notifies to_id and from_id that they should enter a match
     # message: %{"from_id", "to_id", "game_id"}
-    # push: %{"from_id", "to_id", "game_id"}
+    # push: %{"from_id", "to_id", "game_id", "game_token"}
     def handle_out("lobby:start_game", message, socket) do
         user_id = to_string(socket.assigns[:user_id])
-        Debug.log "LobbyChannel OUT lobby:start_game #{user_id} from #{message.from_id} | to #{message.to_id} | game #{message.game_id}"
+        Debug.log "LobbyChannel OUT lobby:start_game #{user_id} from #{message.from_id} | to #{message.to_id} | game_id #{message.game_id}"
 
         # Push the message, only if we're being spoken to.
         if(message.to_id == user_id || message.from_id == user_id) do
-            push socket, "lobby:start_game", %{"from_id" => message.from_id, "to_id" => message.to_id, "game_id" => message.game_id}
+
+            # sign the game_id so we can make proper validation checks for this user
+            # and that they are joining the right game room
+            game_token = Phoenix.Token.sign(socket, "game_id", message.game_id)
+
+            push socket, "lobby:start_game", 
+                %{"from_id" => message.from_id, 
+                "to_id" => message.to_id, 
+                "game_id" => message.game_id, 
+                "game_token" => game_token}
         end
 
         {:noreply, socket}

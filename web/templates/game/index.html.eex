@@ -1,11 +1,7 @@
-<div class="jumbotron">
-    <h2>Game <%= @last_game_id %> !</h2>
-    
-</div>
-    
+
 <!-- Set some variables to connect to the server -->
 <script>window.userToken = "<%= assigns[:user_token] %>";</script>
-<script>window.lastGameId = "<%= @last_game_id %>";</script>
+<script>window.guestToken = "<%= assigns[:guest_token] %>";</script>
 
 <div id="gameDiv" >
     <input type="text" id="lobbyTextField" style="position:absolute;"></input>
@@ -15,19 +11,6 @@
 
 <!-- Import the game socket -->
 <script> require("web/static/js/game_socket")</script>
-
-<!-- Import the game client logic -->
-<!--<script> require("web/static/js/game/common")</script>
-<script> require("web/static/js/game/seedrandom")</script>
-<script> require("web/static/js/game/server_translator")</script>
-<script> require("web/static/js/game/input")</script>
-<script> require("web/static/js/game/generation")</script>
-<script> require("web/static/js/game/menu")</script>
-<script> require("web/static/js/game/graphics")</script>
-<script> require("web/static/js/game/game")</script>
-<script> require("web/static/js/game/main_control")</script>
-<script> require("web/static/js/game/main")</script>-->
-
 
 <!-- Import the game --> 
 <script src='<%= static_path(@conn, "/js/game.js") %>'></script>

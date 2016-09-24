@@ -3,26 +3,44 @@ defmodule Whosthebest.GameChannel do
     alias Whosthebest.Debug
     alias Whosthebest.GameManager
     alias Whosthebest.GameServer
+
+    # TODO, remove some 0's here
+    # max_age: 1209600 is equivalent to two weeks in seconds
+    @max_game_token_age 120960000
   
     # **************************
     # Handle JOINs
     # A user will join a specific game ID.
-    def join("game:" <> game_id, _params, socket) do
+    def join("game:" <> game_id, params, socket) do
         
         # We have their user ID from socket.connect, so
         # use that to retrieve their DB info
         user_id = socket.assigns[:user_id]
-        user = Whosthebest.Repo.get(Whosthebest.User, user_id) 
+        username = socket.assigns[:username]
+        game_token = params["game_token"]
+        Debug.log "GameChannel JOIN game:#{game_id} | user_id #{user_id} | username #{username} | game_token #{game_token}"
 
-        # and validate that they entered the right room
-        case user.last_game_id == game_id do
-            true ->
-                socket = assign(socket, :game_id, game_id)
-                socket = setup_game(game_id, socket)
-                send(self, {:after_join, %{user: user.username, from: user_id}})
-                {:ok, socket}
-            false ->
-                {:error, %{reason: "unauthorized"}}
+        # if the user wants to play here they will have game_token defined
+        # validate the game_token is for the correct room
+        # then, setup the game for this user and save the socket details
+        success = false
+        if game_token != nil do
+            case Phoenix.Token.verify(socket, "game_id", game_token, max_age: @max_game_token_age) do
+            {:ok, verified_game_id} ->
+                if verified_game_id == game_id do
+                    socket = assign(socket, :game_id, game_id)
+                    socket = setup_game(game_id, socket)
+                    # send(self, {:after_join, %{user: username, from: user_id}})
+                    success = true
+                end
+            {:error, _reason} ->
+            end
+        end
+
+        if success == true do
+            {:ok, socket}
+        else
+            {:error, %{reason: "unauthorized"}}
         end
     end
     

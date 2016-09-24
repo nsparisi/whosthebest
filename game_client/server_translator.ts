@@ -147,7 +147,8 @@ class LobbyConnection
             ServerTranslator.Instance.toClientStartGame(
                 this.safeGetUsername(payload.from_id), 
                 this.safeGetUsername(payload.to_id), 
-                payload.game_id);
+                payload.game_id,
+                payload.game_token);
         });
     }
 
@@ -212,13 +213,13 @@ class GameConnection
         }
     }
 
-    openChannelToGame = (game_id: string) =>
+    openChannelToGame = (game_id: string, game_token: string) =>
     {
         // join a channel, this will be the game server with game id
         // window["lastGameId"]
         var channelName = "game:" + game_id;
         Debug.log("joining channel. " + channelName);
-        this.channel = SOCKET.channel(channelName, {});
+        this.channel = SOCKET.channel(channelName, {game_token: game_token});
         this.channel.join()
             .receive("ok", resp => { onJoin(resp); })
             .receive("error", resp => { onFail(resp); });
@@ -331,12 +332,12 @@ class ServerTranslator
         this.connectionToLobbyServer = null;
     }
 
-    connectToGame = (game_id: string) =>
+    connectToGame = (game_id: string, game_token: string) =>
     {
         if(!this.connectionToGameServer)
         {
             this.connectionToGameServer = new GameConnection();
-            this.connectionToGameServer.openChannelToGame(game_id);
+            this.connectionToGameServer.openChannelToGame(game_id, game_token);
         }
         else 
         {
@@ -384,9 +385,9 @@ class ServerTranslator
         GAME_INSTANCE.receivedResponse(from_username, to_username, accepted);
     }
     
-    toClientStartGame = (from_username: string, to_username: string, game_id: string) =>
+    toClientStartGame = (from_username: string, to_username: string, game_id: string, game_token: string) =>
     {
-        GAME_INSTANCE.switchToGameLobby(from_username, to_username, game_id);
+        GAME_INSTANCE.switchToGameLobby(from_username, to_username, game_id, game_token);
     }
     
     // ************************************
