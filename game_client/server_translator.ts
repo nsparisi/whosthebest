@@ -440,7 +440,7 @@ class ServerTranslator
                 }
             }
 
-            var data = new FrameData(serverInTime, serverOutTime, frame, inputs);
+            var data = new FrameData(serverInTime, serverOutTime, parseInt(frame), inputs);
             GenerationEngine.Instance.receiveFrameFromServer(data);
         }
     }
@@ -464,12 +464,7 @@ class ServerTranslator
         // frame~player,inputs,by,number
         var payload = "" + frame;
         payload += this.FRAME_DELIMETER;
-
-        for(var i = 0; i < playerInputs.length; i++)
-        {
-            payload += this.PLAYERINPUT_DELIMETER;
-            payload += playerInputs[i];
-        }
+        payload += this.inputsToString(playerInputs);
 
         this.connectionToGameServer.toServerGameFrame(payload);
     }
@@ -483,6 +478,17 @@ class ServerTranslator
     {
         //TODO send debug message
     }
+    
+    inputsToString = (playerInputs) =>
+    {
+        var asString = "";
+        for(var i = 0; i < playerInputs.length; i++)
+        {
+            asString += this.PLAYERINPUT_DELIMETER;
+            asString += playerInputs[i];
+        }
+        return asString;
+    }
 }
 
 /**
@@ -493,7 +499,7 @@ class FrameData
     constructor(
         public serverTimeIn: number, 
         public serverTimeOut: number, 
-        public frame: string, 
+        public frame: number, 
         public inputs: Array<string>)
         {
             

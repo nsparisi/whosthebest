@@ -98,25 +98,39 @@ module Whosthebest.Graphics
 
         switchToGame = (randomSeed: number, userIndex: number) => 
         {
+            var player1 = Math.floor(randomSeed) % State_Game.NUMBER_OF_CHARACTERS;
+            var player2 = Math.floor(randomSeed * randomSeed) % State_Game.NUMBER_OF_CHARACTERS;
+            if(player2 == player1){ player2 = player2 + 1 % State_Game.NUMBER_OF_CHARACTERS; }            
+
             this.USER_INDEX = userIndex;
             this.state.start(
                 "Game",
                 true,
                 false, 
                 randomSeed,     // randomSeed parameter
-                false           // isPracticeGame parameter
+                false,           // isPracticeGame parameter
+                [player1, player2]
             );
         }
 
         switchToPractice = () =>
         {
+            var randomSeed = 1333811.83127122704;
+            var player1 = Math.floor(randomSeed) % State_Game.NUMBER_OF_CHARACTERS;
+            var player2 = Math.floor(randomSeed * randomSeed) % State_Game.NUMBER_OF_CHARACTERS;
+            if(player2 == player1){ player2 = player2 + 1 % State_Game.NUMBER_OF_CHARACTERS; } 
+
+
+            // TODO investigate 2-attack bug 
+            // this seed is 333811.83127122704 found a bug on the first swap
             this.USER_INDEX = 0;
             this.state.start(
                 "Game",
                 true, 
                 false, 
-                123456,         // randomSeed parameter
-                true            // isPracticeGame parameter
+                randomSeed,              // randomSeed parameter
+                true,                    // isPracticeGame parameter
+                [player1, player2]
             );
         }
 

@@ -6,19 +6,10 @@
 * update is called to advance the game state by one frame.
 */
 class GameEngine
-{
-    // singleton implementation
-    static Instance = new GameEngine();
-    constructor()
-    {
-        if(GameEngine.Instance)
-        {
-            throw new Error("An instance of GameEngine already exists.");
-        }
-        
-        GameEngine.Instance = this;
-    }
-    
+{   
+    // for client-side predictions
+    isLocalGameInstance = false;
+
     //tile reference:
     // 0 = empty
     // 1 = metal
@@ -62,7 +53,7 @@ class GameEngine
     numberOfPlayers = 2;
 
     // need to start keeping global timing values here
-    attackBlockDelay = 24 // about 70ish frames in 60fps
+    public static ATTACK_BLOCK_DELAY = 75 // about 150ish frames in 60fps
     
     // attack information
     // e.g. an 8-combo will attack with a 3-size and a 4-size block
@@ -84,7 +75,7 @@ class GameEngine
         for(var i = 0; i < this.numberOfPlayers; i++)
         {
             var rng = new RandomNumberGenerator(randomSeed);
-            this.boards.push(new Board(rng, i, GameEngine.Instance.attackBlockTypeStartIndex));
+            this.boards.push(new Board(rng, i, this.attackBlockTypeStartIndex, this));
         }
 
         this.boards.forEach(
@@ -104,7 +95,7 @@ class GameEngine
             this.currentGameState = this.gameStateTypes.Playing;
         }
 
-        else if(this.currentGameState == this.gameStateTypes.Playing)
+        if(this.currentGameState == this.gameStateTypes.Playing)
         {
             // if any attacks are queued, send them out before processing next frame
             this.sendAllAttacks();
@@ -169,16 +160,41 @@ class GameEngine
 
     pressedRestartButton = (inputs) =>
     {
-        return inputs && inputs.indexOf(GameEngine.Instance.inputTypes.Swap) != -1;
+        return inputs && inputs.indexOf(this.inputTypes.Swap) != -1;
     }
 
     attackOtherPlayer = (fromBoardIndex: number, attackBlock: AttackBlock) =>
     {
+        // client-side prediction changes
+        if(this.isLocalGameInstance)
+        {
+            Debug.log("fromBoardIndex:" + fromBoardIndex);
+            if(fromBoardIndex == GAME_INSTANCE.USER_INDEX)
+            {
+                attackBlock.framesLeftUntilDrop += GenerationEngine.Instance.frameDelay;
+
+                if(GenerationEngine.Instance.frameCount < GenerationEngine.Instance.frameDelay)
+                {
+                    attackBlock.framesLeftUntilDrop -= 
+                        GenerationEngine.Instance.frameDelay - GenerationEngine.Instance.frameCount - 1;
+                    Debug.log("It's too early. subtracting " + 
+                        (GenerationEngine.Instance.frameDelay - GenerationEngine.Instance.frameCount - 1));
+                }
+                
+                Debug.log("I attacked them! " + attackBlock.framesLeftUntilDrop);
+            } 
+            else 
+            {
+                attackBlock.framesLeftUntilDrop -= GenerationEngine.Instance.frameDelay;
+                Debug.log("They attacked me! " + attackBlock.framesLeftUntilDrop);
+            }
+        }
+
         // todo make round robin
-        var targetBoardIndex = (fromBoardIndex + 1) % GameEngine.Instance.numberOfPlayers;
+        var targetBoardIndex = (fromBoardIndex + 1) % this.numberOfPlayers;
         var attackData : AttackBlockData = 
         {
-            fromBoadIndex: fromBoardIndex, 
+            fromBoardIndex: fromBoardIndex, 
             attackBlock:attackBlock, 
             targetBoardIndex:targetBoardIndex
         };
@@ -190,7 +206,8 @@ class GameEngine
         for(var i = 0; i < this.attackBlockQueue.length; i++)
         {
             var attackData = this.attackBlockQueue[i];
-            GameEngine.Instance.boards[attackData.targetBoardIndex].wasAttackedByOtherPlayer(attackData.attackBlock);
+            this.boards[attackData.targetBoardIndex].wasAttackedByOtherPlayer(attackData.attackBlock);
+            Debug.log("wasAttackedByOtherPlayer local? " + this.isLocalGameInstance);
         }
         this.attackBlockQueue = [];
     }
@@ -202,7 +219,7 @@ class GameEngine
 // ************************************************
 interface AttackBlockData
 {
-    fromBoadIndex: number;
+    fromBoardIndex: number;
     attackBlock: AttackBlock;
     targetBoardIndex: number;
 }
@@ -253,7 +270,8 @@ class Board
     constructor(
         public randomNumberGenerator: RandomNumberGenerator, 
         public playerIndex: number, 
-        public attackBlockType: number)
+        public attackBlockType: number,
+        public gameEngine: GameEngine)
     {
         
     }
@@ -272,24 +290,27 @@ class Board
     
     lastTileId = 0;
 
+    // yOffset represents the tiles slowly ticking upward
     yOffset = 0; 
     yOffsetMax = 16;
-    yOffsetFrameCount = 20; //todo frames
-    yOffsetFrameReset = 20;
+    yOffsetFrameCount = 30; //todo frames
+    yOffsetFrameReset = 30;
 
-    swapDelayReset = 2; //todo frames
+    // how long the swap animation lasts
+    // -1 means it's not swapping
+    swapDelayReset = 3; //todo frames
     swapDelayCount = -1;
     queuedUpSwapAction = false;
 
     // how long a combo lasts (44 + 25 - 9) / 60fps
-    comboDelayReset = 20;
-    comboDelayResetPerTile = 3;
+    comboDelayReset = 30;
+    comboDelayResetPerTile = 4;
 
     // how long to hang in the air before falling
-    fallDelayReset = 4; // roughly 2x swap delay
+    fallDelayReset = 6; // roughly 2x swap delay
 
     // the elevate command will advance the height until a new row is added
-    fastElevateHeightPerFrame = 3;
+    fastElevateHeightPerFrame = 2;
     fastElevate = false;
 
     // some actions will stop the board from progressing
@@ -300,8 +321,8 @@ class Board
 
     // game over
     isGameOver = false;
-    gameOverLeewayReset = 40; // todo frames
-    gameOverLeewayCount = 40; // how long until we really die
+    gameOverLeewayReset = 60; // todo frames
+    gameOverLeewayCount = 60; // how long until we really die
 
     highestTileHeight = 0;
 
@@ -311,13 +332,13 @@ class Board
 
         // make board spaces
         // these are static boxes at fixed coordinates
-        for(var i = 0; i < GameEngine.Instance.rowCount; i++)
+        for(var i = 0; i < this.gameEngine.rowCount; i++)
         {
             this.boardSpaces[i] = new Array();
         }
-        for(var i = 0; i < GameEngine.Instance.rowCount; i++)
+        for(var i = 0; i < this.gameEngine.rowCount; i++)
         {
-            for(var j = 0; j < GameEngine.Instance.colCount; j++)
+            for(var j = 0; j < this.gameEngine.colCount; j++)
             {
                 this.boardSpaces[i][j] = new BoardSpace();
             }
@@ -338,6 +359,15 @@ class Board
 
     update = (inputs) =>
     {
+        // This is a special case, where we instruct one of the boards to wait.
+        // This happens in our client-side prediction board.
+        // And during the beginning of the game, we don't want to run any frames
+        // for the opponent board.
+        if(inputs == "SKIP")
+        {
+            return;
+        }
+
         // tiles are moving upwards
         this.updateBoardHeight();
 
@@ -369,7 +399,7 @@ class Board
         // Internal safety clock -- some leeway in vs mode.
         if(!this.stopBoardFromGrowing)
         {
-            if(this.highestTileHeight >= GameEngine.Instance.rowCountInBounds)
+            if(this.highestTileHeight >= this.gameEngine.rowCountInBounds)
             {
                 this.gameOverLeewayCount--;
 
@@ -865,7 +895,7 @@ class Board
         {
             for(var j = 0; j < attackBlock.tilesWide; j++)
             {
-                var tile = new Tile(j, GameEngine.Instance.attackBlockAllowedHeight + 1 + i, attackBlock.attackType, this);
+                var tile = new Tile(j, this.gameEngine.attackBlockAllowedHeight + 1 + i, attackBlock.attackType, this);
                 tile.isAttackBlock = true;
                 tile.isConnectedRight = j < attackBlock.tilesWide - 1;
                 tile.isConnectedLeft = j > 0;
@@ -890,7 +920,7 @@ class Board
             // if the tile is ready to fall
             // remove it from queue and fall
             if(attackBlock.framesLeftUntilDrop <= 0 && !this.stopBoardFromGrowing &&
-                this.highestTileHeight <= GameEngine.Instance.attackBlockAllowedHeight)
+                this.highestTileHeight <= this.gameEngine.attackBlockAllowedHeight)
             {
                 // only one attack per frame
                 this.releaseAttackBlockIntoBoard(attackBlock);
@@ -907,13 +937,13 @@ class Board
         {
             // combo patterns are predetermined i.e:
             // an 8-combo will always generate a size-3 block and a size-4 block.
-            var comboIndex = Math.min(comboSize, GameEngine.Instance.comboAttackPatterns.length - 1);
-            var comboPattern = GameEngine.Instance.comboAttackPatterns[comboIndex];
+            var comboIndex = Math.min(comboSize, this.gameEngine.comboAttackPatterns.length - 1);
+            var comboPattern = this.gameEngine.comboAttackPatterns[comboIndex];
 
             // multiple blocks can be generated from one combo.
             for(var i = 0; i < comboPattern.length; i++)
             {
-                GameEngine.Instance.attackOtherPlayer(
+                this.gameEngine.attackOtherPlayer(
                     this.playerIndex, 
                     new AttackBlock(comboPattern[i], 1, this.attackBlockType));
             }
@@ -924,17 +954,17 @@ class Board
     {
         // chain attacks are always the width of the board
         // the height grows as the chain grows
-        GameEngine.Instance.attackOtherPlayer(
+        this.gameEngine.attackOtherPlayer(
             this.playerIndex,
-            new AttackBlock(GameEngine.Instance.colCount, chainSize - 1, this.attackBlockType));
+            new AttackBlock(this.gameEngine.colCount, chainSize - 1, this.attackBlockType));
     }
 
     getNextRandomTile = (ignoreList: Array<number>) =>
     {
         while(true)
         {
-            var type = GameEngine.Instance.basicTileTypeStartIndex +
-                Math.floor(this.randomNumberGenerator.next() * GameEngine.Instance.basicTileTypeCount);
+            var type = this.gameEngine.basicTileTypeStartIndex +
+                Math.floor(this.randomNumberGenerator.next() * this.gameEngine.basicTileTypeCount);
             if(!ignoreList || ignoreList.indexOf(type) == -1)
             {
                 return type;
@@ -945,7 +975,7 @@ class Board
     generateRow = (rowNum) =>
     {
         var row = new Array();
-        for(var i = 0; i < GameEngine.Instance.colCount; i++)
+        for(var i = 0; i < this.gameEngine.colCount; i++)
         {
             // no type can repeat in adjacent rows
             var ignoreTypes = [this.lastRowOfTileTypes[i]];
@@ -1014,9 +1044,9 @@ class Board
     updateBoardNewHeight = () =>
     {
         //copy the contents of the space below
-        for(var i = GameEngine.Instance.rowCount - 1; i > 0; i--)
+        for(var i = this.gameEngine.rowCount - 1; i > 0; i--)
         {
-            for(var j = 0; j < GameEngine.Instance.colCount; j++)
+            for(var j = 0; j < this.gameEngine.colCount; j++)
             {
                 this.boardSpaces[i][j].contents = this.boardSpaces[i-1][j].contents;
             }
@@ -1106,28 +1136,28 @@ class Board
     {
         if(inputs != null)
         {
-            if(inputs.indexOf(GameEngine.Instance.inputTypes.Up) != -1)
+            if(inputs.indexOf(this.gameEngine.inputTypes.Up) != -1)
             {
-                this.cursor.y = Math.min(this.cursor.y + 1, GameEngine.Instance.rowCountInBounds);
+                this.cursor.y = Math.min(this.cursor.y + 1, this.gameEngine.rowCountInBounds);
             }
-            if(inputs.indexOf(GameEngine.Instance.inputTypes.Down) != -1)
+            if(inputs.indexOf(this.gameEngine.inputTypes.Down) != -1)
             {
                 this.cursor.y = Math.max(this.cursor.y - 1, 1);
             }
-            if(inputs.indexOf(GameEngine.Instance.inputTypes.Left) != -1)
+            if(inputs.indexOf(this.gameEngine.inputTypes.Left) != -1)
             {
                 this.cursor.x = Math.max(this.cursor.x - 1, 0);
             }
-            if(inputs.indexOf(GameEngine.Instance.inputTypes.Right) != -1)
+            if(inputs.indexOf(this.gameEngine.inputTypes.Right) != -1)
             {
-                this.cursor.x = Math.min(this.cursor.x + 1, GameEngine.Instance.colCount - 2);
+                this.cursor.x = Math.min(this.cursor.x + 1, this.gameEngine.colCount - 2);
             }
-            if(inputs.indexOf(GameEngine.Instance.inputTypes.Swap) != -1 ||
+            if(inputs.indexOf(this.gameEngine.inputTypes.Swap) != -1 ||
                 this.queuedUpSwapAction)
             {
                 this.swapAction();
             }
-            if(inputs.indexOf(GameEngine.Instance.inputTypes.Elevate) != -1)
+            if(inputs.indexOf(this.gameEngine.inputTypes.Elevate) != -1)
             {
                 this.fastElevate = true;
             }
@@ -1154,7 +1184,7 @@ class AttackBlock
         public tilesHigh: number,
         public attackType: number)
     {
-        this.framesLeftUntilDrop = GameEngine.Instance.attackBlockDelay;
+        this.framesLeftUntilDrop = GameEngine.ATTACK_BLOCK_DELAY;
     }
 }
 

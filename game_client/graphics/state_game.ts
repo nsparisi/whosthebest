@@ -11,15 +11,30 @@ module Whosthebest.Graphics
         networkText3: Phaser.Text;
         networkText4: Phaser.Text;
         networkText5: Phaser.Text;
+        networkText6: Phaser.Text;
+        networkText7: Phaser.Text;
+        networkText8: Phaser.Text;
+        networkText9: Phaser.Text;
+        networkText10: Phaser.Text;
+
         networkText1Label: Phaser.Text;
         networkText2Label: Phaser.Text;
         networkText3Label: Phaser.Text;
         networkText4Label: Phaser.Text;
         networkText5Label: Phaser.Text;
+        networkText6Label: Phaser.Text;
+        networkText7Label: Phaser.Text;
+        networkText8Label: Phaser.Text;
+        networkText9Label: Phaser.Text;
+        networkText10Label: Phaser.Text;
         gameBoards: GameBoard[];
 
-        static sfxChainMild: Phaser.Sound;
-        static sfxChainIntense: Phaser.Sound;
+        spritesheets: Phaser.Sprite[];
+        sfxChainIntenses: Phaser.Sound[];
+        sfxChainMilds: Phaser.Sound[];
+        static NUMBER_OF_CHARACTERS = 8;
+
+        characterIndexes: number[];
 
         static TILE_SPRITE_KEYS = [
             "images/game/tile_0.png",
@@ -45,68 +60,51 @@ module Whosthebest.Graphics
 
         }
 
-        init(randomSeed: number, isPracticeGame: boolean)
+        init(randomSeed: number, isPracticeGame: boolean, characterIndexes: number[])
         {
             Debug.log("state_game init: " + randomSeed + ":" + isPracticeGame);
             InputEngine.Instance.initialize(bodyElement);    
-            GameEngine.Instance.initialize(randomSeed);
+            LOCAL_GAME_ENGINE.initialize(randomSeed);
+            SERVER_GAME_ENGINE.initialize(randomSeed);
             GenerationEngine.Instance.initialize();
             GenerationEngine.Instance.setAsPracticeGame(isPracticeGame);
             Main.Instance.isRunning = true;
-        }
+            this.characterIndexes = characterIndexes;
 
-        preload()
-        {
-            // load all TILE assets
-            for(var i = 0; i < State_Game.TILE_SPRITE_KEYS.length; i++)
-            {
-                this.load.spritesheet(
-                    State_Game.TILE_SPRITE_KEYS[i], 
-                    State_Game.TILE_SPRITE_KEYS[i], 
-                    15, 15);
-            }
-
-            this.load.audio("audio/chain_intense.mp3","audio/chain_intense.mp3");
-            this.load.audio("audio/chain_mild.mp3", "audio/chain_mild.mp3");
+            
+            Debug.log(characterIndexes[0] + ' : ' + characterIndexes[1]);
         }
 
         create()
         {
-            TILE_WIDTH = Math.round(this.game.width * 0.05625);
-            TILE_HEIGHT = Math.round(this.game.height * 0.0667);
+            TILE_WIDTH = 25;
+            TILE_HEIGHT = 25;
+            // TILE_WIDTH = Math.round(this.game.width * 0.05625);
+            // TILE_HEIGHT = Math.round(this.game.height * 0.0667);
 
             // NETWORK_DEBUG
-            TILE_WIDTH *= 0.8;
-            TILE_HEIGHT *= 0.8;
-
-            this.gameBoards = [];
-
+            /*
             // player 1
-            var board1 = new GameBoard(this.game, null, "board1", true);
-            board1.x = this.game.width / 4;
-            board1.y = this.game.height / 2;
-            board1.x -= GameEngine.Instance.colCount * TILE_WIDTH / 2;
-            board1.y -= GameEngine.Instance.rowCountInBounds * TILE_HEIGHT / 2;
-            board1.initialize(GameEngine.Instance.boards[0]);
-            this.gameBoards.push(board1);
-            this.add.existing(board1);
+            var serverBoard1 = new GameBoard(this.game, null, "serverBoard1", true);
+            serverBoard1.x = board2.x + boardWidth + 100;
+            serverBoard1.y = this.game.height / 2;
+            serverBoard1.y -= LOCAL_GAME_ENGINE.rowCountInBounds * TILE_HEIGHT / 2;
+            serverBoard1.initialize(SERVER_GAME_ENGINE.boards[0], false);
+            this.gameBoards.push(serverBoard1);
+            this.add.existing(serverBoard1);
 
             // player 2
-            if(GameEngine.Instance.boards.length > 1)
+            if(SERVER_GAME_ENGINE.boards.length > 1)
             {
-                var board2 = new GameBoard(this.game, null, "board2", true);
-                board2.x = this.game.width * 3 / 4;
-                board2.y = this.game.height / 2
-                board2.x -= GameEngine.Instance.colCount * TILE_WIDTH / 2;
-                board2.y -= GameEngine.Instance.rowCountInBounds * TILE_HEIGHT / 2;
-
-                // NETWORK_DEBUG
-                board2.x -= GameEngine.Instance.colCount * TILE_WIDTH / 2;
-
-                board2.initialize(GameEngine.Instance.boards[1]);
-                this.gameBoards.push(board2);
-                this.add.existing(board2);
+                var serverBoard2 = new GameBoard(this.game, null, "serverBoard2", true);
+                serverBoard2.x = serverBoard1.x + boardWidth + 20;
+                serverBoard2.y = this.game.height / 2
+                serverBoard2.y -= LOCAL_GAME_ENGINE.rowCountInBounds * TILE_HEIGHT / 2;
+                serverBoard2.initialize(SERVER_GAME_ENGINE.boards[1], false);
+                this.gameBoards.push(serverBoard2);
+                this.add.existing(serverBoard2);
             }
+            */
 
             this.fpsText = this.add.text(
                 this.game.width / 2, 
@@ -115,8 +113,89 @@ module Whosthebest.Graphics
                 {font: "10pt Arial", fill: "#000"});
             this.fpsText.anchor.set(0.5, 0);
 
-            State_Game.sfxChainIntense = this.add.audio("audio/chain_intense.mp3");
-            State_Game.sfxChainMild = this.add.audio("audio/chain_mild.mp3");
+            // spritesheets - for now order is important
+            this.spritesheets = [];
+            var sprite = this.add.sprite(40, 10, "images/sprites/ss_cloyster.png", 0);
+            sprite.animations.add("idle",[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4], 10, true);
+            this.spritesheets.push(sprite);
+
+            sprite = this.add.sprite(120, 10, "images/sprites/ss_growlithe.png", 0);
+            sprite.animations.add("idle",[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2], 10, true);
+            this.spritesheets.push(sprite);
+
+            sprite = this.add.sprite(40, 80, "images/sprites/ss_pikachu.png", 0);
+            sprite.animations.add("idle",[0, 0, 0, 0, 0, , 0, 0, 0, 0, 1, 2, 3, 4, 5, 6], 10, true);
+            this.spritesheets.push(sprite);
+
+            sprite = this.add.sprite(120, 80, "images/sprites/ss_poliwhirl.png", 0);
+            sprite.animations.add("idle",[0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2], 10, true);
+            this.spritesheets.push(sprite);
+
+            sprite = this.add.sprite(40, 160, "images/sprites/ss_psyduck.png", 0);
+            sprite.animations.add("idle",[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4], 10, true);
+            this.spritesheets.push(sprite);
+
+            sprite = this.add.sprite(120, 160, "images/sprites/ss_raichu.png", 0);
+            sprite.animations.add("idle",[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2], 10, true);
+            this.spritesheets.push(sprite);
+
+            sprite = this.add.sprite(40, 240, "images/sprites/ss_squirtle.png", 0);
+            sprite.animations.add("idle",[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2], 10, true);
+            this.spritesheets.push(sprite);
+            
+            sprite = this.add.sprite(120, 240, "images/sprites/ss_weepinbell.png", 0);
+            sprite.animations.add("idle",[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2], 10, true);
+            this.spritesheets.push(sprite);
+
+            this.spritesheets.forEach(s => 
+            {
+                s.animations.play("idle");
+                s.exists = false;
+                s.anchor.x = 0.5;
+                s.anchor.y = 0.5;
+            });
+
+            // audios - for now ordering is important
+            this.sfxChainIntenses = [];
+            this.sfxChainIntenses.push(this.add.audio("audio/cloyster_intense.mp3"));
+            this.sfxChainIntenses.push(this.add.audio("audio/growlithe_intense.mp3"));
+            this.sfxChainIntenses.push(this.add.audio("audio/pikachu_intense.mp3"));
+            this.sfxChainIntenses.push(this.add.audio("audio/poliwhirl_intense.mp3"));
+            this.sfxChainIntenses.push(this.add.audio("audio/psyduck_intense.mp3"));
+            this.sfxChainIntenses.push(this.add.audio("audio/raichu_intense.mp3"));
+            this.sfxChainIntenses.push(this.add.audio("audio/squirtle_intense.mp3"));
+            this.sfxChainIntenses.push(this.add.audio("audio/weepinbell_intense.mp3"));
+            this.sfxChainMilds = [];
+            this.sfxChainMilds.push(this.add.audio("audio/cloyster_mild.mp3"));
+            this.sfxChainMilds.push(this.add.audio("audio/growlithe_mild.mp3"));
+            this.sfxChainMilds.push(this.add.audio("audio/pikachu_mild.mp3"));
+            this.sfxChainMilds.push(this.add.audio("audio/poliwhirl_mild.mp3"));
+            this.sfxChainMilds.push(this.add.audio("audio/psyduck_mild.mp3"));
+            this.sfxChainMilds.push(this.add.audio("audio/raichu_mild.mp3"));
+            this.sfxChainMilds.push(this.add.audio("audio/squirtle_mild.mp3"));
+            this.sfxChainMilds.push(this.add.audio("audio/weepinbell_mild.mp3"));
+
+            this.gameBoards = [];
+            var boardWidth = LOCAL_GAME_ENGINE.colCount * TILE_WIDTH;
+            var xSpacing = 50;
+            var x = (this.game.width / 2) - (this.characterIndexes.length * boardWidth / 2 ) - xSpacing / 2 ;
+            for(var i = 0; i < this.characterIndexes.length; i++)
+            {
+                var board = new GameBoard(this.game, null, "board" + i, true);
+                board.x = x;
+                board.y = this.game.height / 2;
+                board.y -= LOCAL_GAME_ENGINE.rowCountInBounds * TILE_HEIGHT / 2;
+                board.initialize(
+                    LOCAL_GAME_ENGINE.boards[i], 
+                    this.characterIndexes[i], 
+                    this, 
+                    i != 0, 
+                    true);
+                this.gameBoards.push(board);
+                this.add.existing(board);
+
+                x += boardWidth + xSpacing;
+            }
 
             var addText = (x, y, label, xAnchor) =>
             {
@@ -134,11 +213,21 @@ module Whosthebest.Graphics
             this.networkText3 = addText(this.game.width - 43, 35, "0", 1);
             this.networkText4 = addText(this.game.width - 43, 50, "0", 1);
             this.networkText5 = addText(this.game.width - 43, 65, "0", 1);
+            this.networkText6 = addText(this.game.width - 43, 100, "0", 1);
+            this.networkText7 = addText(this.game.width - 43, 115, "0", 1);
+            this.networkText8 = addText(this.game.width - 43, 130, "0", 1);
+            this.networkText9 = addText(this.game.width - 43, 145, "0", 1);
+            this.networkText10 = addText(this.game.width - 43, 160, "0", 1);
             this.networkText1Label = addText(this.game.width - 40, 5, "FRM", 0);
             this.networkText2Label = addText(this.game.width - 40, 20, "IN", 0);
             this.networkText3Label = addText(this.game.width - 40, 35, "OUT", 0);
             this.networkText4Label = addText(this.game.width - 40, 50, "REC", 0);
             this.networkText5Label = addText(this.game.width - 40, 65, "RTT", 0);
+            this.networkText6Label = addText(this.game.width - 40, 100, "BUF", 0);
+            this.networkText7Label = addText(this.game.width - 40, 115, "FOUT", 0);
+            this.networkText8Label = addText(this.game.width - 40, 130, "FIN", 0);
+            this.networkText9Label = addText(this.game.width - 40, 145, "GAME", 0);
+            this.networkText10Label = addText(this.game.width - 40, 160, "N/A", 0);
         }
 
         shutdown()
@@ -169,7 +258,7 @@ module Whosthebest.Graphics
         updateNetworkInfo()
         {
             var data: FrameTimeData = 
-                GenerationEngine.Instance.timemap[
+                GenerationEngine.Instance.frameTimings[
                     GenerationEngine.Instance.expectedFrame - 1];
 
             if(data)
@@ -180,6 +269,11 @@ module Whosthebest.Graphics
                 this.networkText4.text = data.deltaReceive;
                 this.networkText5.text = data.totalRoundTrip;
             }
+
+            this.networkText6.text = GenerationEngine.Instance.receiveBuffer.length.toString();
+            this.networkText7.text = GenerationEngine.Instance.frameCount.toString();
+            this.networkText8.text = GenerationEngine.Instance.expectedFrame.toString();
+            this.networkText9.text = GenerationEngine.Instance.currentFrameInGame.toString();
         }
     }
     
@@ -201,16 +295,23 @@ module Whosthebest.Graphics
 
         tilePools: Phaser.Group[];
 
+        playSfx: boolean = true;
+        characterIndex: number;
+        gameState: State_Game;
+
         empty = () =>
         {
         }
 
-        initialize = (gameEngineBoard: Board) =>
+        initialize = (gameEngineBoard: Board, characterIndex: number, gameState: State_Game, invert: boolean, playSfx: boolean) =>
         {
+            this.characterIndex = characterIndex;
+            this.playSfx = playSfx;
             this.gameEngineBoard = gameEngineBoard;
+            this.gameState = gameState;
 
-            this.boardWidth = GameEngine.Instance.colCount * TILE_WIDTH;
-            this.boardHeight = GameEngine.Instance.rowCountInBounds * TILE_HEIGHT;
+            this.boardWidth = LOCAL_GAME_ENGINE.colCount * TILE_WIDTH;
+            this.boardHeight = LOCAL_GAME_ENGINE.rowCountInBounds * TILE_HEIGHT;
             this.yOffsetAsHeight = TILE_HEIGHT / gameEngineBoard.yOffsetMax;
 
             // use graphics tool to draw a border with a filled lightbox
@@ -264,6 +365,14 @@ module Whosthebest.Graphics
                     0, 0, "GameOver", 
                     {font: "10pt Arial", fill: "#000"}));
             this.textGameOverCounter.anchor.set(1, 0);
+
+            // put the character sprite in position
+            var sprite = gameState.spritesheets[this.characterIndex];
+            sprite.exists = true;
+            sprite.animations.play("idle");
+            sprite.x = invert ? this.x + 40 + this.boardWidth : this.x - 40;
+            sprite.y = this.boardHeight + this.y;
+            sprite.scale.x = invert ? 1 : -1;
         }
 
         updateBoard = () =>
@@ -292,7 +401,7 @@ module Whosthebest.Graphics
             {
                 // grab a sprite from the pool, with the tile type index
                 var tileSprite = this.getDeadOrNewTileSprite(
-                    tile.type - GameEngine.Instance.basicTileTypeStartIndex);
+                    tile.type - LOCAL_GAME_ENGINE.basicTileTypeStartIndex);
                 
                 // wake the tile from "dead" state and set x,y
                 var tileX = tile.x * TILE_WIDTH;
@@ -442,17 +551,22 @@ module Whosthebest.Graphics
         addComboPopup = (tileX, tileY, count, falseComboTrueChain) =>
         {
             // todo logic for visuals
-            var realX = tileX * GraphicsEngine.Instance.tileWidth;
-            var realY = this.height - tileY * GraphicsEngine.Instance.tileHeight -
+            var realX = tileX * TILE_WIDTH;
+            var realY = this.height - tileY * TILE_HEIGHT -
                 this.yOffsetAsHeight * this.gameEngineBoard.yOffset;
+
+            if(!this.playSfx)
+            {
+                return;
+            }
 
             if(falseComboTrueChain && count <= 3)
             {
-               State_Game.sfxChainMild.play();
+               this.gameState.sfxChainMilds[this.characterIndex].play();
             }
             else if(falseComboTrueChain && count > 3)
             {
-               State_Game.sfxChainIntense.play();
+               this.gameState.sfxChainIntenses[this.characterIndex].play();
             }
         }
 

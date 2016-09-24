@@ -24,6 +24,42 @@ module Whosthebest.Graphics
             this.load.spritesheet("images/menu/btn_invite.png", "images/menu/btn_invite.png", 120, 52);
             this.load.spritesheet("images/menu/btn_practice.png", "images/menu/btn_practice.png", 120, 52);
             this.load.image("images/menu/img_avatar.png", "images/menu/img_avatar.png");
+
+
+            this.load.spritesheet("images/sprites/ss_cloyster.png", "images/sprites/ss_cloyster.png", 68, 68);
+            this.load.spritesheet("images/sprites/ss_growlithe.png", "images/sprites/ss_growlithe.png", 47, 49);
+            this.load.spritesheet("images/sprites/ss_pikachu.png", "images/sprites/ss_pikachu.png", 41, 39);
+            this.load.spritesheet("images/sprites/ss_poliwhirl.png", "images/sprites/ss_poliwhirl.png", 58, 46);
+            this.load.spritesheet("images/sprites/ss_psyduck.png", "images/sprites/ss_psyduck.png", 36, 45);
+            this.load.spritesheet("images/sprites/ss_raichu.png", "images/sprites/ss_raichu.png", 66, 55);
+            this.load.spritesheet("images/sprites/ss_squirtle.png", "images/sprites/ss_squirtle.png", 39, 38);
+            this.load.spritesheet("images/sprites/ss_weepinbell.png", "images/sprites/ss_weepinbell.png", 42, 40);
+
+            this.load.audio("audio/cloyster_intense.mp3","audio/cloyster_intense.mp3");
+            this.load.audio("audio/cloyster_mild.mp3", "audio/cloyster_mild.mp3");
+            this.load.audio("audio/growlithe_intense.mp3","audio/growlithe_intense.mp3");
+            this.load.audio("audio/growlithe_mild.mp3", "audio/growlithe_mild.mp3");
+            this.load.audio("audio/pikachu_intense.mp3","audio/pikachu_intense.mp3");
+            this.load.audio("audio/pikachu_mild.mp3", "audio/pikachu_mild.mp3");
+            this.load.audio("audio/poliwhirl_intense.mp3","audio/poliwhirl_intense.mp3");
+            this.load.audio("audio/poliwhirl_mild.mp3", "audio/poliwhirl_mild.mp3");
+            this.load.audio("audio/psyduck_intense.mp3","audio/psyduck_intense.mp3");
+            this.load.audio("audio/psyduck_mild.mp3", "audio/psyduck_mild.mp3");
+            this.load.audio("audio/raichu_intense.mp3","audio/raichu_intense.mp3");
+            this.load.audio("audio/raichu_mild.mp3", "audio/raichu_mild.mp3");
+            this.load.audio("audio/squirtle_intense.mp3","audio/squirtle_intense.mp3");
+            this.load.audio("audio/squirtle_mild.mp3", "audio/squirtle_mild.mp3");
+            this.load.audio("audio/weepinbell_intense.mp3","audio/weepinbell_intense.mp3");
+            this.load.audio("audio/weepinbell_mild.mp3", "audio/weepinbell_mild.mp3");
+            
+            // load all TILE assets
+            for(var i = 0; i < State_Game.TILE_SPRITE_KEYS.length; i++)
+            {
+                this.load.spritesheet(
+                    State_Game.TILE_SPRITE_KEYS[i], 
+                    State_Game.TILE_SPRITE_KEYS[i], 
+                    15, 15);
+            }
         }
 
         create()
