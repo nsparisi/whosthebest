@@ -70,8 +70,6 @@ module Whosthebest.Graphics
             GenerationEngine.Instance.setAsPracticeGame(isPracticeGame);
             Main.Instance.isRunning = true;
             this.characterIndexes = characterIndexes;
-
-            
             Debug.log(characterIndexes[0] + ' : ' + characterIndexes[1]);
         }
 

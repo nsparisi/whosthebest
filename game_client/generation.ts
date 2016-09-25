@@ -38,6 +38,10 @@ class GenerationEngine
     // NETWORK_DEBUG
     frameTimings: { [key: string]: FrameTimeData; } = { };
     
+    // practice AI
+    opponentWait = 0;
+    opponentMoves = [];
+
     initialize = () =>
     {
         this.elapsed = 0;
@@ -47,6 +51,37 @@ class GenerationEngine
         this.frameTimings = {};
         this.receiveBuffer = [];
         this.drainInput();
+        
+        this.opponentMoves = [
+            SERVER_GAME_ENGINE.inputTypes.Swap,
+            SERVER_GAME_ENGINE.inputTypes.Swap,
+            SERVER_GAME_ENGINE.inputTypes.Swap,
+            SERVER_GAME_ENGINE.inputTypes.Swap,
+            SERVER_GAME_ENGINE.inputTypes.Swap,
+            SERVER_GAME_ENGINE.inputTypes.Swap,
+            SERVER_GAME_ENGINE.inputTypes.Swap,
+            SERVER_GAME_ENGINE.inputTypes.Swap,
+            SERVER_GAME_ENGINE.inputTypes.Swap,
+            SERVER_GAME_ENGINE.inputTypes.None,
+            SERVER_GAME_ENGINE.inputTypes.None,
+            SERVER_GAME_ENGINE.inputTypes.None,
+            SERVER_GAME_ENGINE.inputTypes.None,
+            SERVER_GAME_ENGINE.inputTypes.None,
+            SERVER_GAME_ENGINE.inputTypes.None,
+            SERVER_GAME_ENGINE.inputTypes.None,
+            SERVER_GAME_ENGINE.inputTypes.None,
+            SERVER_GAME_ENGINE.inputTypes.Up,
+            SERVER_GAME_ENGINE.inputTypes.Down,
+            SERVER_GAME_ENGINE.inputTypes.Down,
+            SERVER_GAME_ENGINE.inputTypes.Down,
+            SERVER_GAME_ENGINE.inputTypes.Left,
+            SERVER_GAME_ENGINE.inputTypes.Left,
+            SERVER_GAME_ENGINE.inputTypes.Left,
+            SERVER_GAME_ENGINE.inputTypes.Right,
+            SERVER_GAME_ENGINE.inputTypes.Right,
+            SERVER_GAME_ENGINE.inputTypes.Right,
+            //SERVER_GAME_ENGINE.inputTypes.Elevate
+        ];
     }
 
     setAsPracticeGame = (isPracticeGame: boolean) =>
@@ -176,8 +211,8 @@ class GenerationEngine
         }
         inputs.push(playerInputAsString);
 
-        // TODO set CPU player with random inputs
-        inputs.push("");
+        // set CPU player with random inputs
+        inputs.push(this.generateOpponentsMove());
 
         // bypass server call, and send data back to client
         var data = new FrameData(
@@ -186,6 +221,15 @@ class GenerationEngine
             frame, 
             inputs);
         this.receiveFrameFromServer(data);
+    }
+
+    generateOpponentsMove = () =>
+    {
+        this.opponentWait = (this.opponentWait + 1) % 3;
+
+        return this.opponentWait > 0 ? 
+            SERVER_GAME_ENGINE.inputTypes.None.toString() : 
+            this.opponentMoves[Math.floor(Math.random() * this.opponentMoves.length)].toString();
     }
 
     receiveFrameFromServer = (frameData: FrameData) =>
@@ -225,34 +269,61 @@ class GenerationEngine
             return;
         }
 
-        if(InputEngine.Instance.justPressed("W"))
+        if( InputEngine.Instance.justPressed("W") || 
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.XBOX360_DPAD_UP) || 
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.PS3XC_DPAD_UP))
         {
             this.currentInput.push(SERVER_GAME_ENGINE.inputTypes.Up);
         }
         
-        if(InputEngine.Instance.justPressed("S"))
+        if( InputEngine.Instance.justPressed("S") || 
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.XBOX360_DPAD_DOWN) || 
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.PS3XC_DPAD_DOWN))
         {
             this.currentInput.push(SERVER_GAME_ENGINE.inputTypes.Down);
         }
         
-        if(InputEngine.Instance.justPressed("A"))
+        if( InputEngine.Instance.justPressed("A") || 
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.XBOX360_DPAD_LEFT) || 
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.PS3XC_DPAD_LEFT))
         {
             this.currentInput.push(SERVER_GAME_ENGINE.inputTypes.Left);
         }
         
-        if(InputEngine.Instance.justPressed("D"))
+        if( InputEngine.Instance.justPressed("D") || 
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.XBOX360_DPAD_RIGHT) || 
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.PS3XC_DPAD_RIGHT))
         {
             this.currentInput.push(SERVER_GAME_ENGINE.inputTypes.Right);
         }
         
-        if(InputEngine.Instance.justPressed("¿") || InputEngine.Instance.justClicked())
+        if( InputEngine.Instance.justPressed("¿") || 
+            InputEngine.Instance.justClicked() || 
+            InputEngine.Instance.justPressed("\r") || 
+            InputEngine.Instance.justPressed("\r\n") || 
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.XBOX360_A) ||
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.XBOX360_B) ||
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.XBOX360_X) ||
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.XBOX360_Y) ||
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.PS3XC_X) ||
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.PS3XC_CIRCLE) ||
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.PS3XC_SQUARE) ||
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.PS3XC_TRIANGLE))
         {
             this.currentInput.push(SERVER_GAME_ENGINE.inputTypes.Swap);
         }
 
         if( InputEngine.Instance.justPressed("Q") || 
             InputEngine.Instance.justPressed("E") || 
-            InputEngine.Instance.justPressed(" "))
+            InputEngine.Instance.justPressed(" ") || 
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.XBOX360_RIGHT_BUMPER) ||
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.XBOX360_RIGHT_TRIGGER) ||
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.XBOX360_LEFT_BUMPER) ||
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.XBOX360_LEFT_TRIGGER) ||
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.PS3XC_R1) ||
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.PS3XC_R2) ||
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.PS3XC_L1) ||
+            InputEngine.Instance.justPressedButton(Phaser.Gamepad.PS3XC_L2))
         {
             this.currentInput.push(SERVER_GAME_ENGINE.inputTypes.Elevate);
         }

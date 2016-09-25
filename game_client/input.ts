@@ -19,8 +19,11 @@ class InputEngine
     
     keysPrevious = {};
     keysCurrent = {};
+    buttonsPrevious = {};
+    buttonsCurrent = {};
     click = null;
     clickPrevious = null;
+    gamePad1: Phaser.SinglePad = null;
 
     initialize = (bodyElement: HTMLElement) =>
     {
@@ -40,6 +43,43 @@ class InputEngine
         }
         this.clickPrevious = this.click;
         this.click = null;
+        
+        // store last frame of buttons
+        for(var k in this.buttonsCurrent)
+        {
+            this.buttonsPrevious[k] = this.buttonsCurrent[k];
+        }
+        this.checkGamePad();
+    }
+
+    checkGamePad = () =>
+    {
+        this.buttonsCurrent[Phaser.Gamepad.XBOX360_DPAD_UP] = this.gamePad1.getButton(Phaser.Gamepad.XBOX360_DPAD_UP).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.PS3XC_DPAD_UP] = this.gamePad1.getButton(Phaser.Gamepad.PS3XC_DPAD_UP).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.XBOX360_DPAD_DOWN] = this.gamePad1.getButton(Phaser.Gamepad.XBOX360_DPAD_DOWN).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.PS3XC_DPAD_DOWN] = this.gamePad1.getButton(Phaser.Gamepad.PS3XC_DPAD_DOWN).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.XBOX360_DPAD_LEFT] = this.gamePad1.getButton(Phaser.Gamepad.XBOX360_DPAD_LEFT).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.PS3XC_DPAD_LEFT] = this.gamePad1.getButton(Phaser.Gamepad.PS3XC_DPAD_LEFT).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.XBOX360_DPAD_RIGHT] = this.gamePad1.getButton(Phaser.Gamepad.XBOX360_DPAD_RIGHT).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.PS3XC_DPAD_RIGHT] = this.gamePad1.getButton(Phaser.Gamepad.PS3XC_DPAD_RIGHT).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.XBOX360_A] = this.gamePad1.getButton(Phaser.Gamepad.XBOX360_A).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.XBOX360_B] = this.gamePad1.getButton(Phaser.Gamepad.XBOX360_B).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.XBOX360_X] = this.gamePad1.getButton(Phaser.Gamepad.XBOX360_X).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.XBOX360_Y] = this.gamePad1.getButton(Phaser.Gamepad.XBOX360_Y).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.PS3XC_X] = this.gamePad1.getButton(Phaser.Gamepad.PS3XC_X).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.PS3XC_CIRCLE] = this.gamePad1.getButton(Phaser.Gamepad.PS3XC_CIRCLE).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.PS3XC_SQUARE] = this.gamePad1.getButton(Phaser.Gamepad.PS3XC_SQUARE).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.PS3XC_TRIANGLE] = this.gamePad1.getButton(Phaser.Gamepad.PS3XC_TRIANGLE).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.XBOX360_RIGHT_BUMPER] = this.gamePad1.getButton(Phaser.Gamepad.XBOX360_RIGHT_BUMPER).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.XBOX360_RIGHT_TRIGGER] = this.gamePad1.getButton(Phaser.Gamepad.XBOX360_RIGHT_TRIGGER).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.XBOX360_LEFT_BUMPER] = this.gamePad1.getButton(Phaser.Gamepad.XBOX360_LEFT_BUMPER).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.XBOX360_LEFT_TRIGGER] = this.gamePad1.getButton(Phaser.Gamepad.XBOX360_LEFT_TRIGGER).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.PS3XC_R1] = this.gamePad1.getButton(Phaser.Gamepad.PS3XC_R1).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.PS3XC_R2] = this.gamePad1.getButton(Phaser.Gamepad.PS3XC_R2).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.PS3XC_L1] = this.gamePad1.getButton(Phaser.Gamepad.PS3XC_L1).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.PS3XC_L2] = this.gamePad1.getButton(Phaser.Gamepad.PS3XC_L2).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.PS3XC_START] = this.gamePad1.getButton(Phaser.Gamepad.PS3XC_START).isDown;
+        this.buttonsCurrent[Phaser.Gamepad.XBOX360_START] = this.gamePad1.getButton(Phaser.Gamepad.XBOX360_START).isDown;
     }
 
     justPressed = (key) =>
@@ -50,6 +90,11 @@ class InputEngine
     justClicked = () =>
     {
         return this.click && !this.clickPrevious;
+    }
+
+    justPressedButton = (gamepadButton: number) =>
+    {
+        return this.buttonsCurrent[gamepadButton] && !this.buttonsPrevious[gamepadButton];
     }
 
     // Listen for key presses.
