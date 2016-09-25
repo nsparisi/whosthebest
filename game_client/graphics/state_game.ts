@@ -6,6 +6,10 @@ module Whosthebest.Graphics
     export class State_Game extends Phaser.State
     {
         fpsText: Phaser.Text;
+        fpsTextPhaser: Phaser.Text;
+        gameClock: Phaser.Text;
+        gameSpeed: Phaser.Text;
+
         networkText1: Phaser.Text;
         networkText2: Phaser.Text;
         networkText3: Phaser.Text;
@@ -110,6 +114,27 @@ module Whosthebest.Graphics
                 "FPS", 
                 {font: "10pt Arial", fill: "#000"});
             this.fpsText.anchor.set(0.5, 0);
+
+            this.fpsTextPhaser = this.add.text(
+                this.game.width / 2, 
+                20, 
+                "FPS", 
+                {font: "10pt Arial", fill: "#000"});
+            this.fpsTextPhaser.anchor.set(0.5, 0);
+
+            this.gameClock = this.add.text(
+                this.game.width - 50, 
+                this.game.height -50,
+                "FPS", 
+                {font: "20pt Arial", fill: "#000"});
+            this.gameClock.anchor.set(0.5, 0);
+
+            this.gameSpeed = this.add.text(
+                this.game.width - 10, 
+                this.game.height - 80,
+                "FPS", 
+                {font: "20pt Arial", fill: "#000"});
+            this.gameSpeed.anchor.set(1, 0);
 
             // spritesheets - for now order is important
             this.spritesheets = [];
@@ -241,7 +266,10 @@ module Whosthebest.Graphics
 
         update()
         {
-            this.fpsText.text = deltaTimeMs.toString(); //this.game.time.fps.toString();
+            this.fpsText.text = deltaTimeMs.toString(); 
+            this.fpsTextPhaser.text = this.game.time.fps.toString();
+            this.gameClock.text = this.clockToPrettyString();
+            this.gameSpeed.text = LOCAL_GAME_ENGINE.boards[GAME_INSTANCE.USER_INDEX].gameSpeed.toString();
 
             // NETWORK_DEBUG
             this.updateNetworkInfo();
@@ -252,6 +280,13 @@ module Whosthebest.Graphics
                 gameBoard.updateBoard();
             });
         }    
+
+        clockToPrettyString = () =>
+        {
+            var minutes = Math.floor(LOCAL_GAME_ENGINE.boards[GAME_INSTANCE.USER_INDEX].gameClockInSeconds / 60);
+            var seconds = LOCAL_GAME_ENGINE.boards[GAME_INSTANCE.USER_INDEX].gameClockInSeconds % 60;
+            return ("0" + minutes).slice(-2) + ":" + ("0" + seconds).slice(-2);
+        }
 
         updateNetworkInfo()
         {

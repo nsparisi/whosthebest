@@ -12,6 +12,7 @@ To start your Phoenix app:
   1. Install node dependencies with `npm install`
   2. Install elixir dependencies with `mix deps.get`
   3. Create and migrate your database with `mix ecto.create && mix ecto.migrate`
+  4. Build typescript game with `node node_modules/typescript/bin/tsc -p game_client/` or download VSCode and run ctrl+shift+b
   4. Start Phoenix endpoint with `mix phoenix.server`
 
 For Windows Users:

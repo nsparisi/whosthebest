@@ -81,7 +81,7 @@ class GameEngine
         this.boards.forEach(
             (board) =>
             {
-                board.initialize();
+                board.initialize(0, 0);
             });
     }
     
@@ -290,11 +290,23 @@ class Board
     
     lastTileId = 0;
 
+    // game clock
+    gameClockInSeconds = 0;
+    totalFramesElapsed = 0;
+
+    // difficulty
+    // speed affects how fast game raises (yOffset)
+    // difficulty affects # of tile types, and how fast tiles disappear
+    gameSpeed = 0;
+    gameDifficulty = 0;
+
     // yOffset represents the tiles slowly ticking upward
     yOffset = 0; 
     yOffsetMax = 16;
     yOffsetFrameCount = 30; //todo frames
     yOffsetFrameReset = 30;
+    yOffsetFrameResetValues = [30, 25, 20, 17, 15, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+    speedLengthInSeconds = 20;
 
     // how long the swap animation lasts
     // -1 means it's not swapping
@@ -326,9 +338,12 @@ class Board
 
     highestTileHeight = 0;
 
-    initialize = () =>
+    initialize = (speed: number, difficulty: number) =>
     {
         this.isGameOver = false;
+        this.totalFramesElapsed = 0;
+        this.gameDifficulty = difficulty;
+        this.setGameSpeed(speed);
 
         // make board spaces
         // these are static boxes at fixed coordinates
@@ -368,6 +383,10 @@ class Board
             return;
         }
 
+        // count the frames, convert to seconds for convenience
+        // slowly become faster as the game goes on
+        this.updateClockAndGameSpeed();
+
         // tiles are moving upwards
         this.updateBoardHeight();
 
@@ -391,6 +410,29 @@ class Board
 
         // did we lose?
         this.checkGameOverConditions();
+    }
+    
+    updateClockAndGameSpeed = () =>
+    {
+        // count up the total frames
+        // each second that passes, check to see if the game is getting faster
+        this.totalFramesElapsed ++;
+        if(this.totalFramesElapsed % GenerationEngine.Instance.frameRate == 0)
+        {
+            this.gameClockInSeconds++;
+            if(this.gameClockInSeconds % this.speedLengthInSeconds == 0)
+            {
+                this.setGameSpeed(this.gameSpeed + 1);
+            }
+        }
+    }
+
+    setGameSpeed = (speed: number) =>
+    {
+        this.gameSpeed = Math.min(
+                speed, 
+                this.yOffsetFrameResetValues.length - 1);
+        this.yOffsetFrameReset = this.yOffsetFrameResetValues[this.gameSpeed];
     }
 
     checkGameOverConditions = () =>

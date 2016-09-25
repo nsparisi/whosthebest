@@ -100,14 +100,17 @@ module Whosthebest.Graphics
         {
             var player1 = Math.floor(randomSeed) % State_Game.NUMBER_OF_CHARACTERS;
             var player2 = Math.floor(randomSeed * randomSeed) % State_Game.NUMBER_OF_CHARACTERS;
-            if(player2 == player1){ player2 = player2 + 1 % State_Game.NUMBER_OF_CHARACTERS; }            
+            if(player2 == player1)
+            { 
+                player2 = player2 + 1 % State_Game.NUMBER_OF_CHARACTERS; 
+            }            
 
             this.USER_INDEX = userIndex;
             this.state.start(
                 "Game",
                 true,
                 false, 
-                randomSeed,     // randomSeed parameter
+                randomSeed,      // randomSeed parameter
                 false,           // isPracticeGame parameter
                 [player1, player2]
             );
@@ -115,11 +118,13 @@ module Whosthebest.Graphics
 
         switchToPractice = () =>
         {
-            var randomSeed = 1333811.83127122704;
+            var randomSeed = Math.random() * 100000;
             var player1 = Math.floor(randomSeed) % State_Game.NUMBER_OF_CHARACTERS;
             var player2 = Math.floor(randomSeed * randomSeed) % State_Game.NUMBER_OF_CHARACTERS;
-            if(player2 == player1){ player2 = player2 + 1 % State_Game.NUMBER_OF_CHARACTERS; } 
-
+            if(player2 == player1)
+            { 
+                player2 = player2 + 1 % State_Game.NUMBER_OF_CHARACTERS; 
+            } 
 
             // TODO investigate 2-attack bug 
             // this seed is 333811.83127122704 found a bug on the first swap
@@ -128,8 +133,8 @@ module Whosthebest.Graphics
                 "Game",
                 true, 
                 false, 
-                randomSeed,              // randomSeed parameter
-                true,                    // isPracticeGame parameter
+                randomSeed,         // randomSeed parameter
+                true,               // isPracticeGame parameter
                 [player1, player2]
             );
         }

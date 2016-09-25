@@ -54,6 +54,11 @@ class InputEngine
 
     checkGamePad = () =>
     {
+        if(!this.gamePad1.connected)
+        {
+            return;
+        }
+        
         this.buttonsCurrent[Phaser.Gamepad.XBOX360_DPAD_UP] = this.gamePad1.getButton(Phaser.Gamepad.XBOX360_DPAD_UP).isDown;
         this.buttonsCurrent[Phaser.Gamepad.PS3XC_DPAD_UP] = this.gamePad1.getButton(Phaser.Gamepad.PS3XC_DPAD_UP).isDown;
         this.buttonsCurrent[Phaser.Gamepad.XBOX360_DPAD_DOWN] = this.gamePad1.getButton(Phaser.Gamepad.XBOX360_DPAD_DOWN).isDown;
