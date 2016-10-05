@@ -5,7 +5,11 @@ defmodule Whosthebest.Repo.Migrations.CreateUser do
     create table(:users) do
       add :username, :string
       add :email, :string
-      add :last_game_id, :string
+      
+      add :total_time, :integer
+      add :total_games, :integer 
+      add :total_wins, :integer 
+      
       add :role, :string
       add :password_hash, :string
       add :confirmed_at, :datetime

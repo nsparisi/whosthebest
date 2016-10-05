@@ -1,3 +1,54 @@
-<h2>Welcome to Whosthebest, <%= @user.username %>!</h2>
-<a href="<%= user_path(@conn, :show, @user.username) %>"><%= "View Profile" %></a>
-<a href="<%= logout_path(@conn, :logout) %>"><%= "Logout" %></a>
+
+<h3>Top Time</h3>
+<table class = "table-striped">
+    <tr>
+        <th>Name</th>
+        <th>Total Time</th>
+        <th>Total Wins</th>
+        <th>Total Games</th>
+    </tr>
+    <%= for {username, total_time, total_wins, total_games} <- @users_by_times do %>
+        <tr>
+            <td><%= username %></td>
+            <td><%= total_time %></td>
+            <td><%= total_wins %></td>
+            <td><%= total_games %></td>
+        </tr>
+    <% end %>
+</table>
+
+<h2>Top Wins</h2>
+<table class = "table-striped">
+    <tr>
+        <th>Name</th>
+        <th>Total Time</th>
+        <th>Total Wins</th>
+        <th>Total Games</th>
+    </tr>
+    <%= for {username, total_time, total_wins, total_games} <- @users_by_wins do %>
+        <tr>
+            <td><%= username %></td>
+            <td><%= total_time %></td>
+            <td><%= total_wins %></td>
+            <td><%= total_games %></td>
+        </tr>
+    <% end %>
+</table>
+
+<h1>Top Games</h1>
+<table class = "table-striped">
+    <tr>
+        <th>Name</th>
+        <th>Total Time</th>
+        <th>Total Wins</th>
+        <th>Total Games</th>
+    </tr>
+    <%= for {username, total_time, total_wins, total_games} <- @users_by_games do %>
+        <tr>
+            <td><%= username %></td>
+            <td><%= total_time %></td>
+            <td><%= total_wins %></td>
+            <td><%= total_games %></td>
+        </tr>
+    <% end %>
+</table>

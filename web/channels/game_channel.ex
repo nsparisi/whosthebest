@@ -23,21 +23,25 @@ defmodule Whosthebest.GameChannel do
         # if the user wants to play here they will have game_token defined
         # validate the game_token is for the correct room
         # then, setup the game for this user and save the socket details
-        success = false
-        if game_token != nil do
-            case Phoenix.Token.verify(socket, "game_id", game_token, max_age: @max_game_token_age) do
-            {:ok, verified_game_id} ->
-                if verified_game_id == game_id do
-                    socket = assign(socket, :game_id, game_id)
-                    socket = setup_game(game_id, socket)
-                    # send(self, {:after_join, %{user: username, from: user_id}})
-                    success = true
+        {success, socket} =
+            if game_token != nil do
+                case Phoenix.Token.verify(socket, "game_id", game_token, max_age: @max_game_token_age) do
+                    {:ok, verified_game_id} ->
+                        if verified_game_id == game_id do
+                            socket = assign(socket, :game_id, game_id)
+                            socket = setup_game(game_id, socket)
+                            # send(self, {:after_join, %{user: username, from: user_id}})
+                            {true, socket}
+                        else
+                            {false, socket}
+                        end
+                    {:error, _reason} -> {false, socket}
                 end
-            {:error, _reason} ->
+            else
+                {false, socket}
             end
-        end
 
-        if success == true do
+        if success do
             {:ok, socket}
         else
             {:error, %{reason: "unauthorized"}}

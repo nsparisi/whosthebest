@@ -14,7 +14,7 @@ users = [
   %{
     username: "nick",
     email: "nick@mail.com",
-    password_hash: Comeonin.Bcrypt.hashpwsalt("test"),
+    password: "testtest",
     role: "user",
     otp_required: false,
     otp_secret: Comeonin.Otp.gen_secret,
@@ -23,7 +23,7 @@ users = [
   %{
     username: "nat",
     email: "nat@mail.com",
-    password_hash: Comeonin.Bcrypt.hashpwsalt("test"),
+    password: "testtest",
     role: "user",
     otp_required: false,
     otp_secret: Comeonin.Otp.gen_secret,
@@ -32,7 +32,7 @@ users = [
   %{
     username: "admin",
     email: "admin@mail.com",
-    password_hash: Comeonin.Bcrypt.hashpwsalt("test"),
+    password: "testtest",
     role: "admin",
     otp_required: false,
     otp_secret: Comeonin.Otp.gen_secret,
@@ -41,5 +41,5 @@ users = [
 ]
 
 for user <- users do
-  Map.merge(%Whosthebest.User{}, user) |> Whosthebest.Repo.insert!
+  Whosthebest.User.auth_changeset(%Whosthebest.User{}, user) |> Whosthebest.Repo.insert!
 end

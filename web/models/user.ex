@@ -5,9 +5,11 @@ defmodule Whosthebest.User do
 
   schema "users" do
     field :username, :string
-    field :email, :string
-    field :last_game_id, :string
-    
+    field :email, :string 
+    field :total_time, :integer
+    field :total_games, :integer 
+    field :total_wins, :integer 
+
     #openmaize requirements
     field :role, :string
     field :password, :string, virtual: true
@@ -24,7 +26,7 @@ defmodule Whosthebest.User do
   end
 
   @required_fields ~w(username role password)
-  @optional_fields ~w(last_game_id password_hash email)
+  @optional_fields ~w(password_hash email total_time total_games total_wins)
 
   @doc """
   Creates a changeset based on the `model` and `params`.
@@ -33,10 +35,21 @@ defmodule Whosthebest.User do
   with no validation performed.
   """
   def changeset(model, params \\ :empty) do
-    if(is_map(params) and !Map.has_key?(params, :role)) do
-        params = Map.put(params, "role", "user")
-    end
-  
+    
+    params = 
+        if(is_map(params) and !Map.has_key?(params, :role)) do
+            Map.put(params, :role, "user")
+        else
+            params
+        end
+    
+    params =
+        params
+        |> Map.put(:total_time, 0)
+        |> Map.put(:total_games, 0)
+        |> Map.put(:total_wins, 0)
+        |> Map.put(:otp_required, false)
+
     model
     |> cast(params, @required_fields, @optional_fields)
     |> validate_length(:username, min: 3)
@@ -57,13 +70,6 @@ defmodule Whosthebest.User do
     model
     |> cast(params, ~w(email), [])
     |> OpenmaizeEcto.add_reset_token(key)
-  end
-
-  def update_game_id(model, game_id) do
-    changeset = cast(model, %{last_game_id: game_id}, [:last_game_id])
-    if changeset.valid? do
-      Whosthebest.Repo.update!(changeset)
-    end
   end
 
   def validate_guest(model, guest_name) do

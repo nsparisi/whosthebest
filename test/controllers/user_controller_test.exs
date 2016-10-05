@@ -2,7 +2,7 @@ defmodule Whosthebest.UserControllerTest do
   use Whosthebest.ConnCase
 
   alias Whosthebest.User
-  @valid_attrs %{email: "some@content", last_game_id: "some content", name: "some content", password: "some content"}
+  @valid_attrs %{email: "some@content", name: "some content", password: "some content"}
   @invalid_attrs %{}
 
   setup do
