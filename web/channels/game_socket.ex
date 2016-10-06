@@ -1,6 +1,5 @@
 defmodule Whosthebest.GameSocket do
     use Phoenix.Socket
-    alias Whosthebest.Debug
     import Ecto.Repo
 
     ## Channels

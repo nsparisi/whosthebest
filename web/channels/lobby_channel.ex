@@ -82,15 +82,16 @@ defmodule Whosthebest.LobbyChannel do
         Debug.log "LobbyChannel IN lobby:ask #{from_id} | #{to_id} | #{is_available}"
 
         if(is_available) do
-            # the user is now blocked from future game invites
-            socket = assign(socket, :is_available, false)
-
             # Broadcast the ask, then add an INTERCEPT, to filter who actually pushes.
-            # TODO - run some checks to see if ask is even possible (user is in a game?)
+            # TODO - run some checks to see whether ask is even possible (user is in a game?)
             broadcast! socket, "lobby:ask", %{
                 from_id: to_string(from_id), 
                 to_id: to_string(to_id) }
         end
+
+        # the user is now "busy",
+        # and is blocked from future game invites
+        socket = assign(socket, :is_available, false)
 
         {:noreply, socket}
     end
@@ -147,14 +148,9 @@ defmodule Whosthebest.LobbyChannel do
         Debug.log "LobbyChannel OUT lobby:ask #{user_id} | from #{message.from_id} | to #{message.to_id}"
 
         # Push the message, only if we're being spoken to.
+        # And only if we're available for an invite
         if(message.to_id == user_id) do
-
             if(is_available) do
-                # the user is now blocked from game invites
-                # until they respond to the ask
-                socket = assign(socket, :is_available, false)
-
-                # push the ask down to the client
                 push socket, "lobby:ask", %{"from_id" =>  message.from_id, "to_id" => message.to_id}
             else
                 # respond back that the user is busy
@@ -166,6 +162,14 @@ defmodule Whosthebest.LobbyChannel do
             end
         end
 
+        # update the socket, in all cases this user is now "busy"
+        socket = 
+            if(message.to_id == user_id) do
+                assign(socket, :is_available, false)
+            else
+                socket
+            end
+
         {:noreply, socket}
     end
 
@@ -176,12 +180,18 @@ defmodule Whosthebest.LobbyChannel do
         user_id = to_string(socket.assigns[:user_id])
         Debug.log "LobbyChannel OUT lobby:response #{user_id} from #{message.from_id} | to #{message.to_id}"
 
-        # Push the message, only if we're being spoken to.
-        if(message.to_id == user_id || message.from_id == user_id) do
-            if(!message.accepted) do
-                # the user is now un-blocked for game invites
-                socket = assign(socket, :is_available, true)
+        # If we're being spoken to,
+        # update the socket, the user is now unblocked for game invites
+        socket = 
+            if(!message.accepted && (message.to_id == user_id || message.from_id == user_id)) do
+                assign(socket, :is_available, true)
+            else
+                socket
             end
+
+        # If we're being spoken to,
+        # push the message out to the client.
+        if(message.to_id == user_id || message.from_id == user_id) do
             push socket, "lobby:response", %{"from_id" => message.from_id, "to_id" => message.to_id, "accepted" => message.accepted}
         end
 

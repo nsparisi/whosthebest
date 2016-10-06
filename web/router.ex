@@ -44,7 +44,7 @@ defmodule Whosthebest.Router do
         # PageController handles all user registration + login experience
         # get "/register", PageController, :register
         # post "/create", PageController, :create
-        # get "/login", PageController, :login, as: :login
+        get "/login", PageController, :login, as: :login
         # post "/login", PageController, :login_user, as: :login
         # get "/logout", PageController, :logout, as: :logout
         post "/guest_login", PageController, :guest_login, as: :login

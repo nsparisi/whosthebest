@@ -38,11 +38,16 @@ defmodule Whosthebest.GameManager do
     def handle_call({:get, key}, _from, state) do
         Debug.log("GameManager  handle_call get " <> key)
         
-        if !Map.has_key?(state, key) do
-            Debug.log("GameManager  starting new game")
-            {:ok, game} = GameServer.start()
-            state = Map.put(state, key, game)
-        end
+        # create a new game server 
+        # if it does not exist
+        state = 
+            if !Map.has_key?(state, key) do
+                Debug.log("GameManager  starting new game")
+                {:ok, game} = GameServer.start()
+                Map.put(state, key, game)
+            else
+                state
+            end
         
         {:reply, Map.fetch!(state, key), state}
     end
@@ -50,11 +55,17 @@ defmodule Whosthebest.GameManager do
     def handle_call({:kill, key}, _from, state) do
         Debug.log("GameManager  handle_cast kill " <> key)
         
-        if Map.has_key?(state, key) do
-            Debug.log("GameManager  deleting game")
-            Process.exit(Map.fetch!(state, key), :shutdown)
-            state = Map.delete(state, key)
-        end
+        # kill the server process 
+        # and remove from the map
+        state = 
+            if Map.has_key?(state, key) do
+                Debug.log("GameManager  deleting game")
+                Process.exit(Map.fetch!(state, key), :shutdown)
+                Map.delete(state, key)
+            else
+                state
+            end
+            
         {:reply, nil, state}
     end
     

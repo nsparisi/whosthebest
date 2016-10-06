@@ -2,12 +2,10 @@ defmodule Whosthebest.PageController do
     use Whosthebest.Web, :controller
 
     alias Whosthebest.User
-    alias Whosthebest.Debug
 
     def index(conn, _params) do
         render conn, "index.html"
     end
-
 
     def login(conn, _params) do
         conn = delete_session conn, :guest_name

@@ -42,7 +42,7 @@ defmodule Coherence.Redirects do
 
   """
   use Redirects
-  import Whosthebest.Router.Helpers
+  # import Whosthebest.Router.Helpers
 
   # Add function overrides below
 

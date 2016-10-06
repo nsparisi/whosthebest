@@ -71,8 +71,7 @@ defmodule Whosthebest.GameChannel do
         GameServer.clear_frames(game)
         
         if :ready == GameServer.get_game_state(game) do
-            :random.seed(:erlang.now())
-            random_seed = to_string(:random.uniform() * 1000000)
+            random_seed = to_string(:rand.uniform 1000000)
             broadcast! socket, "game:ready", %{:random_seed => random_seed}
         end
         

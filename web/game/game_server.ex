@@ -91,18 +91,24 @@ defmodule Whosthebest.GameServer do
     
     def handle_cast({:join, user}, state) do
         Debug.log("GameServer  handle_cast join " <> user)
-        if !Map.has_key?(state[:user_frames], user) do
-        
-            # add the user to the game
-            user_frames = Map.put(state[:user_frames], user, [])
-            state = Map.put(state, :user_frames, user_frames)
-            
-            # if all of the user have joined, mark as ready
-            if state[:number_of_players] == length(Map.keys(user_frames)) do
-                state = Map.put(state, :game_state, :ready)
+
+        # if they are not present
+        # add the user to the game
+        state = 
+            if !Map.has_key?(state[:user_frames], user) do
+                user_frames = Map.put(state[:user_frames], user, [])
+                Map.put(state, :user_frames, user_frames)
+            else
+                state
             end
+
+        # if all of the user have joined
+        # mark this game as ready
+        if state[:number_of_players] == length(Map.keys(state[:user_frames])) do
+            {:noreply, Map.put(state, :game_state, :ready) }
+        else
+            {:noreply, state}
         end
-        {:noreply, state}
     end
     
     def handle_call({:message, user, message}, _from, state) do
@@ -124,7 +130,7 @@ defmodule Whosthebest.GameServer do
         {:reply, state, state}
     end
     
-    def handle_call(:reset, _from, state) do
+    def handle_call(:reset, _from, _state) do
         {:reply, nil, new_state}
     end
     

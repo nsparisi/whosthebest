@@ -1,6 +1,5 @@
 defmodule Whosthebest.GameController do
     use Whosthebest.Web, :controller
-    alias Whosthebest.Debug
     
     def index(conn, _params) do
         # get the logged in guest name from the browsing session

@@ -1,5 +1,6 @@
 defmodule Whosthebest.UserController do
     use Whosthebest.Web, :controller
+    use Timex
     
     import Ecto.Query, only: [from: 2]
     alias Whosthebest.User
