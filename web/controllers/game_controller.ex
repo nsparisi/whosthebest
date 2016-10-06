@@ -13,7 +13,6 @@ defmodule Whosthebest.GameController do
             # yes, they are logged in
             user != nil ->
                 # get the full user from the DB
-                user = Repo.get(Whosthebest.User, user.id)
                 
                 # generate a token based on the user unique id
                 token = Phoenix.Token.sign(conn, "user_id", user.id)

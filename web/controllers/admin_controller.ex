@@ -1,11 +1,7 @@
 defmodule Whosthebest.AdminController do
     use Whosthebest.Web, :controller
 
-    import Whosthebest.Authorize
     alias Whosthebest.User
-
-    # only users with the admin role can access resources in this module
-    plug :role_check, roles: ["admin"]
 
     def index(conn, _params) do
         users = Repo.all(User)

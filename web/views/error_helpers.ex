@@ -26,7 +26,10 @@ defmodule Whosthebest.ErrorHelpers do
     #
     #     dngettext "errors", "1 file", "%{count} files", count
     #
-    Gettext.dngettext(Whosthebest.Gettext, "errors", msg, msg, opts[:count], opts)
+    
+    # TODO there is some bug with the original line here
+    Gettext.dgettext(Whosthebest.Gettext, "errors", msg)
+    #Gettext.dngettext(Whosthebest.Gettext, "errors", msg, msg, opts[:count], opts)
   end
 
   def translate_error(msg) do

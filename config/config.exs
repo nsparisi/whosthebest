@@ -20,21 +20,26 @@ config :whosthebest, ecto_repos: [Whosthebest.Repo]
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
-  
-# TODO remove this, leftover from openmaize  
-# config :openmaize,
-    # user_model: Whosthebest.User,
-    # repo: Whosthebest.Repo,
-    # redirect_pages: %{  "user" => "/users", 
-    #                     "admin" => "/admin", 
-    #                     "login" => "/login", 
-    #                     "logout" => "/"}
-
-# Import environment specific config. This must remain at the bottom
-# of this file so it overrides the configuration defined above.
-import_config "#{Mix.env}.exs"
 
 # Configure phoenix generators
 config :phoenix, :generators,
   migration: true,
   binary_id: false
+
+# %% Coherence Configuration %%   Don't remove this line
+config :coherence,
+  user_schema: Whosthebest.User,
+  repo: Whosthebest.Repo,
+  module: Whosthebest,
+  logged_out_url: "/",
+  email_from: {"Your Name", "yourname@example.com"},
+  opts: [:authenticatable, :recoverable, :lockable, :trackable, :unlockable_with_token, :confirmable, :registerable]
+
+config :coherence, Whosthebest.Coherence.Mailer,
+  adapter: Swoosh.Adapters.Mandrill,
+  api_key: "api key"
+# %% End Coherence Configuration %%
+
+# Import environment specific config. This must remain at the bottom
+# of this file so it overrides the configuration defined above.
+import_config "#{Mix.env}.exs"
