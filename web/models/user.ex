@@ -1,30 +1,21 @@
 defmodule Whosthebest.User do
   use Whosthebest.Web, :model
-  
-  alias Whosthebest.OpenmaizeEcto
+  use Coherence.Schema
 
   schema "users" do
     field :username, :string
-    field :email, :string
-    field :last_game_id, :string
+    field :email, :string 
+    field :total_time, :integer
+    field :total_games, :integer 
+    field :total_wins, :integer 
     
-    #openmaize requirements
-    field :role, :string
-    field :password, :string, virtual: true
-    field :password_hash, :string
-    field :confirmed_at, Ecto.DateTime
-    field :confirmation_token, :string
-    field :confirmation_sent_at, Ecto.DateTime
-    field :reset_token, :string
-    field :reset_sent_at, Ecto.DateTime
-    field :otp_required, :boolean
-    field :otp_secret, :string
+    coherence_schema 
 
     timestamps
   end
 
-  @required_fields ~w(username role password)
-  @optional_fields ~w(last_game_id password_hash email)
+  @required_fields ~w(username)
+  @optional_fields ~w(email total_time total_games total_wins)
 
   @doc """
   Creates a changeset based on the `model` and `params`.
@@ -32,38 +23,43 @@ defmodule Whosthebest.User do
   If no params are provided, an invalid changeset is returned
   with no validation performed.
   """
-  def changeset(model, params \\ :empty) do
-    if(is_map(params) and !Map.has_key?(params, :role)) do
-        params = Map.put(params, "role", "user")
-    end
-  
+  def changeset(model, params \\ :empty) do  
+
+
+    # todo, email and username uniqueness
+    # todo, case-insensitive 
     model
-    |> cast(params, @required_fields, @optional_fields)
+    |> cast(params, [:username, :email, :total_time, :total_games, :total_wins] ++ coherence_fields)
     |> validate_length(:username, min: 3)
     |> validate_length(:username, max: 12)
-    |> validate_length(:password, min: 4)
-    |> validate_length(:password, max: 80)
-    |> validate_confirmation(:password, message: "passwords do not match")
-    |> unique_constraint(:username)
-  end
-  
-  def auth_changeset(model, params) do
-    model
-    |> changeset(params)
-    |> OpenmaizeEcto.add_password_hash(params)
+    |> update_change(:email, &String.downcase/1)
+    |> unique_constraint(:email)
+    |> validate_coherence(params)
   end
 
-  def reset_changeset(model, params, key) do
-    model
-    |> cast(params, ~w(email), [])
-    |> OpenmaizeEcto.add_reset_token(key)
-  end
+  @doc """
+  Creates a changeset based on the model and post-game information.
 
-  def update_game_id(model, game_id) do
-    changeset = cast(model, %{last_game_id: game_id}, [:last_game_id])
-    if changeset.valid? do
-      Whosthebest.Repo.update!(changeset)
-    end
+  Updates the following fields on the user model:
+  :total_wins
+  :total_games
+  :total_time
+  """
+  def changeset_postgame(model, is_winner, game_time) do
+    total_wins = 
+      if is_winner do
+          model.total_wins + 1
+      else
+          model.total_wins
+      end
+
+    params = %{
+      :total_wins => total_wins,
+      :total_games => model.total_games + 1,
+      :total_time => model.total_time + game_time
+    }
+
+    cast(model, params, [:total_wins, :total_games, :total_time])
   end
 
   def validate_guest(model, guest_name) do

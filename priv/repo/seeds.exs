@@ -10,36 +10,30 @@
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
 
+Whosthebest.Repo.delete_all Whosthebest.User
+
+# TODO fix this
 users = [
   %{
     username: "nick",
     email: "nick@mail.com",
-    password_hash: Comeonin.Bcrypt.hashpwsalt("test"),
-    role: "user",
-    otp_required: false,
-    otp_secret: Comeonin.Otp.gen_secret,
-    confirmed_at: Ecto.DateTime.utc
+    password: "test",
+    password_confirmation: "test"
   },
   %{
     username: "nat",
     email: "nat@mail.com",
-    password_hash: Comeonin.Bcrypt.hashpwsalt("test"),
-    role: "user",
-    otp_required: false,
-    otp_secret: Comeonin.Otp.gen_secret,
-    confirmed_at: Ecto.DateTime.utc
+    password: "test",
+    password_confirmation: "test"
   },
   %{
     username: "admin",
     email: "admin@mail.com",
-    password_hash: Comeonin.Bcrypt.hashpwsalt("test"),
-    role: "admin",
-    otp_required: false,
-    otp_secret: Comeonin.Otp.gen_secret,
-    confirmed_at: Ecto.DateTime.utc
+    password: "test",
+    password_confirmation: "test"
   }
 ]
 
 for user <- users do
-  Map.merge(%Whosthebest.User{}, user) |> Whosthebest.Repo.insert!
+  Whosthebest.User.changeset(%Whosthebest.User{}, user) |> Whosthebest.Repo.insert!
 end

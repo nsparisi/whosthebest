@@ -266,11 +266,13 @@ class GameConnection
         this.channel.push("game:frame", {payload: payload});
     }
     
-    toServerGameEnd = () =>
+    toServerGameEnd = (winner_index: number, game_time: number) =>
     {
         if(this.channel)
         {
-            this.channel.push("game:end", {});
+            this.channel.push(
+                "game:end", 
+                {winner_index: winner_index, game_time: game_time});
         }
     }
     
@@ -448,6 +450,7 @@ class ServerTranslator
 
     toClientMatchEnd = () =>
     {
+        Debug.log("received message: toClientMatchEnd");
         GAME_INSTANCE.switchToMenu();
     }
 
@@ -470,9 +473,9 @@ class ServerTranslator
         this.connectionToGameServer.toServerGameFrame(payload);
     }
     
-    toServerGameEnd = () =>
+    toServerGameEnd = (winner_index: number, game_time: number) =>
     {
-        this.connectionToGameServer.toServerGameEnd();
+        this.connectionToGameServer.toServerGameEnd(winner_index, game_time);
     }
     
     toServerDebug = (message: string) =>

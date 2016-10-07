@@ -1,5 +1,6 @@
 defmodule Whosthebest.Router do
     use Whosthebest.Web, :router
+    use Coherence.Router
 
     pipeline :browser do
         plug :accepts, ["html"]
@@ -7,13 +8,32 @@ defmodule Whosthebest.Router do
         plug :fetch_flash
         plug :protect_from_forgery
         plug :put_secure_browser_headers
-        plug Openmaize.Authenticate
+        plug Coherence.Authentication.Session
+    end
+    
+    pipeline :protected do
+        plug :accepts, ["html"]
+        plug :fetch_session
+        plug :fetch_flash
+        plug :protect_from_forgery
+        plug :put_secure_browser_headers
+        plug Coherence.Authentication.Session, protected: true
     end
 
-    pipeline :api do
-        plug :accepts, ["json"]
+    # set up coherence routes first and separately
+    scope "/" do
+        pipe_through :browser
+        coherence_routes
+    end
+
+    scope "/" do
+        pipe_through :protected
+        coherence_routes :protected
     end
   
+    # =========================================
+    # public routes - coherence plugin will not
+    # require a login for these routes
     scope "/", Whosthebest do
         pipe_through :browser
 
@@ -22,11 +42,11 @@ defmodule Whosthebest.Router do
         get "/", PageController, :index
         
         # PageController handles all user registration + login experience
-        get "/register", PageController, :register
-        post "/create", PageController, :create
+        # get "/register", PageController, :register
+        # post "/create", PageController, :create
         get "/login", PageController, :login, as: :login
-        post "/login", PageController, :login_user, as: :login
-        get "/logout", PageController, :logout, as: :logout
+        # post "/login", PageController, :login_user, as: :login
+        # get "/logout", PageController, :logout, as: :logout
         post "/guest_login", PageController, :guest_login, as: :login
 
         # /game will be the one and only game page
@@ -39,13 +59,33 @@ defmodule Whosthebest.Router do
 
         # This is the landing page for users
         # will contain game-specific news and data.
-        resources "/", UserController, only: [:index, :update, :edit], param: "id"
+        resources "/", UserController, only: [:index]
+
+        # Will also be able to view user profiles
         get "/:username", UserController, :show
-        #get "/password", UserController, :password
+    end
+
+    # =========================================
+    # private routes - coherence plugin *will*
+    # require a login for these routes
+    scope "/", Whosthebest do
+        pipe_through :protected
+
+        # routes for user account management
+        put "/lock/:id", UserController, :lock
+        put "/unlock/:id", UserController, :unlock
+        put "/confirm/:id", UserController, :confirm
+    end
+
+    scope "/users", Whosthebest do
+        pipe_through :protected
+
+        # Logged in users will be able to edit their profile
+        resources "/", UserController, only: [:update, :edit], param: "id"
     end
 
     scope "/admin", Whosthebest do
-        pipe_through :browser
+        pipe_through :protected
 
         # /admin will provide admin functions
         get "/", AdminController, :index

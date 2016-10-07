@@ -17,7 +17,7 @@ defmodule Whosthebest.ErrorHelpers do
   @doc """
   Translates an error message using gettext.
   """
-  def translate_error({msg, opts}) do
+  def translate_error({msg, _opts}) do
     # Because error messages were defined within Ecto, we must
     # call the Gettext module passing our Gettext backend. We
     # also use the "errors" domain as translations are placed
@@ -26,7 +26,10 @@ defmodule Whosthebest.ErrorHelpers do
     #
     #     dngettext "errors", "1 file", "%{count} files", count
     #
-    Gettext.dngettext(Whosthebest.Gettext, "errors", msg, msg, opts[:count], opts)
+    
+    # TODO there is some bug with the original line here
+    Gettext.dgettext(Whosthebest.Gettext, "errors", msg)
+    #Gettext.dngettext(Whosthebest.Gettext, "errors", msg, msg, opts[:count], opts)
   end
 
   def translate_error(msg) do

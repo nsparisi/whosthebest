@@ -1,1 +1,0 @@
-iex.bat -S mix phoenix.server

@@ -31,11 +31,6 @@
     <%= label f, :role, "Role", class: "control-label" %>
     <%= text_input f, :role, class: "form-control" %>
   </div>
-  
-  <div class="form-group">
-    <%= label f, :last_game_id, "Last game", class: "control-label" %>
-    <%= text_input f, :last_game_id, class: "form-control" %>
-  </div>
 
   <div class="form-group">
     <%= submit "Submit", class: "btn" %>
