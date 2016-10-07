@@ -135,12 +135,6 @@ class GameEngine
 
         else if(this.currentGameState == this.gameStateTypes.Ended)
         {
-            // wait for "play again" option
-            if(this.pressedRestartButton(inputs[0]))
-            {
-                // this.initialize();
-                ServerTranslator.Instance.toServerGameEnd();
-            }
         }
     }
 
@@ -149,6 +143,16 @@ class GameEngine
         if(winnerIndex >= 0)
         {
             Debug.log("Congratulations player " + winnerIndex);
+
+            // For now, the winner will tell the server they won.
+            // server needs to control this in the distant future.
+            if(!this.isLocalGameInstance && 
+                GAME_INSTANCE.USER_INDEX == winnerIndex)
+            {
+                ServerTranslator.Instance.toServerGameEnd(
+                    winnerIndex, 
+                    this.boards[0].gameClockInSeconds);
+            }
         }
         else if(winnerIndex == -1)
         {

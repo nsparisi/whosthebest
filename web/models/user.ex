@@ -37,6 +37,31 @@ defmodule Whosthebest.User do
     |> validate_coherence(params)
   end
 
+  @doc """
+  Creates a changeset based on the model and post-game information.
+
+  Updates the following fields on the user model:
+  :total_wins
+  :total_games
+  :total_time
+  """
+  def changeset_postgame(model, is_winner, game_time) do
+    total_wins = 
+      if is_winner do
+          model.total_wins + 1
+      else
+          model.total_wins
+      end
+
+    params = %{
+      :total_wins => total_wins,
+      :total_games => model.total_games + 1,
+      :total_time => model.total_time + game_time
+    }
+
+    cast(model, params, [:total_wins, :total_games, :total_time])
+  end
+
   def validate_guest(model, guest_name) do
     model
       |> cast(%{username: guest_name}, [:username])

@@ -30,7 +30,6 @@ defmodule Whosthebest.GameChannel do
                         if verified_game_id == game_id do
                             socket = assign(socket, :game_id, game_id)
                             socket = setup_game(game_id, socket)
-                            # send(self, {:after_join, %{user: username, from: user_id}})
                             {true, socket}
                         else
                             {false, socket}
@@ -46,17 +45,6 @@ defmodule Whosthebest.GameChannel do
         else
             {:error, %{reason: "unauthorized"}}
         end
-    end
-    
-    defp setup_game(game_id, socket) do
-        game = GameManager.get_or_create_game(GameManager, game_id)
-        assign(socket, :game, game)
-    end
-    
-    # broadcasts to other members of channel
-    def handle_info({:after_join, message}, socket) do
-        broadcast_from! socket, "game:joined", message
-        {:noreply, socket}
     end
     
     # **************************
@@ -80,24 +68,39 @@ defmodule Whosthebest.GameChannel do
     
     # "game:frame" is called each frame to send the frame data to the server
     def handle_in("game:frame", %{"payload" => payload}, socket) do
-        case GameServer.handle_message(
-            socket.assigns[:game], 
-            to_string(socket.assigns[:user_id]), 
-            payload) 
-        do
-            :ok ->
-                {:noreply, socket}
-            {:broadcast, to_client_payload} ->
-                broadcast! socket, "game:frame", %{:payload => to_client_payload}
-                {:noreply, socket}
+        if Process.alive? socket.assigns[:game] do
+            case GameServer.handle_message(
+                socket.assigns[:game], 
+                to_string(socket.assigns[:user_id]), 
+                payload) 
+            do
+                :ok -> nil
+                {:broadcast, to_client_payload} ->
+                    broadcast! socket, "game:frame", %{:payload => to_client_payload}
+            end
         end
+
+        {:noreply, socket}
     end
     
     # "game:end" is called when the game is over.
     # TODO at some point this will be determined by the server, not client
-    def handle_in("game:end", %{}, socket) do
+    def handle_in("game:end", %{"winner_index" => winner_index, "game_time" => game_time}, socket) do
         Debug.log "GameChannel IN game:end  #{socket.assigns[:user_id]}"
-        GameServer.reset(socket.assigns[:game])
+
+        # translate the winner_id from it's index
+        winner_id = GameServer.get_user_from_index(socket.assigns[:game], winner_index)
+        Debug.log "GameChannel IN game:end  --winner_index-- #{inspect winner_index}  --winner_id--  #{inspect winner_id}"
+
+        # record game stats as part of user data
+        all_users = GameServer.get_users(socket.assigns[:game])
+        Debug.log "GameChannel IN game:end --all_users--  #{inspect all_users}"
+        for user_id <- all_users do 
+            update_user_post_game user_id, winner_id == user_id, game_time
+        end
+
+        # the game is over, kill the game server
+        kill_game(socket)
         broadcast! socket, "game:end", %{}
         {:noreply, socket}
     end
@@ -139,5 +142,30 @@ defmodule Whosthebest.GameChannel do
     # terminate will not reliably be called
     def terminate(_reason, _socket) do
         
+    end
+
+    
+    # **************************
+    # private functions
+    defp setup_game(game_id, socket) do
+        game = GameManager.get_or_create_game(GameManager, game_id)
+        assign(socket, :game, game)
+    end
+
+    defp kill_game(socket) do
+        GameManager.kill_game(GameManager, socket.assigns[:game_id])
+    end
+    
+    defp update_user_post_game(user_id, is_winner, game_time) do
+        Debug.log "update_user_post_game user_id #{inspect user_id} is_winner #{inspect is_winner} game_time #{inspect game_time}"
+        
+        # guests are UUIDs which contain "-" character
+        # otherwise, update the user stats
+        unless String.contains? user_id, "-" do
+            user = Whosthebest.Repo.get(Whosthebest.User, user_id)
+            changeset = Whosthebest.User.changeset_postgame(
+                    user, is_winner, game_time)
+            Whosthebest.Repo.update changeset
+        end
     end
 end

@@ -55,6 +55,20 @@ defmodule Whosthebest.GameServer do
     end
     
     @doc """
+    Gets the user, given the index of the user.
+    """
+    def get_user_from_index(server, user_index) do
+        GenServer.call(server, {:get_user_from_index, user_index})
+    end
+
+    @doc """
+    Gets all the users in the game.
+    """
+    def get_users(server) do
+        GenServer.call(server, :get_users)
+    end
+    
+    @doc """
     Clears the message buffers for every user in the game.
     """
     def clear_frames(server) do
@@ -153,6 +167,18 @@ defmodule Whosthebest.GameServer do
         all_users = Enum.sort(Map.keys(state[:user_frames]))
         user_index = Enum.find_index(all_users, fn(x) -> x == user end)
         {:reply, user_index, state}
+    end
+    
+    def handle_call({:get_user_from_index, index}, _from, state) do
+        # TODO sort should not be copied from below.
+        all_users = Enum.sort(Map.keys(state[:user_frames]))
+        {:reply, Enum.at(all_users, index), state}
+    end
+
+    def handle_call(:get_users, _from, state) do
+        # TODO sort should not be copied from below.
+        all_users = Enum.sort(Map.keys(state[:user_frames]))
+        {:reply, all_users, state}
     end
     
     #unused right now

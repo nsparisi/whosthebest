@@ -41,6 +41,7 @@ defmodule Whosthebest.GameSocket do
 
                     # we now have the guest_name, add it to the socket details
                     socket = assign(socket, :username, verified_guest_name  <> " (Guest)")
+                    socket = assign(socket, :is_guest, true)
                     {:ok, socket}
                     
                 {:error, _reason} ->
@@ -51,6 +52,7 @@ defmodule Whosthebest.GameSocket do
                 # retrieve the actual username from the db and assign to the socket
                 user = Whosthebest.Repo.get(Whosthebest.User, verified_user_id) 
                 socket = assign(socket, :username, user.username)
+                socket = assign(socket, :is_guest, false)
                 {:ok, socket}
             end
 
