@@ -467,7 +467,7 @@ module Whosthebest.Graphics
             // debug text for the gameover count
             this.textGameOverCounter.text = this.gameEngineBoard.gameOverLeewayCount.toString();
         }
-        
+
         getDeadOrNewTileSprite = (index: number) =>
         {
             if(index < 0 || index > this.tilePools.length)
@@ -522,7 +522,7 @@ module Whosthebest.Graphics
         checkForNewCombos = () =>
         {
             // find all new combos occurring this frame
-            for(var i = this.gameEngineBoard.boardSpaces.length - 1; i >= 0 ; i--)
+            for(var i = 0; i <= this.gameEngineBoard.boardSpaces.length -1; i++)
             {
                 for(var j = 0; j < this.gameEngineBoard.boardSpaces[i].length; j++)
                 {
@@ -541,24 +541,27 @@ module Whosthebest.Graphics
             if(this.newCombo.length > 0)
             {
                 this.combos.push(this.newCombo);
+                var last = this.newCombo.length - 1;
 
                 if(this.newCombo.length > 3)
                 {
                     // popup visually!
                     this.addComboPopup(
-                        this.newCombo[0].x,
-                        this.newCombo[0].y,
+                        this.newCombo[last].x,
+                        this.newCombo[last].y,
                         this.newCombo.length,
                         false);
                 }
 
                 if(this.newCombo[0].isChaining && this.gameEngineBoard.globalChainCounter > 1)
                 {
-                    var tileY = this.newCombo.length > 3 ? this.newCombo[0].y + 1 : this.newCombo[0].y;
+                    // aif there is both a combo and chain,
+                    // then make the chain appear above a "combo" popup
+                    var tileY = this.newCombo.length > 3 ? this.newCombo[last].y + 1 : this.newCombo[last].y;
 
                     // popup visually!
                     this.addComboPopup(
-                        this.newCombo[0].x,
+                        this.newCombo[last].x,
                         tileY,
                         this.gameEngineBoard.globalChainCounter,
                         true);
@@ -581,12 +584,17 @@ module Whosthebest.Graphics
             return false;
         }
 
-        addComboPopup = (tileX, tileY, count, falseComboTrueChain) =>
+        addComboPopup = (tileX: number, tileY: number, count: number, falseComboTrueChain: boolean) =>
         {
-            // todo logic for visuals
-            var realX = tileX * TILE_WIDTH;
-            var realY = this.height - tileY * TILE_HEIGHT -
-                this.yOffsetAsHeight * this.gameEngineBoard.yOffset;
+            var realX = tileX * TILE_WIDTH + TILE_WIDTH * 0.5;
+            var realY = this.boardHeight - tileY * TILE_HEIGHT -
+                this.yOffsetAsHeight * this.gameEngineBoard.yOffset - TILE_HEIGHT * 0.5;
+
+            var popup = new ComboPopup(this.game, null, "popup:" + realX + ":" + realY, true);
+                popup.initialize(count, falseComboTrueChain);
+                popup.x = realX;
+                popup.y = realY;
+            this.add(popup);
 
             if(!this.playSfx)
             {
@@ -609,6 +617,90 @@ module Whosthebest.Graphics
             if(index != -1)
             {
                 this.comboPopups.splice(index, 1);
+            }
+        }
+    }
+    
+    class ComboPopup extends Phaser.Group
+    {
+        square: Phaser.Sprite;
+        value: Phaser.Text;
+        xText: Phaser.Text;
+
+        empty = () =>
+        {
+
+        }
+        
+        initialize = (count: number, falseComboTrueChain: boolean) =>
+        {
+            // chains are green, combos are red
+            // chains are yellow text, combos white
+            var bgFill = 0xCC4455;
+            var textFill = "#FFFFFF";
+            if(falseComboTrueChain)
+            {
+                var bgFill = 0x11CC22;
+                var textFill = "#FFFF66";
+            }
+
+            var width = TILE_WIDTH * 0.85;
+            var height = TILE_HEIGHT * 0.85;
+            var alpha = 0.7;
+
+            // fill a square for the visual
+            var graphics = this.game.add.graphics(0,0);
+            graphics.lineStyle(2, 0xFFFFFF, alpha);
+            graphics.beginFill(bgFill, alpha);
+            graphics.drawRoundedRect(0, 0, width, height, 6);
+            graphics.endFill();
+            this.square = this.add(this.game.add.sprite(5, 5, graphics.generateTexture()));
+            graphics.destroy();
+
+            // add the number value as text
+            this.value = this.add(
+                this.game.add.text(
+                    0, 
+                    0,
+                    count.toString(), 
+                    {font: "14pt Arial", fill: textFill}));
+            this.value.alpha = alpha;
+            this.value.anchor.set(1, 0);
+            this.value.x = this.square.x + width;
+            this.value.y = this.square.y;
+
+            // center the text if it's a combo
+            if(!falseComboTrueChain)
+            {
+                this.value.anchor.set(0.5, 0);
+                this.value.x = this.square.x + width * 0.6;
+            }
+
+            // add a small 'x' to indicate 'times'
+            if(falseComboTrueChain)
+            {
+                this.xText = this.add(
+                    this.game.add.text(
+                        0, 
+                        0, 
+                        "x", 
+                        {font: "6pt Arial", fill: textFill}));
+                this.xText.anchor.set(0, 0);
+                this.xText.x = this.square.x + width * 0.2;
+                this.xText.y = this.square.y + height * 0.5;
+            }
+        }
+
+        duration = 1200;
+        timeAlive = 0;
+        speed = 30 / 1000;
+        update()
+        {
+            this.y -= this.game.time.elapsedMS * this.speed;
+            this.timeAlive += this.game.time.elapsedMS;
+            if(this.timeAlive >= this.duration)
+            {
+                this.destroy(true);
             }
         }
     }

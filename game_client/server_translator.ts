@@ -475,7 +475,10 @@ class ServerTranslator
     
     toServerGameEnd = (winner_index: number, game_time: number) =>
     {
-        this.connectionToGameServer.toServerGameEnd(winner_index, game_time);
+        if(this.connectionToGameServer)
+        {
+            this.connectionToGameServer.toServerGameEnd(winner_index, game_time);
+        }
     }
     
     toServerDebug = (message: string) =>
