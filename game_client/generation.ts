@@ -39,8 +39,7 @@ class GenerationEngine
     frameTimings: { [key: string]: FrameTimeData; } = { };
     
     // practice AI
-    opponentWait = 0;
-    opponentMoves = [];
+    intellegence: Array<IntelligenceEngine>;
 
     initialize = () =>
     {
@@ -51,42 +50,16 @@ class GenerationEngine
         this.frameTimings = {};
         this.receiveBuffer = [];
         this.drainInput();
-        
-        this.opponentMoves = [
-            SERVER_GAME_ENGINE.inputTypes.Swap,
-            SERVER_GAME_ENGINE.inputTypes.Swap,
-            SERVER_GAME_ENGINE.inputTypes.Swap,
-            SERVER_GAME_ENGINE.inputTypes.Swap,
-            SERVER_GAME_ENGINE.inputTypes.Swap,
-            SERVER_GAME_ENGINE.inputTypes.Swap,
-            SERVER_GAME_ENGINE.inputTypes.Swap,
-            SERVER_GAME_ENGINE.inputTypes.Swap,
-            SERVER_GAME_ENGINE.inputTypes.Swap,
-            SERVER_GAME_ENGINE.inputTypes.None,
-            SERVER_GAME_ENGINE.inputTypes.None,
-            SERVER_GAME_ENGINE.inputTypes.None,
-            SERVER_GAME_ENGINE.inputTypes.None,
-            SERVER_GAME_ENGINE.inputTypes.None,
-            SERVER_GAME_ENGINE.inputTypes.None,
-            SERVER_GAME_ENGINE.inputTypes.None,
-            SERVER_GAME_ENGINE.inputTypes.None,
-            SERVER_GAME_ENGINE.inputTypes.Up,
-            SERVER_GAME_ENGINE.inputTypes.Down,
-            SERVER_GAME_ENGINE.inputTypes.Down,
-            SERVER_GAME_ENGINE.inputTypes.Down,
-            SERVER_GAME_ENGINE.inputTypes.Left,
-            SERVER_GAME_ENGINE.inputTypes.Left,
-            SERVER_GAME_ENGINE.inputTypes.Left,
-            SERVER_GAME_ENGINE.inputTypes.Right,
-            SERVER_GAME_ENGINE.inputTypes.Right,
-            SERVER_GAME_ENGINE.inputTypes.Right,
-            //SERVER_GAME_ENGINE.inputTypes.Elevate
-        ];
     }
 
     setAsPracticeGame = (isPracticeGame: boolean) =>
     {
         this.isPracticeGame = isPracticeGame;
+
+        this.intellegence = [];
+
+        var aiIndex = (GAME_INSTANCE.USER_INDEX + 1) % SERVER_GAME_ENGINE.boards.length;
+        this.intellegence.push(new IntelligenceEngine(SERVER_GAME_ENGINE.boards[aiIndex]));
     }
 
     update = () =>
@@ -211,8 +184,11 @@ class GenerationEngine
         }
         inputs.push(playerInputAsString);
 
-        // set CPU player with random inputs
-        inputs.push(this.generateOpponentsMove());
+        // set CPU player input from AI engine
+        for(var i = 0; i < this.intellegence.length; i++)
+        {
+            inputs.push(this.intellegence[i].next().toString());
+        }
 
         // bypass server call, and send data back to client
         var data = new FrameData(
@@ -221,15 +197,6 @@ class GenerationEngine
             frame, 
             inputs);
         this.receiveFrameFromServer(data);
-    }
-
-    generateOpponentsMove = () =>
-    {
-        this.opponentWait = (this.opponentWait + 1) % 3;
-
-        return this.opponentWait > 0 ? 
-            SERVER_GAME_ENGINE.inputTypes.None.toString() : 
-            this.opponentMoves[Math.floor(Math.random() * this.opponentMoves.length)].toString();
     }
 
     receiveFrameFromServer = (frameData: FrameData) =>

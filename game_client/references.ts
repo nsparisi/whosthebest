@@ -12,5 +12,6 @@
 /// <reference path="input.ts" />
 /// <reference path="server_translator.ts" />
 /// <reference path="generation.ts" />
+/// <reference path="intelligence.ts" />
 /// <reference path="game.ts" />
 /// <reference path="main.ts" />
