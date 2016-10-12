@@ -235,7 +235,7 @@ Keeps track of a contained tile.
 */
 class BoardSpace
 {
-    contents = [];
+    contents: Tile[] = [];
     
     addTile = (tile) =>
     {
@@ -287,7 +287,7 @@ class Board
     }
 
     tiles: Tile[] = [];
-    boardSpaces = [];
+    boardSpaces: BoardSpace[][] = [];
     lastRowOfTileTypes = [];
     attackBlocksInWait = [];
     allAttackBlocksCombodThisFrame = [];
