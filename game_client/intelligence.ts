@@ -16,7 +16,7 @@ class IntelligenceEngine
         
         for(var i = 0; i < SERVER_GAME_ENGINE.attackBlockTypeStartIndex; i++)
         {
-            this.potentials.push(new Potential(i));
+            this.potentials.push(new Potential(i, board));
         }
     }
 
@@ -48,15 +48,109 @@ class IntelligenceEngine
             return;
         }
 
-        // prioritize adding more tiles if board is low
-        if(this.board.highestTileHeight < 3)
+        // don't do anything if something interesting is happening
+        // this.thinkAboutSomethingInteresting();
+        if(this.thoughts.length > 0)
         {
-            this.thoughts.push(SERVER_GAME_ENGINE.inputTypes.Elevate);
-            this.thoughts.push(SERVER_GAME_ENGINE.inputTypes.Elevate);
-            this.thoughts.push(SERVER_GAME_ENGINE.inputTypes.Elevate);
+            Debug.log("Thinking about something interesting.");
             return;
         }
 
+        // prioritize adding more tiles if board is low
+        this.thinkAboutRaisingTiles();
+        if(this.thoughts.length > 0)
+        {
+            Debug.log("Thinking about raising tiles.");
+            return;
+        }
+
+        this.thinkAboutFlattening();
+        if(this.thoughts.length > 0)
+        {
+            Debug.log("Thinking about flattening.");
+            return;
+        }
+
+        // make a combo happen
+        this.thinkAboutCombos();
+        if(this.thoughts.length > 0)
+        {
+            Debug.log("Thinking about combos.");
+            return;
+        }
+
+        // nothing to think about... let's relax
+        this.getLostInThought(90);
+        Debug.log("Lost in thought");
+    }
+
+    thinkAboutSomethingInteresting = () => 
+    {
+        if(this.board.stopBoardFromGrowing)
+        {
+            this.thoughts.push(SERVER_GAME_ENGINE.inputTypes.None);
+        }
+    }
+
+    thinkAboutFlattening = () =>
+    {
+        var minHole: AIPoint = {x: 100, y: 100};
+        var maxTile: AIPoint = {x: 0, y: 0};
+
+        for(var y = 0; y < this.board.boardSpaces.length; y++)
+        {
+            for(var x = 0; x < this.board.boardSpaces[y].length; x++)
+            {
+                var tile = this.board.boardSpaces[y][x].getTile();
+                
+                if(tile != null)
+                {
+                    if(tile.isAttackBlock || tile.y >= SERVER_GAME_ENGINE.rowCountInBounds)
+                    {
+                        continue;
+                    }
+
+                    if(maxTile.y < y)
+                    {
+                        maxTile.x = x;
+                        maxTile.y = y;
+                    }
+                }
+                else 
+                {
+                    if(minHole.y > y)
+                    {
+                        minHole.x = x;
+                        minHole.y = y;
+                    }
+                }
+            }
+        }
+
+        // if there is a hole
+        // then go ahead and move the tile in the direction of the hole
+        if(minHole.y < maxTile.y)
+        {
+            var destinationX = minHole.x < maxTile.x ? maxTile.x - 1 : maxTile.x;
+            var cursor = {x: this.board.cursor.x, y: this.board.cursor.y};
+            Debug.log(`FLATTEN: cursor ${cursor.x},${cursor.y} tile ${maxTile.x},${maxTile.y} hole ${minHole.x},${minHole.y}`);
+            AIHelpers.moveTo(cursor, destinationX, maxTile.y, this.thoughts);
+            AIHelpers.swapTo(cursor, minHole.x, this.thoughts);
+        }
+    }
+
+    thinkAboutRaisingTiles = () =>
+    {
+        if(this.board.highestTileHeight < 3)
+        {
+            AIHelpers.insertElevate(this.thoughts);
+            AIHelpers.insertElevate(this.thoughts);
+            AIHelpers.insertElevate(this.thoughts);
+        }
+    }
+
+    thinkAboutCombos = () =>
+    {
         // reset and fill up a list of potential tiles
         this.potentials.forEach((potential) =>
         {
@@ -80,52 +174,31 @@ class IntelligenceEngine
             this.thoughts = this.potentials[i].check(this.board.cursor);
             if(this.thoughts.length > 0)
             {
-                this.getLostInThought();
+                this.getLostInThought(30);
                 return;
             }
         }
-
-        if(this.thoughts.length == 0)
-        {
-            // play dumb for a couple seconds
-            Debug.log("No valid moves found, giving up on life");
-            this.getLostInThought();
-            return;
-        }
     }
 
-    getLostInThought = () =>
+    getLostInThought = (waitLength: number) =>
     {
-        var waitLength = 90;
         for(var i = 0; i < waitLength; i++)
         {
             this.thoughts.push(SERVER_GAME_ENGINE.inputTypes.None);
         }
-    }
-
-    generateOpponentsMove = () =>
-    {
-        var opponentMoves = [
-            SERVER_GAME_ENGINE.inputTypes.Swap,
-            SERVER_GAME_ENGINE.inputTypes.None,
-            SERVER_GAME_ENGINE.inputTypes.Up,
-            SERVER_GAME_ENGINE.inputTypes.Down,
-            SERVER_GAME_ENGINE.inputTypes.Down,
-            SERVER_GAME_ENGINE.inputTypes.Left,
-            SERVER_GAME_ENGINE.inputTypes.Right,
-            //SERVER_GAME_ENGINE.inputTypes.Elevate
-        ];
     }
 }
 
 class Potential 
 {
     type: number;
+    board: Board;
     rows: Tile[][];
 
-    constructor(type: number)
+    constructor(type: number, board: Board)
     {
         this.type = type;
+        this.board = board;
         this.rows = [];
         for(var i = 0; i < SERVER_GAME_ENGINE.rowCountInBounds; i++)
         {
@@ -185,8 +258,7 @@ class Potential
         // move each tile to the x-coordinate of the first tile
         var result = [];
         var destX = tiles[0].x;
-        var currentX = cursor.x;
-        var currentY = cursor.y;
+        var currentCursor =  {x: cursor.x, y: cursor.y};
 
         Debug.log(`TILE0:${tiles[0].x},${tiles[0].y} TILE1:${tiles[1].x},${tiles[1].y} TILE2:${tiles[2].x},${tiles[2].y}`);
         
@@ -194,85 +266,102 @@ class Potential
         var currentTile = tiles[1];
         if(currentTile.x < destX)
         {
-            this.moveTo(currentX, currentY, currentTile.x, currentTile.y, result);
-            currentX = currentTile.x;
-            currentY = currentTile.y;
-            this.swapTo(currentTile.x, destX, result);
-            currentX = destX - 1;
+            AIHelpers.moveTo(currentCursor, currentTile.x, currentTile.y, result);
+            AIHelpers.swapTo(currentCursor, destX, result);
         }
         else if(currentTile.x > destX)
         {
-            this.moveTo(currentX, currentY, currentTile.x - 1, currentTile.y, result);
-            currentX = currentTile.x - 1;
-            currentY = currentTile.y;
-            this.swapTo(currentTile.x, destX, result);
-            currentX = destX + 1;
+            AIHelpers.moveTo(currentCursor, currentTile.x - 1, currentTile.y, result);
+            AIHelpers.swapTo(currentCursor, destX, result);
         }
 
         // solve tile 2
         var currentTile = tiles[2];
         if(currentTile.x < destX)
         {
-            this.moveTo(currentX, currentY, currentTile.x, currentTile.y, result);
-            currentX = currentTile.x;
-            currentY = currentTile.y;
-            this.swapTo(currentTile.x, destX, result);
-            currentX = destX - 1;
+            AIHelpers.moveTo(currentCursor, currentTile.x, currentTile.y, result);
+            AIHelpers.swapTo(currentCursor, destX, result);
         }
         else if(currentTile.x > destX)
         {
-            this.moveTo(currentX, currentY, currentTile.x - 1, currentTile.y, result);
-            currentX = currentTile.x - 1;
-            currentY = currentTile.y;
-            this.swapTo(currentTile.x, destX, result);
-            currentX = destX + 1;
+            AIHelpers.moveTo(currentCursor, currentTile.x - 1, currentTile.y, result);
+            AIHelpers.swapTo(currentCursor, destX, result);
         }
         
         return result;
     }
-    
-    swapTo = (startX: number, endX: number, moves: number[]) =>
+}
+
+interface AIPoint {x: number, y: number}
+
+class AIHelpers 
+{
+    empty = () =>
     {
-        Debug.log(`swapTo sx ${startX}, endx ${endX}`);
-        while(startX < endX - 1)
-        {
-            moves.push(SERVER_GAME_ENGINE.inputTypes.Swap);
-            moves.push(SERVER_GAME_ENGINE.inputTypes.Right);
-            startX++;
-        }
 
-        while(startX > endX + 1)
-        {
-            moves.push(SERVER_GAME_ENGINE.inputTypes.Swap);
-            moves.push(SERVER_GAME_ENGINE.inputTypes.Left);
-            startX--;
-        }
-
-        moves.push(SERVER_GAME_ENGINE.inputTypes.Swap);
     }
 
-    moveTo = (startX: number, startY, endX: number, endY: number, moves: number[]) =>
+    static swapTo = (cursor: AIPoint, endX: number, moves: number[]) =>
     {
-        Debug.log(`moveTo sx ${startX},${startY} end ${endX},${endY}`);
-        while(startX < endX)
+        while(cursor.x < endX - 1)
+        {
+            AIHelpers.insertSwap(moves);
+            moves.push(SERVER_GAME_ENGINE.inputTypes.Right);
+            cursor.x++;
+        }
+
+        while(cursor.x > endX)
+        {
+            AIHelpers.insertSwap(moves);
+            moves.push(SERVER_GAME_ENGINE.inputTypes.Left);
+            cursor.x--;
+        }
+
+        AIHelpers.insertSwap(moves);
+    }
+
+    static moveTo = (cursor: AIPoint, endX: number, endY: number, moves: number[]) =>
+    {
+        while(cursor.x < endX)
         {
             moves.push(SERVER_GAME_ENGINE.inputTypes.Right);
-            startX++;
+            cursor.x++;
         }
-        while(startX > endX)
+        while(cursor.x > endX)
         {
             moves.push(SERVER_GAME_ENGINE.inputTypes.Left);
-            startX--;
+            cursor.x--;
         }
-        while(startY < endY)
+        while(cursor.y < endY)
         {
             moves.push(SERVER_GAME_ENGINE.inputTypes.Up);
-            startY++;
+            cursor.y++;
         }
-        while(startY > endY)
+        while(cursor.y > endY)
         {
             moves.push(SERVER_GAME_ENGINE.inputTypes.Down);
-            startY--;
+            cursor.y--;
+        }
+    }
+
+    static insertSwap = (moves: number[]) =>
+    {
+        // add a swap, then wait a number of frames for swap to finish
+        moves.push(SERVER_GAME_ENGINE.inputTypes.Swap);
+        for(var i = 0; i < SERVER_GAME_ENGINE.boards[0].swapDelayReset - 1; i++)
+        {
+            moves.push(SERVER_GAME_ENGINE.inputTypes.None);
+        }
+    }
+
+    static insertElevate = (moves: number[]) =>
+    {
+        // add a swap, then wait a number of frames for swap to finish
+        moves.push(SERVER_GAME_ENGINE.inputTypes.Elevate);
+        var wait = SERVER_GAME_ENGINE.boards[0].yOffsetMax / SERVER_GAME_ENGINE.boards[0].fastElevateHeightPerFrame;
+        for(var i = 0; i < wait - 1; i++)
+        {
+            moves.push(SERVER_GAME_ENGINE.inputTypes.None);
         }
     }
 }

@@ -92,10 +92,19 @@ class GenerationEngine
                 return;
             }
 
+            if(this.isPracticeGame)
+            {
+                this.sendFrameToServer();
+                dequeuedFrame = this.receiveBuffer.shift();
+                SERVER_GAME_ENGINE.update(dequeuedFrame.inputs);
+                LOCAL_GAME_ENGINE.update(dequeuedFrame.inputs);
+                return;
+            }
+
             // if we've buffered enough, dequeue a frame
             // simulate the frame in the game
             var dequeuedFrame: FrameData = null;
-            if( this.receiveBuffer[0] != null &&
+            if( this.receiveBuffer[0] != null && 
                 this.currentFrameInGame <= this.frameCount - this.frameDelay)
             {
                 dequeuedFrame = this.receiveBuffer.shift();
