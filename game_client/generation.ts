@@ -58,6 +58,9 @@ class GenerationEngine
 
         this.intellegence = [];
 
+        // TODO hack, remove
+        this.intellegence.push(new IntelligenceEngine(SERVER_GAME_ENGINE.boards[0]));
+
         var aiIndex = (GAME_INSTANCE.USER_INDEX + 1) % SERVER_GAME_ENGINE.boards.length;
         this.intellegence.push(new IntelligenceEngine(SERVER_GAME_ENGINE.boards[aiIndex]));
     }
@@ -94,10 +97,20 @@ class GenerationEngine
 
             if(this.isPracticeGame)
             {
+                if( SERVER_GAME_ENGINE.currentGameState == 
+                    SERVER_GAME_ENGINE.gameStateTypes.Ended)
+                {
+                    GAME_INSTANCE.switchToMenu();
+                }
+
                 this.sendFrameToServer();
                 dequeuedFrame = this.receiveBuffer.shift();
-                SERVER_GAME_ENGINE.update(dequeuedFrame.inputs);
-                LOCAL_GAME_ENGINE.update(dequeuedFrame.inputs);
+                if(dequeuedFrame)
+                {
+                    SERVER_GAME_ENGINE.update(dequeuedFrame.inputs);
+                    LOCAL_GAME_ENGINE.update(dequeuedFrame.inputs);
+                }
+
                 return;
             }
 
@@ -159,17 +172,10 @@ class GenerationEngine
         else 
         {
             // bypass server entirely for practice
-            if( SERVER_GAME_ENGINE.currentGameState == 
-                SERVER_GAME_ENGINE.gameStateTypes.Ended)
-            {
-                GAME_INSTANCE.switchToMenu();
-            }
-            else 
-            {
-                this.generatePracticeData(
-                    this.frameCount, 
-                    this.currentInput);
-            }
+            this.generatePracticeData(
+                this.frameCount, 
+                this.currentInput);
+            
         }
 
         // drains input buffer
@@ -191,13 +197,15 @@ class GenerationEngine
             playerInputAsString += ServerTranslator.Instance.PLAYERINPUT_DELIMETER;
             playerInputAsString += playerInputs[i];
         }
-        inputs.push(playerInputAsString);
+        //inputs.push(playerInputAsString);
 
         // set CPU player input from AI engine
         for(var i = 0; i < this.intellegence.length; i++)
         {
             inputs.push(this.intellegence[i].next().toString());
         }
+
+        //Debug.log("inputs " +  inputs[0]);
 
         // bypass server call, and send data back to client
         var data = new FrameData(

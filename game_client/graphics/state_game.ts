@@ -401,11 +401,14 @@ module Whosthebest.Graphics
 
             // put the character sprite in position
             var sprite = gameState.spritesheets[this.characterIndex];
-            sprite.exists = true;
-            sprite.animations.play("idle");
-            sprite.x = invert ? this.x + 40 + this.boardWidth : this.x - 40;
-            sprite.y = this.boardHeight + this.y;
-            sprite.scale.x = invert ? 1 : -1;
+            if(sprite)
+            {
+                sprite.exists = true;
+                sprite.animations.play("idle");
+                sprite.x = invert ? this.x + 40 + this.boardWidth : this.x - 40;
+                sprite.y = this.boardHeight + this.y;
+                sprite.scale.x = invert ? 1 : -1;
+            }
         }
 
         updateBoard = () =>
