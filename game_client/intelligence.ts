@@ -256,19 +256,19 @@ class IntelligenceEngine
             return;
         }
 
-        // make a combo happen
-        this.thinkAboutCombos();
-        if(this.thoughts.length > 0)
-        {
-            Debug.log("Thinking about combos.");
-            return;
-        }
-
         // organize the tiles
         this.thinkAboutFlattening();
         if(this.thoughts.length > 0)
         {
             Debug.log("Thinking about flattening.");
+            return;
+        }
+
+        // make a combo happen
+        this.thinkAboutCombos();
+        if(this.thoughts.length > 0)
+        {
+            Debug.log("Thinking about combos.");
             return;
         }
 
@@ -489,6 +489,8 @@ class IntelligenceEngine
                     this.thoughts.push(AIThought.CreateSwapToThought(candidate, focusPoint));
                     this.thoughts.push(AIThought.CreateSwapToThought(leftAndLeftLeft[0], goalLeft));
                     this.thoughts.push(AIThought.CreateSwapToThought(leftAndLeftLeft[1], goalLeftLeft));
+                    this.thoughts.push(AIThought.CreateSwapToThought(leftAndLeftLeft[0], goalLeft));
+                    this.thoughts.push(AIThought.CreateSwapToThought(candidate, focusPoint));
                     this.thoughts.push(AIThought.CreateWaitForChainToChangeThought(this.board.globalChainCounter));
                     break;
                 }
@@ -500,6 +502,8 @@ class IntelligenceEngine
                     this.thoughts.push(AIThought.CreateSwapToThought(candidate, focusPoint));
                     this.thoughts.push(AIThought.CreateSwapToThought(leftAndRight[0], goalLeft));
                     this.thoughts.push(AIThought.CreateSwapToThought(leftAndRight[1], goalRight));
+                    this.thoughts.push(AIThought.CreateSwapToThought(leftAndRight[0], goalLeft));
+                    this.thoughts.push(AIThought.CreateSwapToThought(candidate, focusPoint));
                     this.thoughts.push(AIThought.CreateWaitForChainToChangeThought(this.board.globalChainCounter));
                     break;
                 }
@@ -511,6 +515,8 @@ class IntelligenceEngine
                     this.thoughts.push(AIThought.CreateSwapToThought(candidate, focusPoint));
                     this.thoughts.push(AIThought.CreateSwapToThought(rightAndRightRight[0], goalRight));
                     this.thoughts.push(AIThought.CreateSwapToThought(rightAndRightRight[1], goalRightRight));
+                    this.thoughts.push(AIThought.CreateSwapToThought(rightAndRightRight[0], goalRight));
+                    this.thoughts.push(AIThought.CreateSwapToThought(candidate, focusPoint));
                     this.thoughts.push(AIThought.CreateWaitForChainToChangeThought(this.board.globalChainCounter));
                     break;
                 }
@@ -522,6 +528,8 @@ class IntelligenceEngine
                     this.thoughts.push(AIThought.CreateSwapToThought(candidate, focusPoint));
                     this.thoughts.push(AIThought.CreateSwapToThought(upAndDown[0], goalUp));
                     this.thoughts.push(AIThought.CreateSwapToThought(upAndDown[1], goalDown));
+                    this.thoughts.push(AIThought.CreateSwapToThought(upAndDown[0], goalUp));
+                    this.thoughts.push(AIThought.CreateSwapToThought(candidate, focusPoint));
                     this.thoughts.push(AIThought.CreateWaitForChainToChangeThought(this.board.globalChainCounter));
                     break;
                 }
@@ -533,6 +541,8 @@ class IntelligenceEngine
                     this.thoughts.push(AIThought.CreateSwapToThought(candidate, focusPoint));
                     this.thoughts.push(AIThought.CreateSwapToThought(downAndDownDown[0], goalDown));
                     this.thoughts.push(AIThought.CreateSwapToThought(downAndDownDown[1], goalDownDown));
+                    this.thoughts.push(AIThought.CreateSwapToThought(downAndDownDown[0], goalDown));
+                    this.thoughts.push(AIThought.CreateSwapToThought(candidate, focusPoint));
                     this.thoughts.push(AIThought.CreateWaitForChainToChangeThought(this.board.globalChainCounter));
                     break;
                 }
