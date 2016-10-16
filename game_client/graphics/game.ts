@@ -102,7 +102,7 @@ module Whosthebest.Graphics
             var player2 = Math.floor(randomSeed * randomSeed) % State_Game.NUMBER_OF_CHARACTERS;
             if(player2 == player1)
             { 
-                player2 = player2 + 1 % State_Game.NUMBER_OF_CHARACTERS; 
+                player2 = (player2 + 1) % State_Game.NUMBER_OF_CHARACTERS; 
             }            
 
             this.USER_INDEX = userIndex;
@@ -123,7 +123,7 @@ module Whosthebest.Graphics
             var player2 = Math.floor(randomSeed * randomSeed) % State_Game.NUMBER_OF_CHARACTERS;
             if(player2 == player1)
             { 
-                player2 = player2 + 1 % State_Game.NUMBER_OF_CHARACTERS; 
+                player2 = (player2 + 1) % State_Game.NUMBER_OF_CHARACTERS; 
             } 
 
             // TODO investigate 2-attack bug 

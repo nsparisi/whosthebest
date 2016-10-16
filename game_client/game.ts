@@ -211,7 +211,7 @@ class GameEngine
         {
             var attackData = this.attackBlockQueue[i];
             this.boards[attackData.targetBoardIndex].wasAttackedByOtherPlayer(attackData.attackBlock);
-            Debug.log("wasAttackedByOtherPlayer local? " + this.isLocalGameInstance);
+            //Debug.log("wasAttackedByOtherPlayer local? " + this.isLocalGameInstance);
         }
         this.attackBlockQueue = [];
     }

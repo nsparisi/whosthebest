@@ -56,23 +56,19 @@ class AIThought
 
 class IntelligenceEngine
 {
+    name = "AI";
     board: Board;
     currentThought: AIThought;
     thoughts: AIThought[];
-    potentials: Potential[];
 
     justSwapped = false;
+    pauseBetweenAcions = 2;
 
-    constructor(board: Board)
+    constructor(name: string, board: Board)
     {
+        this.name = name;
         this.board = board;
         this.thoughts = [];
-        this.potentials = [];
-        
-        for(var i = 0; i < SERVER_GAME_ENGINE.attackBlockTypeStartIndex; i++)
-        {
-            this.potentials.push(new Potential(i, board));
-        }
 
         this.getLostInThought(30);
     }
@@ -80,6 +76,11 @@ class IntelligenceEngine
     empty = () =>
     {
     
+    }
+
+    log = (message) =>
+    {
+        //Debug.log("[" + this.name +"]" + message);
     }
 
     next = () =>
@@ -98,21 +99,28 @@ class IntelligenceEngine
 
     act = () =>
     {
+        // always end a train of thought with a wait
+        if( this.thoughts.length > 0 &&
+            this.thoughts[this.thoughts.length - 1].type != AIThought.types.WAIT)
+        {
+            this.thoughts.push(AIThought.CreateWaitThought(this.pauseBetweenAcions));
+        }
+
         if (this.currentThought == null && this.thoughts.length > 0)
         {
             this.currentThought = this.thoughts.shift();
-            Debug.log("ACT: new thought:: " + this.currentThought.type);
+            this.log("ACT: new thought:: " + this.currentThought.type);
         }
 
         if(this.currentThought == null)
         {
-            Debug.log("ACT: no thoughts....");
+            this.log("ACT: no thoughts....");
             return SERVER_GAME_ENGINE.inputTypes.None;
         }
 
         if(this.currentThought.type == AIThought.types.WAIT)
         {
-            Debug.log("ACT: waiting " + this.currentThought.waitCount);
+            this.log("ACT: waiting " + this.currentThought.waitCount);
             this.currentThought.waitCount--;
             if(this.currentThought.waitCount <= 0)
             {
@@ -123,12 +131,12 @@ class IntelligenceEngine
         }
         else if(this.currentThought.type == AIThought.types.ELEVATE)
         {
-            Debug.log("ACT: this.board.fastElevate " + this.board.fastElevate);
+            this.log("ACT: this.board.fastElevate " + this.board.fastElevate);
             if( this.board.fastElevate == false)
             {
                 if(this.currentThought.elevateCount > 0)
                 {
-                    Debug.log("ACT: elevate " + this.currentThought.elevateCount);
+                    this.log("ACT: elevate " + this.currentThought.elevateCount);
                     this.currentThought.elevateCount--;
                     return SERVER_GAME_ENGINE.inputTypes.Elevate;
                 }
@@ -146,7 +154,7 @@ class IntelligenceEngine
                 this.currentThought = null;
             }
             
-            Debug.log("ACT: waiting for chain action");
+            this.log("ACT: waiting for chain action");
             return SERVER_GAME_ENGINE.inputTypes.None;
         }
         else if(this.currentThought.type == AIThought.types.WAIT_FOR_COMBO)
@@ -154,7 +162,7 @@ class IntelligenceEngine
             if( this.currentThought.tile == null ||
                 !this.currentThought.tile.isComboing)
             {
-                Debug.log("ACT: waiting for combo ");
+                this.log("ACT: waiting for combo ");
                 this.currentThought = null;
             }
             
@@ -181,7 +189,7 @@ class IntelligenceEngine
                 var y = this.currentThought.tile.y;
                 x = x < this.currentThought.swapToDestination.x ? x : x - 1;
 
-                Debug.log(`ACT: swap cursor: ${this.board.cursor.x},${this.board.cursor.y} goal:${x},${y} tile:${this.currentThought.tile.x},${this.currentThought.tile.y} to: ${this.currentThought.swapToDestination.x},${this.currentThought.swapToDestination.y}`);
+                this.log(`ACT: swap cursor: ${this.board.cursor.x},${this.board.cursor.y} goal:${x},${y} tile:${this.currentThought.tile.x},${this.currentThought.tile.y} to: ${this.currentThought.swapToDestination.x},${this.currentThought.swapToDestination.y}`);
 
                 if(this.board.cursor.x < x)
                 {
@@ -203,7 +211,7 @@ class IntelligenceEngine
                 if(this.justSwapped)
                 {
                     // somethings wrong, the tile won't swap!
-                    Debug.log("ACT: woah, this block is busted!");
+                    this.log("ACT: woah, this block is busted!");
                     this.currentThought = null;
                     return SERVER_GAME_ENGINE.inputTypes.None;
                 }
@@ -229,14 +237,14 @@ class IntelligenceEngine
         // this.thinkAboutSomethingInteresting();
         if(this.thoughts.length > 0)
         {
-            //Debug.log("Thinking about something interesting.");
+            //this.log("Thinking about something interesting.");
             return;
         }
 
         this.thinkAboutChains();
         if(this.thoughts.length > 0)
         {
-            Debug.log("Thinking about chains.");
+            this.log("Thinking about chains.");
             return;
         }
 
@@ -244,7 +252,7 @@ class IntelligenceEngine
         this.thinkAboutRaisingTiles();
         if(this.thoughts.length > 0)
         {
-            Debug.log("Thinking about raising tiles.");
+            this.log("Thinking about raising tiles.");
             return;
         }
 
@@ -252,7 +260,7 @@ class IntelligenceEngine
         this.thinkAboutDefending();
         if(this.thoughts.length > 0)
         {
-            Debug.log("Thinking about defending.");
+            this.log("Thinking about defending.");
             return;
         }
 
@@ -260,7 +268,7 @@ class IntelligenceEngine
         this.thinkAboutFlattening();
         if(this.thoughts.length > 0)
         {
-            Debug.log("Thinking about flattening.");
+            this.log("Thinking about flattening.");
             return;
         }
 
@@ -268,13 +276,13 @@ class IntelligenceEngine
         this.thinkAboutCombos();
         if(this.thoughts.length > 0)
         {
-            Debug.log("Thinking about combos.");
+            this.log("Thinking about combos.");
             return;
         }
 
         // nothing to think about... let's relax
         this.getLostInThought(2);
-        Debug.log("Lost in thought");
+        this.log("Lost in thought");
     }
 
     thinkAboutChains = () =>
@@ -297,8 +305,6 @@ class IntelligenceEngine
 
         // organize tiles into columns
         var combosInColumns: Tile[][] = [];
-        var sourceYs: number[][] = [];
-        var destinationYs: number[][] = [];
         for(var i = 0; i < this.board.boardSpaces[0].length; i++)
         {
             combosInColumns.push([]);
@@ -319,6 +325,8 @@ class IntelligenceEngine
         }
         
         // map out where the tiles will fall to (their y's), once the combo drops
+        var sourceYs: number[][] = [];
+        var destinationYs: number[][] = [];
         for(var y = 0; y < this.board.boardSpaces.length; y++)
         {
             destinationYs.push([]);
@@ -346,15 +354,15 @@ class IntelligenceEngine
         var focusPoints: AIPoint[] = [];
         for(var i = 0; i < combosInColumns.length; i++)
         {
+            var topTile = null;
+
             // on the left,
             // noncombo | combo ...
             if( i > 0 &&
                 combosInColumns[i - 1].length == 0 && 
                 combosInColumns[i].length > 0)
             {
-                // todo, add more targets
-                var topTile = combosInColumns[i][combosInColumns[i].length - 1];
-                focusPoints.push({x: topTile.x, y: topTile.y + 1});
+                topTile = combosInColumns[i][combosInColumns[i].length - 1];
             }
 
             // on the right
@@ -363,9 +371,18 @@ class IntelligenceEngine
                 combosInColumns[i + 1].length == 0 && 
                 combosInColumns[i].length > 0)
             {
-                // todo, add more targets
-                var topTile = combosInColumns[i][combosInColumns[i].length - 1];
-                focusPoints.push({x: topTile.x, y: topTile.y + 1});
+                topTile = combosInColumns[i][combosInColumns[i].length - 1];
+            }
+            
+            // add focus points
+            // these are every Y coordinate above this top tile, while still in bounds
+            if(topTile != null)
+            {
+                for(var currentY = topTile.y + 1; currentY < SERVER_GAME_ENGINE.rowCountInBounds - 1; currentY++)
+                {
+                    this.log(`PUSH FOCUS ${topTile.x},${currentY}`);
+                    focusPoints.push({x: topTile.x, y: currentY});
+                }
             }
         }
 
@@ -388,7 +405,7 @@ class IntelligenceEngine
                 y: destinationYs[focusPoint.y][focusPoint.x]
             };
             
-            Debug.log(`Focusing on ${focusPoint.x},${focusPoint.y} : ending at ${focusGoal.x},${focusGoal.y}`);
+            this.log(`Focusing on ${focusPoint.x},${focusPoint.y} : ending at ${focusGoal.x},${focusGoal.y}`);
 
             // for each tile in the focus row
             var candidateTiles: Tile[] = [];
@@ -397,7 +414,7 @@ class IntelligenceEngine
                 var tile = this.board.boardSpaces[focusPoint.y][x].getTile();
                 if(tile != null && tile.canMove() && AIHelpers.canSwapTo(tile, focusPoint.x, this.board))
                 {
-                    //Debug.log(`candidate: ${tile.x},${tile.y}`);
+                    //this.log(`candidate: ${tile.x},${tile.y}`);
                     candidateTiles.push(tile);
                 }
             }
@@ -409,68 +426,13 @@ class IntelligenceEngine
             var goalUp: AIPoint = {x: focusGoal.x, y: safeGet(sourceYs, focusGoal.y + 1, focusGoal.x) };
             var goalDown: AIPoint = {x: focusGoal.x, y: safeGet(sourceYs, focusGoal.y - 1, focusGoal.x) };
             var goalDownDown: AIPoint = {x: focusGoal.x, y: safeGet(sourceYs, focusGoal.y - 2, focusGoal.x) };
-            //Debug.log(`goalLeft: ${goalLeft.x},${goalLeft.y}`);
-            //Debug.log(`goalLeftLeft: ${goalLeftLeft.x},${goalLeftLeft.y}`);
-            //Debug.log(`goalRight: ${goalRight.x},${goalRight.y}`);
-            //Debug.log(`goalRightRight: ${goalRightRight.x},${goalRightRight.y}`);
-            //Debug.log(`goalUp: ${goalUp.x},${goalUp.y}`);
-            //Debug.log(`goalDown: ${goalDown.x},${goalDown.y}`);
-            //Debug.log(`goalDownDown: ${goalDownDown.x},${goalDownDown.y}`);
-
-            function getValidTile(goal: AIPoint, candidate: Tile, board: Board, ignore: Tile[], reverseX: boolean = false)
-            {
-                if(goal.x == null || goal.y == null)
-                {
-                    return null;
-                }
-
-                // for each tile in the goal row
-                var initX = reverseX ? board.boardSpaces[goal.y].length - 1 : 0;
-                var endX = reverseX ? 0 : board.boardSpaces[goal.y].length - 1;
-                var xDir = reverseX ? -1 : 1;
-
-                for(var x = initX; x != endX; x += xDir)
-                {
-                    var tile = board.boardSpaces[goal.y][x].getTile();
-                    if( tile != null && 
-                        tile.type == candidate.type && 
-                        tile.canMove() && 
-                        ignore.indexOf(tile) == -1 &&
-                        AIHelpers.canSwapTo(tile, goal.x, board))
-                    {
-                        return tile;
-                    }
-                }
-
-                return null;
-            }
-
-            function matchThree(one: AIPoint, two: AIPoint, candidate: Tile, board: Board, reverseX: boolean = false)
-            {
-                var tileOne = getValidTile(one, candidate, board, [candidate], reverseX);
-                if(tileOne == null)
-                {
-                    return null;
-                }
-
-                var tileTwo = getValidTile(two, candidate, board, [candidate, tileOne], reverseX);
-                if(tileTwo == null)
-                {
-                    return null
-                }
-
-                return [tileOne, tileTwo];
-            }
-
-            function printTile(tile: Tile)
-            {
-                return tile == null ? "null" : `${tile.x},${tile.y}`
-            }
-
-            function printMatch(tile: Tile[])
-            {
-                return tile == null ? "null" : `${printTile(tile[0])} AND ${printTile(tile[1])} `
-            }
+            //this.log(`goalLeft: ${goalLeft.x},${goalLeft.y}`);
+            //this.log(`goalLeftLeft: ${goalLeftLeft.x},${goalLeftLeft.y}`);
+            //this.log(`goalRight: ${goalRight.x},${goalRight.y}`);
+            //this.log(`goalRightRight: ${goalRightRight.x},${goalRightRight.y}`);
+            //this.log(`goalUp: ${goalUp.x},${goalUp.y}`);
+            //this.log(`goalDown: ${goalDown.x},${goalDown.y}`);
+            //this.log(`goalDownDown: ${goalDownDown.x},${goalDownDown.y}`);
 
             // TODO, for each candidate, look for a tile with the same type that can swap to each of the goals above.
             // avoid using the same tile for two calculations
@@ -479,13 +441,13 @@ class IntelligenceEngine
             {
                 var candidate = candidateTiles.shift();
                 var topTileInCombo = combosInColumns[candidate.x][combosInColumns[candidate.x].length - 1];
-                Debug.log("TESTING CANDIDATE: " + printTile(candidate));
+                this.log("TESTING CANDIDATE: " + AIHelpers.printTile(candidate));
 
                 // scan from right to left for this particular match
-                var leftAndLeftLeft = matchThree(goalLeft, goalLeftLeft, candidate, this.board, true);
+                var leftAndLeftLeft = AIHelpers.matchThree(goalLeft, goalLeftLeft, candidate, this.board, true);
                 if(leftAndLeftLeft)
                 {
-                    Debug.log("leftAndLeftLeft: " + printMatch(leftAndLeftLeft));
+                    this.log("leftAndLeftLeft: " + AIHelpers.printMatch(leftAndLeftLeft));
                     this.thoughts.push(AIThought.CreateSwapToThought(candidate, focusPoint));
                     this.thoughts.push(AIThought.CreateSwapToThought(leftAndLeftLeft[0], goalLeft));
                     this.thoughts.push(AIThought.CreateSwapToThought(leftAndLeftLeft[1], goalLeftLeft));
@@ -495,10 +457,10 @@ class IntelligenceEngine
                     break;
                 }
 
-                var leftAndRight = matchThree(goalLeft, goalRight, candidate, this.board);
+                var leftAndRight = AIHelpers.matchThree(goalLeft, goalRight, candidate, this.board);
                 if(leftAndRight)
                 {
-                    Debug.log("leftAndRight: " + printMatch(leftAndRight));
+                    this.log("leftAndRight: " + AIHelpers.printMatch(leftAndRight));
                     this.thoughts.push(AIThought.CreateSwapToThought(candidate, focusPoint));
                     this.thoughts.push(AIThought.CreateSwapToThought(leftAndRight[0], goalLeft));
                     this.thoughts.push(AIThought.CreateSwapToThought(leftAndRight[1], goalRight));
@@ -508,10 +470,10 @@ class IntelligenceEngine
                     break;
                 }
 
-                var rightAndRightRight = matchThree(goalRight, goalRightRight, candidate, this.board);
+                var rightAndRightRight = AIHelpers.matchThree(goalRight, goalRightRight, candidate, this.board);
                 if(rightAndRightRight)
                 {
-                    Debug.log("rightAndRightRight: " + printMatch(rightAndRightRight));
+                    this.log("rightAndRightRight: " + AIHelpers.printMatch(rightAndRightRight));
                     this.thoughts.push(AIThought.CreateSwapToThought(candidate, focusPoint));
                     this.thoughts.push(AIThought.CreateSwapToThought(rightAndRightRight[0], goalRight));
                     this.thoughts.push(AIThought.CreateSwapToThought(rightAndRightRight[1], goalRightRight));
@@ -521,10 +483,10 @@ class IntelligenceEngine
                     break;
                 }
 
-                var upAndDown = matchThree(goalUp, goalDown, candidate, this.board);
+                var upAndDown = AIHelpers.matchThree(goalUp, goalDown, candidate, this.board);
                 if(upAndDown)
                 {
-                    Debug.log("upAndDown: " + printMatch(upAndDown));
+                    this.log("upAndDown: " + AIHelpers.printMatch(upAndDown));
                     this.thoughts.push(AIThought.CreateSwapToThought(candidate, focusPoint));
                     this.thoughts.push(AIThought.CreateSwapToThought(upAndDown[0], goalUp));
                     this.thoughts.push(AIThought.CreateSwapToThought(upAndDown[1], goalDown));
@@ -534,10 +496,10 @@ class IntelligenceEngine
                     break;
                 }
 
-                var downAndDownDown = matchThree(goalDown, goalDownDown, candidate, this.board);
+                var downAndDownDown = AIHelpers.matchThree(goalDown, goalDownDown, candidate, this.board);
                 if(downAndDownDown)
                 {
-                    Debug.log("downAndDownDown: " + printMatch(downAndDownDown));
+                    this.log("downAndDownDown: " + AIHelpers.printMatch(downAndDownDown));
                     this.thoughts.push(AIThought.CreateSwapToThought(candidate, focusPoint));
                     this.thoughts.push(AIThought.CreateSwapToThought(downAndDownDown[0], goalDown));
                     this.thoughts.push(AIThought.CreateSwapToThought(downAndDownDown[1], goalDownDown));
@@ -582,85 +544,136 @@ class IntelligenceEngine
 
     thinkAboutFlattening = () =>
     {
-        var minHole: AIPoint = {x: 100, y: 100};
-        var maxTile: Tile = null;
-
-        for(var y = 0; y < this.board.boardSpaces.length; y++)
+        for(var y = 2; y < this.board.boardSpaces.length; y++)
         {
             for(var x = 0; x < this.board.boardSpaces[y].length; x++)
             {
-                var tile = this.board.boardSpaces[y][x].getTile();
-                
-                if(tile != null)
+                var candidate = this.board.boardSpaces[y][x].getTile();
+                if(candidate == null || candidate.isAttackBlock || !candidate.canMove())
                 {
-                    if(tile.isAttackBlock || tile.y >= SERVER_GAME_ENGINE.rowCountInBounds)
+                    continue;
+                }
+
+                // this.log(`flatten candidate: ${AIHelpers.printTile(candidate)}`);
+                for(var xx = 0; xx < this.board.boardSpaces[y].length; xx++)
+                {
+                    var belowTile = this.board.getTileAtSpace(xx, y - 1);
+                    if(belowTile != null)
                     {
                         continue;
                     }
 
-                    if(maxTile == null || maxTile.y < y)
+                    // found an empty space below me, can I swap to it?
+                    // this.log(`flatten hole ${xx},${y-1}`);
+                    if(AIHelpers.canSwapTo(candidate, xx, this.board, true))
                     {
-                        maxTile = tile;
-                    }
-                }
-                else 
-                {
-                    if(minHole.y > y)
-                    {
-                        minHole.x = x;
-                        minHole.y = y;
+                        this.log(`FLATTEN: tile ${candidate.x},${candidate.y} hole ${xx},${y-1}`);
+                        this.thoughts.push(AIThought.CreateSwapToThought(candidate, {x: xx, y: candidate.y}));
+                        return;
                     }
                 }
             }
-        }
-
-        // if there is a hole
-        // then go ahead and move the tile in the direction of the hole
-        if(minHole.y < maxTile.y)
-        {
-            var destinationX = minHole.x < maxTile.x ? maxTile.x - 1 : maxTile.x;
-            var cursor = {x: this.board.cursor.x, y: this.board.cursor.y};
-            Debug.log(`FLATTEN: cursor ${cursor.x},${cursor.y} tile ${maxTile.x},${maxTile.y} hole ${minHole.x},${minHole.y}`);
-            this.thoughts.push(AIThought.CreateSwapToThought(maxTile, {x: minHole.x, y: maxTile.y}));
         }
     }
 
     thinkAboutRaisingTiles = () =>
     {
+        // never elevate if attacks are coming
+        if(this.board.attackBlocksInWait.length > 0)
+        {
+            return;
+        }
+
+        // elevate if we're low
         if(this.board.highestTileHeight < 6)
         {
             this.thoughts.push(AIThought.CreateElevateThought(3));
+            return;
+        }
+
+        // elevate if there's not enough tiles. i.e. if there are attacks
+        // sitting on top of a few amount of tiles.
+        var tileCount = 0;
+        this.board.tiles.forEach((tile) =>
+        {
+            if(tile && !tile.isAttackBlock)
+            {
+                tileCount++;
+            }
+        });
+
+        if(tileCount <= 21 && 
+            this.board.highestTileHeight < SERVER_GAME_ENGINE.rowCountInBounds - 1)
+        {
+            this.thoughts.push(AIThought.CreateElevateThought(1));
+            return;
         }
     }
 
     thinkAboutCombos = () =>
     {
-        // reset and fill up a list of potential tiles
-        this.potentials.forEach((potential) =>
-        {
-            potential.reset();
-        });
+        // randomly change behavior of AI
+        // this is so two AIs act differently
+        var isReverse = Math.floor((Math.random() * 2)) == 0;
+        var startY = isReverse ? 1 : this.board.boardSpaces.length - 1;
+        var endY = isReverse ? this.board.boardSpaces.length - 1 : 1;
+        var dirY = isReverse ? 1 : -1;
 
-        this.board.tiles.forEach((tile) =>
+        for(var y = startY; y != endY; y += dirY)
         {
-            if(!tile || tile.y == 0 || !tile.canMove() || tile.isAttackBlock || tile.y >= SERVER_GAME_ENGINE.rowCountInBounds)
+            for(var x = 0; x < this.board.boardSpaces[y].length; x++)
             {
-                return;
-            }
+                var candidate = this.board.boardSpaces[y][x].getTile();
+                if(candidate == null || candidate.isAttackBlock || !candidate.canMove())
+                {
+                    continue;
+                }
 
-            this.potentials[tile.type].add(tile);
-        });
+                var goalCandidate = {x: x, y: y};
+                var goalDown = {x: x, y: y - 1};
+                var goalDownDown = {x: x, y: y - 2};
+                var goalUp = {x: x, y: y + 1};
+                var goalUpUp = {x: x, y: y + 2};
 
-        // check each potential
-        // a successful check will fill our thoughts and we can exit
-        AIHelpers.shuffleArray(this.potentials);
-        for(var i = 0; i < this.potentials.length; i++)
-        {
-            this.thoughts = this.potentials[i].check(this.board.cursor);
-            if(this.thoughts.length > 0)
-            {
-                //this.getLostInThought(30);
-                return;
+                // for combos within a row, we set the destination to the candidate itself.
+                var anyInRow = AIHelpers.matchThree(goalCandidate, goalCandidate, candidate, this.board);
+                if(anyInRow != null)
+                {
+                    this.log("anyInRow: " + AIHelpers.printMatch(anyInRow));
+                    this.thoughts.push(AIThought.CreateSwapToThought(anyInRow[0], goalCandidate));
+                    this.thoughts.push(AIThought.CreateSwapToThought(anyInRow[1], goalCandidate));
+                    return;
+                }
+
+                var downAndDownDown = AIHelpers.matchThree(goalDown, goalDownDown, candidate, this.board);
+                if(downAndDownDown != null)
+                {
+                    this.log("downAndDownDown: " + AIHelpers.printMatch(downAndDownDown));
+                    this.thoughts.push(AIThought.CreateSwapToThought(downAndDownDown[0], goalDown));
+                    this.thoughts.push(AIThought.CreateSwapToThought(downAndDownDown[1], goalDownDown));
+                    this.thoughts.push(AIThought.CreateSwapToThought(downAndDownDown[0], goalDown));
+                    return;
+                }
+                
+                var downAndUp = AIHelpers.matchThree(goalDown, goalUp, candidate, this.board);
+                if(downAndUp != null)
+                {
+                    this.log("downAndUp: " + AIHelpers.printMatch(downAndUp));
+                    this.thoughts.push(AIThought.CreateSwapToThought(downAndUp[0], goalDown));
+                    this.thoughts.push(AIThought.CreateSwapToThought(downAndUp[1], goalUp));
+                    this.thoughts.push(AIThought.CreateSwapToThought(downAndUp[0], goalDown));
+                    return;
+                }
+                
+                var upAndUpUp = AIHelpers.matchThree(goalUp, goalUpUp, candidate, this.board);
+                if(upAndUpUp)
+                {
+                    this.log("upAndUpUp: " + AIHelpers.printMatch(upAndUpUp));
+                    this.thoughts.push(AIThought.CreateSwapToThought(upAndUpUp[0], goalUp));
+                    this.thoughts.push(AIThought.CreateSwapToThought(upAndUpUp[1], goalUpUp));
+                    this.thoughts.push(AIThought.CreateSwapToThought(upAndUpUp[0], goalUp));
+                    return;
+                }
             }
         }
     }
@@ -668,141 +681,6 @@ class IntelligenceEngine
     getLostInThought = (waitLength: number) =>
     {
         this.thoughts.push(AIThought.CreateWaitThought(waitLength));
-    }
-}
-
-class Potential 
-{
-    type: number;
-    board: Board;
-    rows: Tile[][];
-
-    constructor(type: number, board: Board)
-    {
-        this.type = type;
-        this.board = board;
-        this.rows = [];
-        for(var i = 0; i < SERVER_GAME_ENGINE.rowCountInBounds; i++)
-        {
-            this.rows.push([]);
-        }
-
-    }
-
-    reset = () =>
-    {
-        for(var i = 0; i < SERVER_GAME_ENGINE.rowCountInBounds; i++)
-        {
-            this.rows[i] = [];
-        }
-    }
-
-    add = (tile: Tile) =>
-    {
-        this.rows[tile.y].push(tile);
-    }
-
-    check = (cursor: any) =>
-    {
-        var tilesToThinkAbout = [];
-        var moves: AIThought[] = [];
-        for(var i = 0; i < SERVER_GAME_ENGINE.rowCountInBounds; i++)
-        {
-            if(this.rows[i].length >= 3)
-            {
-                tilesToThinkAbout = [];
-                tilesToThinkAbout.push(this.rows[i][0]);
-                tilesToThinkAbout.push(this.rows[i][1]);
-                tilesToThinkAbout.push(this.rows[i][2]);
-
-                Debug.log(`solving. type: ${this.type}, in a row of 3.`);
-                this.solve(tilesToThinkAbout, cursor, this.board, moves);
-                if(moves.length > 0)
-                {
-                    return moves;
-                }
-            }
-
-            if(this.rows[i].length > 0)
-            {
-                tilesToThinkAbout.push(this.rows[i][0]);
-                if(tilesToThinkAbout.length >= 3)
-                {
-                    Debug.log(`solving. type: ${this.type}, in a col of 3.`);
-                    this.solve(tilesToThinkAbout, cursor, this.board, moves);
-                    if(moves.length > 0)
-                    {
-                        return moves;
-                    }
-                    else 
-                    {
-                        tilesToThinkAbout.shift();
-                    }
-                }
-            }
-            else 
-            {
-                tilesToThinkAbout = [];
-            }
-        }
-
-        return [];
-    }
-
-    solve = (tiles: Tile[], cursor: any, board: Board, moves: AIThought[]) =>
-    {
-        Debug.log(`TILE0:${tiles[0].x},${tiles[0].y} TILE1:${tiles[1].x},${tiles[1].y} TILE2:${tiles[2].x},${tiles[2].y}`);
-        
-        function possible(tileOne: Tile, tileTwo: Tile, destX: number)
-        {
-            if(!AIHelpers.canSwapTo(tileOne, destX, board))
-            {
-                //Debug.log(`can't swap to! ${tiles[1].x},${tiles[1].y} destx ${destX}`);
-                return false;
-            }
-            
-            if(!AIHelpers.canSwapTo(tileTwo, destX, board))
-            {
-                //Debug.log(`can't swap to! ${tiles[2].x},${tiles[2].y} destx ${destX}`);
-                return false
-            }
-
-            return true;
-        }
-
-        // move each tile to the x-coordinate of the first tile
-        var currentCursor =  {x: cursor.x, y: cursor.y};
-        var destX = 0;
-        var tilesToMove: Tile[] = [];
-
-        if(possible(tiles[0], tiles[1], tiles[2].x))
-        {
-            tilesToMove.push(tiles[0]);
-            tilesToMove.push(tiles[1]);
-            destX = tiles[2].x
-        }
-        else if(possible(tiles[1], tiles[2], tiles[0].x))
-        {
-            tilesToMove.push(tiles[1]);
-            tilesToMove.push(tiles[2]);
-            destX = tiles[0].x
-        }
-        else if(possible(tiles[0], tiles[2], tiles[1].x))
-        {
-            tilesToMove.push(tiles[0]);
-            tilesToMove.push(tiles[2]);
-            destX = tiles[1].x
-        }
-        else
-        {
-            return [];
-        }
-
-        // solve each tile
-        tilesToMove.forEach((currentTile) =>
-        {
-            moves.push(AIThought.CreateSwapToThought(currentTile, {x: destX, y: currentTile.y}));
-        });
     }
 }
 
@@ -832,87 +710,8 @@ class AIHelpers
 
         return array;
     }
-
-    static moveToTileAndSwapTo = (cursor: AIPoint, tile: Tile, endX: number, moves: number[]) =>
-    {
-        if(tile.x < endX)
-        {
-            AIHelpers.moveTo(cursor, tile.x, tile.y, moves);
-            AIHelpers.swapTo(cursor, endX, moves);
-        }
-        else if(tile.x > endX)
-        {
-            AIHelpers.moveTo(cursor, tile.x - 1, tile.y, moves);
-            AIHelpers.swapTo(cursor, endX, moves);
-        }
-    }
-
-    static swapTo = (cursor: AIPoint, endX: number, moves: number[]) =>
-    {
-        while(cursor.x < endX - 1)
-        {
-            AIHelpers.insertSwap(moves);
-            moves.push(SERVER_GAME_ENGINE.inputTypes.Right);
-            cursor.x++;
-        }
-
-        while(cursor.x > endX)
-        {
-            AIHelpers.insertSwap(moves);
-            moves.push(SERVER_GAME_ENGINE.inputTypes.Left);
-            cursor.x--;
-        }
-
-        AIHelpers.insertSwap(moves);
-    }
-
-    static moveTo = (cursor: AIPoint, endX: number, endY: number, moves: number[]) =>
-    {
-        while(cursor.x < endX)
-        {
-            moves.push(SERVER_GAME_ENGINE.inputTypes.Right);
-            cursor.x++;
-        }
-        while(cursor.x > endX)
-        {
-            moves.push(SERVER_GAME_ENGINE.inputTypes.Left);
-            cursor.x--;
-        }
-        while(cursor.y < endY)
-        {
-            moves.push(SERVER_GAME_ENGINE.inputTypes.Up);
-            cursor.y++;
-        }
-        while(cursor.y > endY)
-        {
-            moves.push(SERVER_GAME_ENGINE.inputTypes.Down);
-            cursor.y--;
-        }
-    }
-
-    static insertSwap = (moves: number[]) =>
-    {
-        // add a swap, then wait a number of frames for swap to finish
-        moves.push(SERVER_GAME_ENGINE.inputTypes.Swap);
-        for(var i = 0; i < SERVER_GAME_ENGINE.boards[0].swapDelayReset - 1; i++)
-        {
-            moves.push(SERVER_GAME_ENGINE.inputTypes.None);
-        }
-    }
-
-    static insertElevate = (moves: number[]) =>
-    {
-        // add a swap, then wait a number of frames for swap to finish
-        moves.push(SERVER_GAME_ENGINE.inputTypes.Elevate);
-        var wait = SERVER_GAME_ENGINE.boards[0].yOffsetMax / SERVER_GAME_ENGINE.boards[0].fastElevateHeightPerFrame;
-        for(var i = 0; i < wait - 1; i++)
-        {
-            moves.push(SERVER_GAME_ENGINE.inputTypes.None);
-        }
-    }
     
-
-    static canSwapTo = (tile: Tile, endX: number, board: Board) =>
+    static canSwapTo = (tile: Tile, endX: number, board: Board, ignoreHole: boolean = false) =>
     {
         if(tile == null || tile.y == 0 || tile.isAttackBlock || !tile.canMove())
         {
@@ -920,22 +719,21 @@ class AIHelpers
         }
 
         var y = tile.y;
-        var x = endX < tile.x ? tile.x - 1 : tile.x;
-        var lookahead = endX < tile.x ? 0 : 1;
+        var x = tile.x;
         var direction = endX < tile.x ? -1 : 1;
 
-        function makeChecks(lookahead: number, ignoreCombo: boolean)
+        function makeChecks(direction: number, ignoreCombo: boolean, ignoreHole: boolean)
         {
             // check for unswappable neighbor
-            var tileMiddle = board.getTileAtSpace(x + lookahead, y);
-            if(tileMiddle != null && !tileMiddle.canMove())
+            var tileMiddle = board.getTileAtSpace(x + direction, y);
+            if(tileMiddle != null && (!tileMiddle.canMove() || tileMiddle.isAttackBlock))
             {
                 return false;
             }
 
             // check for a hole in the ground
-            var tileBelow = board.getTileAtSpace(x + lookahead, y - 1);
-            if(tileBelow == null)
+            var tileBelow = board.getTileAtSpace(x + direction, y - 1);
+            if(tileBelow == null && !ignoreHole)
             {
                 return false;
             }
@@ -947,9 +745,9 @@ class AIHelpers
             }
 
             // check for a combo trap
-            var tileAbove = board.getTileAtSpace(x + lookahead, y + 1);
-            var tileAboveAbove = board.getTileAtSpace(x + lookahead, y + 2);
-            var tileBelowBelow = board.getTileAtSpace(x + lookahead, y - 2);
+            var tileAbove = board.getTileAtSpace(x + direction, y + 1);
+            var tileAboveAbove = board.getTileAtSpace(x + direction, y + 2);
+            var tileBelowBelow = board.getTileAtSpace(x + direction, y - 2);
             if( tileAbove != null && 
                 tileAboveAbove != null &&
                 tile.type == tileAbove.type && 
@@ -980,7 +778,7 @@ class AIHelpers
         while(x != endX)
         {
             var ignoreCombo = Math.abs(x - endX) == 1;
-            if(!makeChecks(lookahead, ignoreCombo))
+            if(!makeChecks(direction, ignoreCombo, ignoreHole))
             {
                 return false;
             }
@@ -989,5 +787,61 @@ class AIHelpers
         }
 
         return true;
+    }
+    
+    // ***********************
+    static matchThree = (one: AIPoint, two: AIPoint, candidate: Tile, board: Board, reverseX: boolean = false) =>
+    {
+        var tileOne = AIHelpers.getValidTile(one, candidate, board, [candidate], reverseX);
+        if(tileOne == null)
+        {
+            return null;
+        }
+
+        var tileTwo = AIHelpers.getValidTile(two, candidate, board, [candidate, tileOne], reverseX);
+        if(tileTwo == null)
+        {
+            return null
+        }
+
+        return [tileOne, tileTwo];
+    }
+
+    static getValidTile = (goal: AIPoint, candidate: Tile, board: Board, ignore: Tile[], reverseX: boolean = false) =>
+    {
+        if(goal.x == null || goal.y == null)
+        {
+            return null;
+        }
+
+        // for each tile in the goal row
+        var initX = reverseX ? board.boardSpaces[goal.y].length - 1 : 0;
+        var endX = reverseX ? 0 : board.boardSpaces[goal.y].length - 1;
+        var xDir = reverseX ? -1 : 1;
+
+        for(var x = initX; x != endX; x += xDir)
+        {
+            var tile = board.boardSpaces[goal.y][x].getTile();
+            if( tile != null && 
+                tile.type == candidate.type && 
+                tile.canMove() && 
+                ignore.indexOf(tile) == -1 &&
+                AIHelpers.canSwapTo(tile, goal.x, board))
+            {
+                return tile;
+            }
+        }
+
+        return null;
+    }
+
+    static printTile = (tile: Tile) =>
+    {
+        return tile == null ? "null" : `${tile.x},${tile.y}`
+    }
+
+    static printMatch = (tile: Tile[]) =>
+    {
+        return tile == null ? "null" : `${AIHelpers.printTile(tile[0])} AND ${AIHelpers.printTile(tile[1])} `
     }
 }

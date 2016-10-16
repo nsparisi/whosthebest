@@ -59,10 +59,10 @@ class GenerationEngine
         this.intellegence = [];
 
         // TODO hack, remove
-        this.intellegence.push(new IntelligenceEngine(SERVER_GAME_ENGINE.boards[0]));
+        this.intellegence.push(new IntelligenceEngine("AILeft", SERVER_GAME_ENGINE.boards[0]));
 
         var aiIndex = (GAME_INSTANCE.USER_INDEX + 1) % SERVER_GAME_ENGINE.boards.length;
-        this.intellegence.push(new IntelligenceEngine(SERVER_GAME_ENGINE.boards[aiIndex]));
+        this.intellegence.push(new IntelligenceEngine("AIRight" + aiIndex, SERVER_GAME_ENGINE.boards[aiIndex]));
     }
 
     update = () =>
@@ -108,7 +108,6 @@ class GenerationEngine
                 if(dequeuedFrame)
                 {
                     SERVER_GAME_ENGINE.update(dequeuedFrame.inputs);
-                    LOCAL_GAME_ENGINE.update(dequeuedFrame.inputs);
                 }
 
                 return;
