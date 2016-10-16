@@ -23,6 +23,7 @@ module Whosthebest.Graphics
             this.load.spritesheet("images/menu/btn_quick.png", "images/menu/btn_quick.png", 120, 52);
             this.load.spritesheet("images/menu/btn_invite.png", "images/menu/btn_invite.png", 120, 52);
             this.load.spritesheet("images/menu/btn_practice.png", "images/menu/btn_practice.png", 120, 52);
+            this.load.spritesheet("images/menu/btn_watch.png", "images/menu/btn_watch.png", 120, 52);
             this.load.image("images/menu/img_avatar.png", "images/menu/img_avatar.png");
 
 

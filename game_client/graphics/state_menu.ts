@@ -4,6 +4,7 @@ module Whosthebest.Graphics
     {
         buttonPlay: Phaser.Button;
         buttonPractice: Phaser.Button;
+        buttonWatch: Phaser.Button;
         buttonInvite: Phaser.Button;
         buttonFriend: Phaser.Button;
         buttonBack: Phaser.Button;
@@ -75,6 +76,11 @@ module Whosthebest.Graphics
                 120, 
                 "images/menu/btn_practice.png", this.practice_pressed, this, 1, 0, 2);
 
+            this.buttonWatch = this.add.button(
+                this.game.width / 2 - 60, 
+                180, 
+                "images/menu/btn_watch.png", this.watch_pressed, this, 1, 0, 2);
+
             this.buttonBack = this.add.button(
                 430, 
                 300, 
@@ -111,6 +117,7 @@ module Whosthebest.Graphics
             ServerTranslator.Instance.disconnectFromLobby();
             this.buttonPlay.exists = true;
             this.buttonPractice.exists = true;
+            this.buttonWatch.exists = true;
             this.buttonBack.exists = false;
             this.buttonInvite.exists = false;
             this.buttonFriend.exists = false;
@@ -123,6 +130,7 @@ module Whosthebest.Graphics
             ServerTranslator.Instance.connectToLobby();
             this.buttonPlay.exists = false;
             this.buttonPractice.exists = false;
+            this.buttonWatch.exists = false;
             this.buttonBack.exists = true;
             this.buttonInvite.exists = true;
             this.buttonFriend.exists = false;
@@ -150,6 +158,11 @@ module Whosthebest.Graphics
         practice_pressed()
         {
             GAME_INSTANCE.switchToPractice();
+        }
+
+        watch_pressed()
+        {
+            GAME_INSTANCE.switchToWatch();
         }
 
         invite_pressed()

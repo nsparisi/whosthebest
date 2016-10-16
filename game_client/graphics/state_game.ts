@@ -75,8 +75,8 @@ module Whosthebest.Graphics
             GenerationEngine.Instance.setAsPracticeGame(isPracticeGame);
             Main.Instance.isRunning = true;
             this.characterIndexes = characterIndexes;
-            Debug.log(characterIndexes[0] + ' : ' + characterIndexes[1]);
             State_Game.GAME_INSTANCE = GenerationEngine.Instance.isPracticeGame ? SERVER_GAME_ENGINE : LOCAL_GAME_ENGINE;
+            Debug.log(characterIndexes[0] + ' : ' + characterIndexes[1]);
         }
 
         create()
@@ -272,7 +272,7 @@ module Whosthebest.Graphics
             this.fpsText.text = deltaTimeMs.toString(); 
             this.fpsTextPhaser.text = this.game.time.fps.toString();
             this.gameClock.text = this.clockToPrettyString();
-            this.gameSpeed.text = State_Game.GAME_INSTANCE.boards[GAME_INSTANCE.USER_INDEX].gameSpeed.toString();
+            this.gameSpeed.text = State_Game.GAME_INSTANCE.boards[0].gameSpeed.toString();
 
             // NETWORK_DEBUG
             this.updateNetworkInfo();
@@ -286,8 +286,8 @@ module Whosthebest.Graphics
 
         clockToPrettyString = () =>
         {
-            var minutes = Math.floor(State_Game.GAME_INSTANCE.boards[GAME_INSTANCE.USER_INDEX].gameClockInSeconds / 60);
-            var seconds = State_Game.GAME_INSTANCE.boards[GAME_INSTANCE.USER_INDEX].gameClockInSeconds % 60;
+            var minutes = Math.floor(State_Game.GAME_INSTANCE.boards[0].gameClockInSeconds / 60);
+            var seconds = State_Game.GAME_INSTANCE.boards[0].gameClockInSeconds % 60;
             return ("0" + minutes).slice(-2) + ":" + ("0" + seconds).slice(-2);
         }
 

@@ -55,14 +55,13 @@ class GenerationEngine
     setAsPracticeGame = (isPracticeGame: boolean) =>
     {
         this.isPracticeGame = isPracticeGame;
-
         this.intellegence = [];
 
-        // TODO hack, remove
-        this.intellegence.push(new IntelligenceEngine("AILeft", SERVER_GAME_ENGINE.boards[0]));
-
-        var aiIndex = (GAME_INSTANCE.USER_INDEX + 1) % SERVER_GAME_ENGINE.boards.length;
-        this.intellegence.push(new IntelligenceEngine("AIRight" + aiIndex, SERVER_GAME_ENGINE.boards[aiIndex]));
+        // there is always an AI for each slot, though they may not be used
+        for(var i = 0; i < SERVER_GAME_ENGINE.boards.length; i++)
+        {
+            this.intellegence.push(new IntelligenceEngine("AI_" + i, SERVER_GAME_ENGINE.boards[i]));
+        }
     }
 
     update = () =>
@@ -189,19 +188,27 @@ class GenerationEngine
     {
         var inputs = [];
 
-        // set player 0 as our own input
-        var playerInputAsString = "";
-        for(var i = 0; i < playerInputs.length; i++)
+        for(var boardIndex = 0; boardIndex < SERVER_GAME_ENGINE.boards.length; boardIndex++)
         {
-            playerInputAsString += ServerTranslator.Instance.PLAYERINPUT_DELIMETER;
-            playerInputAsString += playerInputs[i];
-        }
-        //inputs.push(playerInputAsString);
+            // this player is our self
+            if(GAME_INSTANCE.USER_INDEX == boardIndex)
+            {
+                var playerInputAsString = "";
+                for(var i = 0; i < playerInputs.length; i++)
+                {
+                    playerInputAsString += ServerTranslator.Instance.PLAYERINPUT_DELIMETER;
+                    playerInputAsString += playerInputs[i];
+                }
+                inputs.push(playerInputAsString);
+            }
 
-        // set CPU player input from AI engine
-        for(var i = 0; i < this.intellegence.length; i++)
-        {
-            inputs.push(this.intellegence[i].next().toString());
+            // these are the AIs
+            else 
+            {
+                //var shiftIndex = GAME_INSTANCE.USER_INDEX < boardIndex ? 1 : 0;
+                var ai = this.intellegence[boardIndex];
+                inputs.push(ai.next().toString());
+            }
         }
 
         //Debug.log("inputs " +  inputs[0]);
