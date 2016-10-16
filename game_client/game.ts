@@ -211,7 +211,7 @@ class GameEngine
         {
             var attackData = this.attackBlockQueue[i];
             this.boards[attackData.targetBoardIndex].wasAttackedByOtherPlayer(attackData.attackBlock);
-            Debug.log("wasAttackedByOtherPlayer local? " + this.isLocalGameInstance);
+            //Debug.log("wasAttackedByOtherPlayer local? " + this.isLocalGameInstance);
         }
         this.attackBlockQueue = [];
     }
@@ -235,7 +235,7 @@ Keeps track of a contained tile.
 */
 class BoardSpace
 {
-    contents = [];
+    contents: Tile[] = [];
     
     addTile = (tile) =>
     {
@@ -287,7 +287,7 @@ class Board
     }
 
     tiles: Tile[] = [];
-    boardSpaces = [];
+    boardSpaces: BoardSpace[][] = [];
     lastRowOfTileTypes = [];
     attackBlocksInWait = [];
     allAttackBlocksCombodThisFrame = [];
@@ -364,7 +364,8 @@ class Board
         }
 
         // make first set of tiles
-        for(var i = 5; i >= 0; i--)
+        this.highestTileHeight = 5;
+        for(var i = this.highestTileHeight; i >= 0; i--)
         {
             var newRow = this.generateRow(i);
             this.tiles = this.tiles.concat(newRow);

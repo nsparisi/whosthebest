@@ -37,6 +37,7 @@ module Whosthebest.Graphics
         sfxChainIntenses: Phaser.Sound[];
         sfxChainMilds: Phaser.Sound[];
         static NUMBER_OF_CHARACTERS = 8;
+        static GAME_INSTANCE: GameEngine;
 
         characterIndexes: number[];
 
@@ -74,6 +75,7 @@ module Whosthebest.Graphics
             GenerationEngine.Instance.setAsPracticeGame(isPracticeGame);
             Main.Instance.isRunning = true;
             this.characterIndexes = characterIndexes;
+            State_Game.GAME_INSTANCE = GenerationEngine.Instance.isPracticeGame ? SERVER_GAME_ENGINE : LOCAL_GAME_ENGINE;
             Debug.log(characterIndexes[0] + ' : ' + characterIndexes[1]);
         }
 
@@ -81,6 +83,7 @@ module Whosthebest.Graphics
         {
             TILE_WIDTH = 25;
             TILE_HEIGHT = 25;
+
             // TILE_WIDTH = Math.round(this.game.width * 0.05625);
             // TILE_HEIGHT = Math.round(this.game.height * 0.0667);
 
@@ -199,7 +202,7 @@ module Whosthebest.Graphics
             this.sfxChainMilds.push(this.add.audio("audio/weepinbell_mild.mp3"));
 
             this.gameBoards = [];
-            var boardWidth = LOCAL_GAME_ENGINE.colCount * TILE_WIDTH;
+            var boardWidth = State_Game.GAME_INSTANCE.colCount * TILE_WIDTH;
             var xSpacing = 50;
             var x = (this.game.width / 2) - (this.characterIndexes.length * boardWidth / 2 ) - xSpacing / 2 ;
             for(var i = 0; i < this.characterIndexes.length; i++)
@@ -207,9 +210,9 @@ module Whosthebest.Graphics
                 var board = new GameBoard(this.game, null, "board" + i, true);
                 board.x = x;
                 board.y = this.game.height / 2;
-                board.y -= LOCAL_GAME_ENGINE.rowCountInBounds * TILE_HEIGHT / 2;
+                board.y -= State_Game.GAME_INSTANCE.rowCountInBounds * TILE_HEIGHT / 2;
                 board.initialize(
-                    LOCAL_GAME_ENGINE.boards[i], 
+                    State_Game.GAME_INSTANCE.boards[i], 
                     this.characterIndexes[i], 
                     this, 
                     i != 0, 
@@ -269,7 +272,7 @@ module Whosthebest.Graphics
             this.fpsText.text = deltaTimeMs.toString(); 
             this.fpsTextPhaser.text = this.game.time.fps.toString();
             this.gameClock.text = this.clockToPrettyString();
-            this.gameSpeed.text = LOCAL_GAME_ENGINE.boards[GAME_INSTANCE.USER_INDEX].gameSpeed.toString();
+            this.gameSpeed.text = State_Game.GAME_INSTANCE.boards[0].gameSpeed.toString();
 
             // NETWORK_DEBUG
             this.updateNetworkInfo();
@@ -283,8 +286,8 @@ module Whosthebest.Graphics
 
         clockToPrettyString = () =>
         {
-            var minutes = Math.floor(LOCAL_GAME_ENGINE.boards[GAME_INSTANCE.USER_INDEX].gameClockInSeconds / 60);
-            var seconds = LOCAL_GAME_ENGINE.boards[GAME_INSTANCE.USER_INDEX].gameClockInSeconds % 60;
+            var minutes = Math.floor(State_Game.GAME_INSTANCE.boards[0].gameClockInSeconds / 60);
+            var seconds = State_Game.GAME_INSTANCE.boards[0].gameClockInSeconds % 60;
             return ("0" + minutes).slice(-2) + ":" + ("0" + seconds).slice(-2);
         }
 
@@ -343,8 +346,8 @@ module Whosthebest.Graphics
             this.gameEngineBoard = gameEngineBoard;
             this.gameState = gameState;
 
-            this.boardWidth = LOCAL_GAME_ENGINE.colCount * TILE_WIDTH;
-            this.boardHeight = LOCAL_GAME_ENGINE.rowCountInBounds * TILE_HEIGHT;
+            this.boardWidth = State_Game.GAME_INSTANCE.colCount * TILE_WIDTH;
+            this.boardHeight = State_Game.GAME_INSTANCE.rowCountInBounds * TILE_HEIGHT;
             this.yOffsetAsHeight = TILE_HEIGHT / gameEngineBoard.yOffsetMax;
 
             // use graphics tool to draw a border with a filled lightbox
@@ -401,11 +404,14 @@ module Whosthebest.Graphics
 
             // put the character sprite in position
             var sprite = gameState.spritesheets[this.characterIndex];
-            sprite.exists = true;
-            sprite.animations.play("idle");
-            sprite.x = invert ? this.x + 40 + this.boardWidth : this.x - 40;
-            sprite.y = this.boardHeight + this.y;
-            sprite.scale.x = invert ? 1 : -1;
+            if(sprite)
+            {
+                sprite.exists = true;
+                sprite.animations.play("idle");
+                sprite.x = invert ? this.x + 40 + this.boardWidth : this.x - 40;
+                sprite.y = this.boardHeight + this.y;
+                sprite.scale.x = invert ? 1 : -1;
+            }
         }
 
         updateBoard = () =>
@@ -434,7 +440,7 @@ module Whosthebest.Graphics
             {
                 // grab a sprite from the pool, with the tile type index
                 var tileSprite = this.getDeadOrNewTileSprite(
-                    tile.type - LOCAL_GAME_ENGINE.basicTileTypeStartIndex);
+                    tile.type - State_Game.GAME_INSTANCE.basicTileTypeStartIndex);
                 
                 // wake the tile from "dead" state and set x,y
                 var tileX = tile.x * TILE_WIDTH;
