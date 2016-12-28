@@ -19,7 +19,7 @@ defmodule Whosthebest.Mixfile do
   def application do
     [mod: {Whosthebest, []},
      applications: [:phoenix, :phoenix_pubsub, :phoenix_html, :cowboy, :logger, :gettext,
-                    :phoenix_ecto, :postgrex, :coherence]]
+                    :phoenix_ecto, :postgrex, :coherence, :gen_smtp]]
   end
 
   # Specifies which paths to compile per environment.
@@ -39,7 +39,9 @@ defmodule Whosthebest.Mixfile do
      {:cowboy, "~> 1.0"},
      {:gettext, "~> 0.9"},
      {:uuid, "~> 1.1"},
-     {:coherence, "~> 0.3"}]
+     {:coherence, "~> 0.3"},
+     {:gen_smtp, "~> 0.11.0"},
+     {:distillery, "~> 1.0.0"}]
   end
 
   # Aliases are shortcut or tasks specific to the current project.
