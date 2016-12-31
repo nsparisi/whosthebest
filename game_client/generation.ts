@@ -23,6 +23,7 @@ class GenerationEngine
 
     frameRate = 30;
     frameLengthInMs = 1000 / this.frameRate;
+    adjustedFrameLengthInMs = this.frameLengthInMs;
     frameDelay = 30;
 
     elapsed = 0;
@@ -75,11 +76,27 @@ class GenerationEngine
             return;
         }
 
+        // if one player is "lagging" behind, i.e. they can't build their buffer.
+        // then this player will need to slow the framerate down a bit to catch up.
+        // typically this can happen at the start of a match. p1 buffer = 0, p2 buffer = 30.
+        if(this.receiveBuffer.length < this.frameDelay * 0.8)
+        {
+            // t is a value from [0-1].
+            // modifier is just a linear fn from [2-1] (i.e., twice as slow)
+            var t = 1 - ((this.frameDelay - this.receiveBuffer.length) / this.frameDelay);
+            var modifier = 2 - t;
+            this.adjustedFrameLengthInMs = this.frameLengthInMs * modifier;
+        }
+        else 
+        {
+            this.adjustedFrameLengthInMs = this.frameLengthInMs;
+        }
+
         // send packets to game on an interval
         this.elapsed += deltaTimeMs;
-        if(this.elapsed > this.frameLengthInMs || this.frameAdvance)
+        if(this.elapsed > this.adjustedFrameLengthInMs || this.frameAdvance)
         {
-            this.elapsed -= this.frameLengthInMs;
+            this.elapsed -= this.adjustedFrameLengthInMs;
             this.frameAdvance = false;
 
             // if we haven't received any frames in the time window
