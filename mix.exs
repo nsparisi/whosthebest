@@ -19,7 +19,7 @@ defmodule Whosthebest.Mixfile do
   def application do
     [mod: {Whosthebest, []},
      applications: [:phoenix, :phoenix_pubsub, :phoenix_html, :cowboy, :logger, :gettext,
-                    :phoenix_ecto, :postgrex, :coherence, :gen_smtp]]
+                    :phoenix_ecto, :postgrex, :coherence, :gen_smtp, :message_pack]]
   end
 
   # Specifies which paths to compile per environment.
