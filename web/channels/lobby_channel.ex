@@ -104,7 +104,10 @@ defmodule Whosthebest.LobbyChannel do
 
         if(accepted) do
             # Start a new game between these two users
-            game_id = UUID.uuid4()
+            # a 6-byte base64 string will look something like "TSfULAJI"
+            # this should be good enough to avoid collisions as game IDs 
+            # *should* be able to be reused after a game finishes. 2^48.
+            game_id = :crypto.strong_rand_bytes(6) |> Base.url_encode64
 
             # Let each player know the game has started
             broadcast!  socket, "lobby:start_game", %{

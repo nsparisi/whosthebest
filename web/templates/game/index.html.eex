@@ -10,6 +10,7 @@
 </div>
 
 <!-- Import the game socket -->
+<script> require("web/static/js/msgpack_socket")</script>
 <script> require("web/static/js/game_socket")</script>
 
 <!-- Import the game --> 

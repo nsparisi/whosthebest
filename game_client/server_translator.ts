@@ -217,7 +217,7 @@ class GameConnection
     {
         // join a channel, this will be the game server with game id
         // window["lastGameId"]
-        var channelName = "game:" + game_id;
+        var channelName = "g:" + game_id;
         Debug.log("joining channel. " + channelName);
         this.channel = SOCKET.channel(channelName, {game_token: game_token});
         this.channel.join()
@@ -241,9 +241,11 @@ class GameConnection
                 payload.random_seed, payload.user_index);
         });
         
-        this.channel.on("game:frame", payload => {     
+        // "f" was formerly "game:frame"
+        // "p" was formerly "payload"
+        this.channel.on("f", payload => {     
             ServerTranslator.Instance.toClientFrame(
-                payload.payload, payload.out_time);
+                payload.p, payload.t);
         });
           
         this.channel.on("game:joined", payload => {
@@ -263,7 +265,9 @@ class GameConnection
     
     toServerGameFrame = (payload) =>
     {
-        this.channel.push("game:frame", {payload: payload});
+        // "f" was formerly "game:frame"
+        // "p" was formerly "payload"
+        this.channel.push("f", {p: payload});
     }
     
     toServerGameEnd = (winner_index: number, game_time: number) =>

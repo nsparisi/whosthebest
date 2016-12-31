@@ -3,11 +3,13 @@ defmodule Whosthebest.GameSocket do
     import Ecto.Repo
 
     ## Channels
-    channel "game:*", Whosthebest.GameChannel
+    # "g:" is formerly "game:", shortened to reduce network traffic
+    channel "g:*", Whosthebest.GameChannel
     channel "lobby:*", Whosthebest.LobbyChannel
 
     ## Transports
-    transport :websocket, Phoenix.Transports.WebSocket
+    transport :websocket, Phoenix.Transports.WebSocket,
+      serializer: Whosthebest.Transports.MessagePackSerializer
     # transport :longpoll, Phoenix.Transports.LongPoll
 
     # TODO, remove some 0's here

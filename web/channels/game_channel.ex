@@ -11,7 +11,7 @@ defmodule Whosthebest.GameChannel do
     # **************************
     # Handle JOINs
     # A user will join a specific game ID.
-    def join("game:" <> game_id, params, socket) do
+    def join("g:" <> game_id, params, socket) do
         
         # We have their user ID from socket.connect, so
         # use that to retrieve their DB info
@@ -66,8 +66,10 @@ defmodule Whosthebest.GameChannel do
         {:noreply, socket}
     end
     
-    # "game:frame" is called each frame to send the frame data to the server
-    def handle_in("game:frame", %{"payload" => payload}, socket) do
+    # "f" was formerly "game:frame"
+    # "p" was formerly "payload"
+    # is called each frame to send the frame data to the server
+    def handle_in("f", %{"p" => payload}, socket) do
         if Process.alive? socket.assigns[:game] do
             case GameServer.handle_message(
                 socket.assigns[:game], 
@@ -76,7 +78,7 @@ defmodule Whosthebest.GameChannel do
             do
                 :ok -> nil
                 {:broadcast, to_client_payload} ->
-                    broadcast! socket, "game:frame", %{:payload => to_client_payload}
+                    broadcast! socket, "f", %{:payload => to_client_payload}
             end
         end
 
@@ -107,7 +109,7 @@ defmodule Whosthebest.GameChannel do
     
     # **************************
     # Handle OUTs
-    intercept ["game:ready", "game:frame"]
+    intercept ["game:ready", "f"]
     
     # game:ready - sends a "ready" notification to clients
     # we are intercepting here to add a user_index, so players
@@ -124,14 +126,17 @@ defmodule Whosthebest.GameChannel do
         {:noreply, socket}
     end
 
-    # game:frame - send game frame data back to client
+    # "f" was formerly "game:frame"
+    # "p" was formerly "payload"
+    # "t" was formerly "out_time"
+    # send game frame data back to client
     # we are intercepting here to add a timestamp
     # message: %{"payload"}
-    # push: %{"payload", "out_timestamp"}
-    def handle_out("game:frame", message, socket) do
-        push socket, "game:frame", %{
-            "payload" =>  message.payload, 
-            "out_time" => :os.system_time(:milli_seconds)}
+    # push: %{"p", "t"}
+    def handle_out("f", message, socket) do
+        push socket, "f", %{
+            "p" =>  message.payload, 
+            "t" => :os.system_time(:milli_seconds)}
         {:noreply, socket}
     end
     

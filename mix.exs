@@ -41,7 +41,8 @@ defmodule Whosthebest.Mixfile do
      {:uuid, "~> 1.1"},
      {:coherence, "~> 0.3"},
      {:gen_smtp, "~> 0.11.0"},
-     {:distillery, "~> 1.0.0"}]
+     {:distillery, "~> 1.0.0"},
+     {:message_pack, "~> 0.2.0"}]
   end
 
   # Aliases are shortcut or tasks specific to the current project.

@@ -13,8 +13,9 @@ use Mix.Config
 # which you typically run after static files are built.
 config :whosthebest, Whosthebest.Endpoint,
   http: [port: {:system, "PORT"}],
-  url: [host: "example.com", port: 80],
-  cache_static_manifest: "priv/static/manifest.json"
+  url: [host: "wtb03.westus.cloudapp.azure.com", port: 80],
+  cache_static_manifest: "priv/static/manifest.json",
+  check_origin: false
 
 # Do not print debug messages in production
 config :logger, level: :info

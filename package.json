@@ -11,6 +11,7 @@
     "phoenix_html": "file:deps/phoenix_html",
     "sass-brunch": "1.9.2",
     "typescript": "1.8.2",
-    "uglify-js-brunch": "1.7.8"
+    "uglify-js-brunch": "1.7.8",
+    "msgpack-lite": "0.1.26"
   }
 }
