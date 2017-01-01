@@ -19,6 +19,7 @@ class InputEngine
     
     keysPrevious = {};
     keysCurrent = {};
+    keysHoldDuration = {};
     buttonsPrevious = {};
     buttonsCurrent = {};
     click = null;
@@ -40,6 +41,9 @@ class InputEngine
         for(var k in this.keysCurrent)
         {
             this.keysPrevious[k] = this.keysCurrent[k];
+            this.keysHoldDuration[k] = this.keysHoldDuration[k] == null ? 
+                (this.keysCurrent[k] ? 0 : null) : 
+                (this.keysCurrent[k] ? this.keysHoldDuration[k] + deltaTimeMs : null);
         }
         this.clickPrevious = this.click;
         this.click = null;
@@ -48,7 +52,11 @@ class InputEngine
         for(var k in this.buttonsCurrent)
         {
             this.buttonsPrevious[k] = this.buttonsCurrent[k];
+            this.keysHoldDuration[k] = this.keysHoldDuration[k] == null ? 
+                (this.buttonsCurrent[k] ? 0 : null) : 
+                (this.buttonsCurrent[k] ? this.keysHoldDuration[k] + deltaTimeMs : null);
         }
+
         this.checkGamePad();
     }
 
@@ -100,6 +108,11 @@ class InputEngine
     justPressedButton = (gamepadButton: number) =>
     {
         return this.buttonsCurrent[gamepadButton] && !this.buttonsPrevious[gamepadButton];
+    }
+
+    holdDuration= (key) =>
+    {
+        return this.keysHoldDuration[key];
     }
 
     // Listen for key presses.

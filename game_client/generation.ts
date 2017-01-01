@@ -26,6 +26,9 @@ class GenerationEngine
     adjustedFrameLengthInMs = this.frameLengthInMs;
     frameDelay = 30;
 
+    // delay in ms for holding wasd to move quick
+    moveQuickHoldLengthMs = 250;
+
     elapsed = 0;
     frameCount = 0;
     expectedFrame = 0;
@@ -79,7 +82,8 @@ class GenerationEngine
         // if one player is "lagging" behind, i.e. they can't build their buffer.
         // then this player will need to slow the framerate down a bit to catch up.
         // typically this can happen at the start of a match. p1 buffer = 0, p2 buffer = 30.
-        if(this.receiveBuffer.length < this.frameDelay * 0.8)
+        if(!this.isPracticeGame && 
+            this.receiveBuffer.length < this.frameDelay * 0.8)
         {
             // t is a value from [0-1].
             // modifier is just a linear fn from [2-1] (i.e., twice as slow)
@@ -267,7 +271,7 @@ class GenerationEngine
             Debug.log("[generation]    Received: " + frameData.frame);
         }
     }
-    
+
     updatePlayerInput = () =>
     {
         // ignore inputs for first couple frames
@@ -276,30 +280,30 @@ class GenerationEngine
             return;
         }
 
-        if( InputEngine.Instance.justPressed("W") || 
-            InputEngine.Instance.justPressedButton(Phaser.Gamepad.XBOX360_DPAD_UP) || 
-            InputEngine.Instance.justPressedButton(Phaser.Gamepad.PS3XC_DPAD_UP))
+        if( this.checkJustPressedOrHoldLength("W", this.moveQuickHoldLengthMs) || 
+            this.checkJustPressedButtonOrHoldLength(Phaser.Gamepad.XBOX360_DPAD_UP, this.moveQuickHoldLengthMs) || 
+            this.checkJustPressedButtonOrHoldLength(Phaser.Gamepad.PS3XC_DPAD_UP, this.moveQuickHoldLengthMs))
         {
             this.currentInput.push(SERVER_GAME_ENGINE.inputTypes.Up);
         }
         
-        if( InputEngine.Instance.justPressed("S") || 
-            InputEngine.Instance.justPressedButton(Phaser.Gamepad.XBOX360_DPAD_DOWN) || 
-            InputEngine.Instance.justPressedButton(Phaser.Gamepad.PS3XC_DPAD_DOWN))
+        if( this.checkJustPressedOrHoldLength("S", this.moveQuickHoldLengthMs) || 
+            this.checkJustPressedButtonOrHoldLength(Phaser.Gamepad.XBOX360_DPAD_DOWN, this.moveQuickHoldLengthMs) || 
+            this.checkJustPressedButtonOrHoldLength(Phaser.Gamepad.PS3XC_DPAD_DOWN, this.moveQuickHoldLengthMs))
         {
             this.currentInput.push(SERVER_GAME_ENGINE.inputTypes.Down);
         }
         
-        if( InputEngine.Instance.justPressed("A") || 
-            InputEngine.Instance.justPressedButton(Phaser.Gamepad.XBOX360_DPAD_LEFT) || 
-            InputEngine.Instance.justPressedButton(Phaser.Gamepad.PS3XC_DPAD_LEFT))
+        if( this.checkJustPressedOrHoldLength("A", this.moveQuickHoldLengthMs) || 
+            this.checkJustPressedButtonOrHoldLength(Phaser.Gamepad.XBOX360_DPAD_LEFT, this.moveQuickHoldLengthMs) || 
+            this.checkJustPressedButtonOrHoldLength(Phaser.Gamepad.PS3XC_DPAD_LEFT, this.moveQuickHoldLengthMs))
         {
             this.currentInput.push(SERVER_GAME_ENGINE.inputTypes.Left);
         }
         
-        if( InputEngine.Instance.justPressed("D") || 
-            InputEngine.Instance.justPressedButton(Phaser.Gamepad.XBOX360_DPAD_RIGHT) || 
-            InputEngine.Instance.justPressedButton(Phaser.Gamepad.PS3XC_DPAD_RIGHT))
+        if( this.checkJustPressedOrHoldLength("D", this.moveQuickHoldLengthMs) || 
+            this.checkJustPressedButtonOrHoldLength(Phaser.Gamepad.XBOX360_DPAD_RIGHT, this.moveQuickHoldLengthMs) || 
+            this.checkJustPressedButtonOrHoldLength(Phaser.Gamepad.PS3XC_DPAD_RIGHT, this.moveQuickHoldLengthMs))
         {
             this.currentInput.push(SERVER_GAME_ENGINE.inputTypes.Right);
         }
@@ -360,6 +364,18 @@ class GenerationEngine
     drainInput = () =>
     {
         this.currentInput = []
+    }
+    
+    checkJustPressedOrHoldLength = (key: any, minHoldDuration: number) => 
+    {
+        return InputEngine.Instance.justPressed(key) || 
+            InputEngine.Instance.holdDuration(key) >= minHoldDuration;
+    }
+    
+    checkJustPressedButtonOrHoldLength = (key: any, minHoldDuration: number) => 
+    {
+        return InputEngine.Instance.justPressedButton(key) || 
+            InputEngine.Instance.holdDuration(key) >= minHoldDuration;
     }
 }
 
