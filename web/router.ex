@@ -1,14 +1,13 @@
 defmodule Whosthebest.Router do
     use Whosthebest.Web, :router
-    use Coherence.Router
-
+    
     pipeline :browser do
         plug :accepts, ["html"]
         plug :fetch_session
         plug :fetch_flash
         plug :protect_from_forgery
         plug :put_secure_browser_headers
-        plug Coherence.Authentication.Session
+        plug Whosthebest.Plugs.UserSession
     end
     
     pipeline :protected do
@@ -17,18 +16,16 @@ defmodule Whosthebest.Router do
         plug :fetch_flash
         plug :protect_from_forgery
         plug :put_secure_browser_headers
-        plug Coherence.Authentication.Session, protected: true
+        plug Whosthebest.Plugs.UserSession
     end
 
     # set up coherence routes first and separately
     scope "/" do
         pipe_through :browser
-        coherence_routes
     end
 
     scope "/" do
         pipe_through :protected
-        coherence_routes :protected
     end
   
     # =========================================
@@ -52,6 +49,10 @@ defmodule Whosthebest.Router do
         # /game will be the one and only game page
         get "/game", GameController, :index
         get "/test", GameController, :test
+
+        # new, todo, comment
+        get "/signin/:token", SessionController, :show, as: :signin
+        resources "/sessions", SessionController, only: [:new, :create, :delete]
     end
   
     scope "/users", Whosthebest do

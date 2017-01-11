@@ -16,21 +16,15 @@ Whosthebest.Repo.delete_all Whosthebest.User
 users = [
   %{
     username: "nick",
-    email: "nick@mail.com",
-    password: "test",
-    password_confirmation: "test"
+    email: "nick@mail.com"
   },
   %{
     username: "nat",
-    email: "nat@mail.com",
-    password: "test",
-    password_confirmation: "test"
+    email: "nat@mail.com"
   },
   %{
     username: "admin",
-    email: "admin@mail.com",
-    password: "test",
-    password_confirmation: "test"
+    email: "admin@mail.com"
   }
 ]
 

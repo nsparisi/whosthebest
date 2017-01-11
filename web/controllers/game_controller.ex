@@ -5,16 +5,16 @@ defmodule Whosthebest.GameController do
         # get the logged in guest name from the browsing session
         guest_name = get_session(conn, :guest_name)
 
-        # get the logged in username from the browsing session
-        user = conn.assigns[:current_user]
+        # get the logged in user_id from the browsing session
+        user_id = get_session(conn, :user_id)
         
         cond do
             # yes, they are logged in
-            user != nil ->
+            user_id != nil ->
                 # get the full user from the DB
                 
                 # generate a token based on the user unique id
-                token = Phoenix.Token.sign(conn, "user_id", user.id)
+                token = Phoenix.Token.sign(conn, "user_id", user_id)
                 conn = assign(conn, :user_token, token)
                 
                 # get the user's game_id, so they can join the correct game room

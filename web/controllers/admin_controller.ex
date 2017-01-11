@@ -5,13 +5,13 @@ defmodule Whosthebest.AdminController do
 
     def index(conn, _params) do
         users = Repo.all(User)
-        admin = Repo.get(User, conn.assigns[:current_user].id)
+        admin = Repo.get(User, get_session(conn, :user_id))
         render(conn, "index.html", users: users, admin: admin)
     end
 
     def delete(conn, %{"id" => id}) do
         user = Repo.get(User, id)
-        admin = Repo.get(User, conn.assigns[:current_user].id)
+        admin = Repo.get(User, get_session(conn, :user_id))
 
         # TODO add RBAC for admin role
         if true do

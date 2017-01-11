@@ -44,7 +44,6 @@
                             <li style="color: red;">!!</li>
                         <% end %>
                     <% end %>
-                    <%= Whosthebest.Coherence.ViewHelpers.coherence_links(@conn, :layout) %>
                 </ol>
             </div>
 
