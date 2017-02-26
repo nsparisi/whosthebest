@@ -129,7 +129,7 @@ module Whosthebest.Graphics
                 this.game.width - 50, 
                 this.game.height -50,
                 "FPS", 
-                {font: "20pt Arial", fill: "#000"});
+                {font: "20pt Arial", fill: "#fff"});
             this.gameClock.anchor.set(0.5, 0);
 
             this.gameSpeed = this.add.text(
@@ -352,9 +352,9 @@ module Whosthebest.Graphics
 
             // use graphics tool to draw a border with a filled lightbox
              var graphics = this.game.add.graphics(0, 0);
-            graphics.lineStyle(2, 0x0000FF, 1);
+            graphics.lineStyle(4, 0xffffff, 1);
             graphics.beginFill(0x000000, 0.3);
-            graphics.drawRect(0, 0, this.boardWidth, this.boardHeight);
+            graphics.drawRect(0, 0, this.boardWidth + 4, this.boardHeight);
             graphics.endFill();
             this.spriteBorder = this.add(
                 this.game.add.sprite(0, 0, graphics.generateTexture()));
@@ -373,7 +373,7 @@ module Whosthebest.Graphics
 
             // use graphics tool to draw the bottom border
              var graphics = this.game.add.graphics(0, 0);
-            graphics.lineStyle(2, 0x0000FF, 1);
+            graphics.lineStyle(4, 0xffffff, 1);
             graphics.beginFill(0x000000, 0.3);
             graphics.drawRect(0, 0, this.boardWidth, this.boardHeight);
             graphics.endFill();
@@ -399,7 +399,7 @@ module Whosthebest.Graphics
             this.textGameOverCounter = this.add(
                 this.game.add.text(
                     0, 0, "GameOver", 
-                    {font: "10pt Arial", fill: "#000"}));
+                    {font: "10pt Arial", fill: "#fff"}));
             this.textGameOverCounter.anchor.set(1, 0);
 
             // put the character sprite in position

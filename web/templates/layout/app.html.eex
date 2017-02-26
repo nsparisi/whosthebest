@@ -7,49 +7,63 @@
         <meta name="description" content="">
         <meta name="author" content="">
 
-        <title>Hello Phoenix!</title>
+        <title>BLOCK GAME</title>
         <link rel="stylesheet" href="<%= static_path(@conn, "/css/app.css") %>">
         <script src="<%= static_path(@conn, "/js/app.js") %>"></script>
         <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+        <link href="https://fonts.googleapis.com/css?family=Righteous" rel="stylesheet">
     </head>
 
     <body>
-        <div class="container" role="main">
+        <div class="bs-docs-header">
             <div class="header">
-                <%= if @current_user do %>
-                    You are logged in!
-                <% else %>
-                    You are not logged in.
-                <% end %>
-                <ul class="nav nav-pills pull-right">
-                    <li><a href="http://www.phoenixframework.org/docs">Get Started</a></li>
-                </ul>
-                <span class="logo"></span>
-                <nav>
-                    <ul>
-                        <li><a href="<%= page_path @conn, :index %>">Home</a></li>
-                        <li><a href="<%= guest_login_path @conn, :guest_login %>">Guest Login</a></li>
-                        <li><a href="<%= user_path @conn, :index %>">Users</a></li>
-                        <li><a href="<%= admin_path @conn, :index %>">Admin</a></li>
-                        <%= if @current_user do %>
-                            <li><a href="<%= game_path @conn, :index %>">Play!</a></li>
-                        <%= else %>
-                        <%= end %>
-                    </ul>
-                </nav>
-                <ol class="breadcrumb text-right">
-                    <%= if @current_user do %>
-                        <%= if @conn.assigns[:remembered] do %>
-                            <li style="color: red;">!!</li>
-                        <% end %>
-                    <% end %>
-                </ol>
+                <a href="<%= page_path @conn, :index %>" class="page-title"><h1>BLOCK GAME</h1></a>       
             </div>
 
             <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
             <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
-
-            <%= render @view_module, @view_template, assigns %>
+            
         </div>
+        <div class="container" role="main" style="background: #fff;">
+            <div class="row">
+                <div style="">
+                    <nav>
+                        <ul>
+                            <li><a href="<%= page_path @conn, :index %>">Home</a></li>
+                            <li><a href="<%= login_path @conn, :login %>">Guest Login</a></li>
+                            <li><a href="<%= user_path @conn, :index %>">Users</a></li>
+                            <li><a href="<%= admin_path @conn, :index %>">Admin</a></li>
+                            <%= if @current_user do %>
+                                <li><a href="<%= game_path @conn, :index %>">Play!</a></li>
+                            <%= else %>
+                            <%= end %>
+                            <li><a href="<%= game_path @conn, :test %>">Test</a></li>
+                        </ul>
+                    </nav>
+                    <ol class="breadcrumb text-center" style="color: #000;">
+                                        <%= if @current_user do %>
+                        You are logged in!
+                    <% else %>
+                        You are not logged in.
+                    <% end %>
+                        <%= if @current_user do %>
+                            <%= if @conn.assigns[:remembered] do %>
+                                <li style="color: red;">!!</li>
+                            <% end %>
+                        <% end %>
+                        <%= Whosthebest.Coherence.ViewHelpers.coherence_links(@conn, :layout) %>
+                    </ol>
+                </div>
+                <div class="" style="margin:50px auto; min-height: 400px;">
+                    <%= render @view_module, @view_template, assigns %>
+                </div>
+            </div>
+        </div>
+
+    <footer class="bs-docs-footer footer">
+        <div class="container">email at blockgame dot website</div>
+    </footer>
+
+        
     </body>
 </html>

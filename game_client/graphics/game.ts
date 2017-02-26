@@ -9,7 +9,7 @@ module Whosthebest.Graphics
 
         constructor()
         {
-            super(640, 480, Phaser.AUTO, 'gameDiv');
+            super(730, 530, Phaser.AUTO, 'gameDiv');
 
             this.state.add("Boot", State_Boot);
             this.state.add("Preloader", State_Preloader);

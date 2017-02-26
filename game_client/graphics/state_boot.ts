@@ -8,7 +8,7 @@ module Whosthebest.Graphics
             // any differences between mobile/desktop, screen scaling, etc.
             this.input.maxPointers = 1;
             this.stage.disableVisibilityChange = true;
-            this.stage.backgroundColor = "#6495ED";
+            this.stage.backgroundColor = "#15befd";
 
             // various phaser settings
             this.game.time.advancedTiming = true;

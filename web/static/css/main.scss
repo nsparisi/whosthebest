@@ -1,7 +1,122 @@
 body{
-     background-color: white * .3;
+     background-color: #fff;
+     margin: 0;
 }
+
 
 canvas {
     margin: 0 0 0 50
+}
+
+.header {
+    text-align: center;
+    margin: 0 auto;
+    font-family: 'Righteous', cursive;
+    letter-spacing: 6px;
+
+a:link, a:hover, a:active, a:visited {
+    text-decoration: none;
+    color: #fff;
+}
+
+}
+
+nav {
+    margin-bottom: 10px; 
+    ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+}
+
+   li {
+    float: left;
+
+    a:hover {
+        text-decoration: none;
+    }
+   } 
+   li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+   }
+
+   li a:hover {
+       background-color: #111;
+       color: #fff;
+   }
+
+}
+
+.container {
+    padding: 15px;
+    }
+
+.game-area {
+    text-align:center;
+    margin: 0 auto;
+}
+
+#gameDiv {
+    margin: 0 auto;
+    width: 730px;
+    margin-bottom: 15px;
+}
+
+#lobbyTextField {
+    border: 0;
+    padding: 5px;
+}
+
+.page-title {
+    color: #fff;
+    text-decoration: none;
+    h1 {
+        font-size: 5em;
+        padding: 25px 0;
+        margin: 0;
+    }
+}
+
+.page-title:hover {
+    color: #fff;
+    text-decoration: none;
+    border-bottom: 0;
+}
+
+.main-body {
+    background: #fff;
+    height: 500px;
+}
+
+.bs-docs-header, .bs-docs-footer {
+    background: #fe7b94;
+    text-align: center;   
+}
+
+
+
+/* Sticky footer styles */
+html {
+  position: relative;
+  min-height: 100%;
+}
+body {
+  /* Margin bottom by footer height   */
+  margin-bottom: 60px;
+}
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here  */
+  height: 60px;
+  background-color: #fe7b94;
+  color: #fff;
+  text-align: center;  
 }
