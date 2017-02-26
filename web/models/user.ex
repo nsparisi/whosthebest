@@ -1,6 +1,5 @@
 defmodule Whosthebest.User do
   use Whosthebest.Web, :model
-  use Coherence.Schema
 
   schema "users" do
     field :username, :string
@@ -9,13 +8,14 @@ defmodule Whosthebest.User do
     field :total_games, :integer 
     field :total_wins, :integer 
     
-    coherence_schema 
-
     timestamps
+
+    # add the association among the rest of the schema
+    has_many :auth_tokens, Whosthebest.AuthToken
   end
 
-  @required_fields ~w(username)
-  @optional_fields ~w(email total_time total_games total_wins)
+  @required_fields ~w(email)
+  @optional_fields ~w(username total_time total_games total_wins)
 
   @doc """
   Creates a changeset based on the `model` and `params`.
@@ -25,16 +25,15 @@ defmodule Whosthebest.User do
   """
   def changeset(model, params \\ :empty) do  
 
-
     # todo, email and username uniqueness
     # todo, case-insensitive 
     model
-    |> cast(params, [:username, :email, :total_time, :total_games, :total_wins] ++ coherence_fields)
+    |> cast(params, [:username, :email, :total_time, :total_games, :total_wins])
     |> validate_length(:username, min: 3)
     |> validate_length(:username, max: 12)
     |> update_change(:email, &String.downcase/1)
-    |> unique_constraint(:email)
-    |> validate_coherence(params)
+    |> unique_constraint(:username)
+    |> unique_constraint(:email) # TODO
   end
 
   @doc """
@@ -68,5 +67,17 @@ defmodule Whosthebest.User do
       |> validate_length(:username, min: 3)
       |> validate_length(:username, max: 12)
       |> unique_constraint(:username)
+  end
+
+  def generate_user_name() do
+    "user" <> generate_random_name
+  end
+
+  def generate_guest_name() do
+    generate_random_name
+  end
+
+  defp generate_random_name() do
+    :crypto.strong_rand_bytes(5) |> Base.hex_encode32 |> binary_part(0, 6)
   end
 end
