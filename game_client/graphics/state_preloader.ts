@@ -10,21 +10,26 @@ module Whosthebest.Graphics
                 this.game.width / 2, 
                 this.game.height /2,
                 "Loading...", 
-                {font: "bold 20pt Arial", fill: "#000"});
+                {font: "bold 20pt Arial", fill: "#fff"});
             this.preloadText.anchor.set(0.5);
 
             // Load all additional game assets from this screen
             // Can use this option to load all assets up front
             // May consider loading before a game, like starcraft
-            this.load.spritesheet("images/menu/btn_back.png", "images/menu/btn_back.png", 51, 50);
-            this.load.spritesheet("images/menu/btn_ready.png", "images/menu/btn_ready.png", 120, 52);
+            this.load.spritesheet("images/menu/btn_back.png", "images/menu/btn_back.png", 122, 42);
+            this.load.spritesheet("images/menu/btn_ready.png", "images/menu/btn_ready.png", 200, 70);
             this.load.spritesheet("images/menu/btn_friend.png", "images/menu/btn_friend.png", 120, 52);
-            this.load.spritesheet("images/menu/btn_play.png", "images/menu/btn_play.png", 120, 52);
+            this.load.spritesheet("images/menu/btn_play.png", "images/menu/btn_play.png", 200, 70);
             this.load.spritesheet("images/menu/btn_quick.png", "images/menu/btn_quick.png", 120, 52);
-            this.load.spritesheet("images/menu/btn_invite.png", "images/menu/btn_invite.png", 120, 52);
-            this.load.spritesheet("images/menu/btn_practice.png", "images/menu/btn_practice.png", 120, 52);
-            this.load.spritesheet("images/menu/btn_watch.png", "images/menu/btn_watch.png", 120, 52);
-            this.load.image("images/menu/img_avatar.png", "images/menu/img_avatar.png");
+            this.load.spritesheet("images/menu/btn_invite.png", "images/menu/btn_invite.png", 122, 42);
+            this.load.spritesheet("images/menu/btn_practice.png", "images/menu/btn_practice.png", 200, 70);
+            this.load.spritesheet("images/menu/btn_watch.png", "images/menu/btn_watch.png", 200, 70);
+            this.load.image("images/menu/img_avatar.png", "images/menu/img_avatar.png");            
+            this.load.image("images/menu/YellowCatAvatar.png", "images/menu/YellowCatAvatar.png");            
+            this.load.image("images/menu/BlueCatAvatar.png", "images/menu/BlueCatAvatar.png");            
+            this.load.image("images/menu/PinkCatAvatar.png", "images/menu/PinkCatAvatar.png");            
+            this.load.image("images/menu/OrangeCatAvatar.png", "images/menu/OrangeCatAvatar.png");        
+            this.load.image("images/menu/GreenCatAvatar.png", "images/menu/GreenCatAvatar.png");
 
 
             this.load.spritesheet("images/sprites/ss_cloyster.png", "images/sprites/ss_cloyster.png", 68, 68);
@@ -59,7 +64,7 @@ module Whosthebest.Graphics
                 this.load.spritesheet(
                     State_Game.TILE_SPRITE_KEYS[i], 
                     State_Game.TILE_SPRITE_KEYS[i], 
-                    15, 15);
+                    25, 25);
             }
         }
 

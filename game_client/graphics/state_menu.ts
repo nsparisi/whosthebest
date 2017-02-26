@@ -35,10 +35,10 @@ module Whosthebest.Graphics
             // TODO create this div here instead of keeping in html
             this.lobbyTextField =  <HTMLInputElement>document.getElementById("lobbyTextField");
             this.lobbyTextField.style.position = "absolute";
-            this.lobbyTextField.style.marginLeft = "10px";
-            this.lobbyTextField.style.marginTop = "300px";
-            this.lobbyTextField.style.width = "300px";
-            this.lobbyTextField.style.height = "30px";
+            this.lobbyTextField.style.marginLeft = "25px";
+            this.lobbyTextField.style.marginTop = "463px";
+            this.lobbyTextField.style.width = "533px";
+            this.lobbyTextField.style.height = "42px";
             this.lobbyTextField.onkeyup = (event) => 
             {
                 event.preventDefault();
@@ -51,49 +51,45 @@ module Whosthebest.Graphics
 
             this.lobbyChat =  document.getElementById("lobbyChat");
             this.lobbyChat.style.position = "absolute";
-            this.lobbyChat.style.marginLeft = "10px";
-            this.lobbyChat.style.marginTop = "10px";
-            this.lobbyChat.style.width = "350px";
-            this.lobbyChat.style.height = "280px";
+            this.lobbyChat.style.marginLeft = "25px";
+            this.lobbyChat.style.marginTop = "92px";
+            this.lobbyChat.style.width = "533px";
+            this.lobbyChat.style.height = "346px";
             this.lobbyChat.style.backgroundColor = "#ffffff";
             this.lobbyChat.style.overflowY = "auto";
 
             this.lobbyUserList =  document.getElementById("lobbyUserList");
             this.lobbyUserList.style.position = "absolute";
-            this.lobbyUserList.style.marginLeft = "370px";
-            this.lobbyUserList.style.marginTop = "10px";
-            this.lobbyUserList.style.width = "100px";
-            this.lobbyUserList.style.height = "280px";
+            this.lobbyUserList.style.marginLeft = "583px";
+            this.lobbyUserList.style.marginTop = "92px";
+            this.lobbyUserList.style.width = "122px";
+            this.lobbyUserList.style.height = "346px";
             this.lobbyUserList.style.backgroundColor = "#ffffff";
 
             this.buttonPlay = this.add.button(
-                this.game.width / 2 - 60, 
-                60, 
+                this.game.width / 2 - 100, 
+                254, 
                 "images/menu/btn_play.png", this.play_pressed, this, 1, 0, 2);
 
             this.buttonPractice = this.add.button(
-                this.game.width / 2 - 60, 
-                120, 
+                this.game.width / 2 - 100, 
+                334, 
                 "images/menu/btn_practice.png", this.practice_pressed, this, 1, 0, 2);
 
             this.buttonWatch = this.add.button(
-                this.game.width / 2 - 60, 
-                180, 
+                this.game.width / 2 - 100, 
+                414, 
                 "images/menu/btn_watch.png", this.watch_pressed, this, 1, 0, 2);
 
             this.buttonBack = this.add.button(
-                430, 
-                300, 
+                25, 
+                25, 
                 "images/menu/btn_back.png", this.back_pressed, this, 1, 0, 2);
-            this.buttonBack.width = this.buttonBack.width - 10;
-            this.buttonBack.height = this.buttonBack.height - 10;
 
             this.buttonInvite = this.add.button(
-                322, 
-                300, 
+                583, 
+                463, 
                 "images/menu/btn_invite.png", this.invite_pressed, this, 1, 0, 2);
-            this.buttonInvite.width = this.buttonInvite.width - 20;
-            this.buttonInvite.height = this.buttonInvite.height - 10;
 
             this.buttonFriend = this.add.button(
                 this.game.width / 2 - 60, 
@@ -280,7 +276,7 @@ module Whosthebest.Graphics
             }
 
             var clickedDiv = <HTMLElement>event.target;
-            clickedDiv.style.backgroundColor = "#aaaaaa";
+            clickedDiv.style.backgroundColor = "#faec7f";
             this.currentSelectedUserName = clickedDiv.getAttribute("user_id");
         }
         

@@ -1,12 +1,11 @@
-
 <!-- Set some variables to connect to the server -->
 <script>window.userToken = "<%= assigns[:user_token] %>";</script>
 <script>window.guestToken = "<%= assigns[:guest_token] %>";</script>
 
-<div id="gameDiv" >
-    <input type="text" id="lobbyTextField" style="position:absolute;"></input>
+<div id="gameDiv" >    
     <div id="lobbyChat" style="position:absolute;"></div>
     <div id="lobbyUserList" style="position:absolute;"></div>
+    <input type="text" id="lobbyTextField" style="position:absolute;"></input>
 </div>
 
 <!-- Import the game socket -->
