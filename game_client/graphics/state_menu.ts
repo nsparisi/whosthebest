@@ -106,6 +106,7 @@ module Whosthebest.Graphics
             // graphics.destroy();
 
             this.showTitleMenu();
+            GAME_INSTANCE.playMusic("audio/music/bgm_main_menu.mp3");
         }
 
         showTitleMenu = () =>

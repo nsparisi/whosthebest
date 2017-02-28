@@ -6,6 +6,7 @@ module Whosthebest.Graphics
         GAME_ID: string;
         OPPONENT_USERNAME: string;
         USER_INDEX: number;
+        MUSIC: Phaser.Sound;
 
         constructor()
         {
@@ -138,6 +139,18 @@ module Whosthebest.Graphics
         switchToMenu = () =>
         {
             this.state.start("Menu");
+        }
+
+        playMusic = (filename: string) =>
+        {
+            if(this.MUSIC)
+            {
+                this.MUSIC.stop();
+                this.MUSIC.destroy();
+            }
+
+            this.MUSIC = this.add.audio(filename);
+            this.MUSIC.play();
         }
     }
 }
