@@ -1,5 +1,5 @@
 <div class="jumbotron">
   <h2>Who's the Best?</h2>
   <p class="lead">Play this fun puzzle game to find out!</p>
-  <a href="<%= game_path @conn, :test %>"><button type="button" class="btn btn-primary btn-lg">Play a Test Game</button></a>
+  <a href="<%= guest_login_path @conn, :guest_login %>"><button type="button" class="btn btn-primary btn-lg">Play a Test Game</button></a>
 </div>

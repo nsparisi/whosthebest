@@ -17,8 +17,7 @@
 
 </ul>
 
-<%= if @current_user[:id] == @user.id do %>
-    <%= link "Edit", to: user_path(@conn, :edit, @user) %>
-<%= else %>
-    <%= link "Back", to: user_path(@conn, :index) %>
+<%= if @current_user.id == @user.id do %>
+    <!-- <%= link "Edit", to: user_path(@conn, :edit, @user) %>-->
 <%= end %>
+<%= link "Back", to: user_path(@conn, :index) %>

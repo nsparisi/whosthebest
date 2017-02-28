@@ -12,24 +12,6 @@
   <% end %>
 
   <h3><%= @user.username %></h3>
-
-  <div class="form-group">
-    <label>Old Password</label>
-    <%= password_input f, :password_old, class: "form-control" %>
-    <%= error_tag f, :password_old %>
-  </div>
-
-  <div class="form-group">
-    <label>New Password</label>
-    <%= password_input f, :password, class: "form-control" %>
-    <%= error_tag f, :password %>
-  </div>
-
-  <div class="form-group">
-    <label>Confirm Password</label>
-    <%= password_input f, :password_confirmation, class: "form-control" %>
-    <%= error_tag f, :password_confirmation %>
-  </div>
   
   <div class="form-group">
     <%= submit "Submit", class: "btn btn-primary" %>

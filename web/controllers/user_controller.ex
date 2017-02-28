@@ -55,20 +55,37 @@ defmodule Whosthebest.UserController do
     Sign up action, most likely UserController#create
     """
     def create(conn, %{"user" => user_params}) do
-        changeset = User.changeset(
-            %User{}, 
-            Map.put(user_params, "username", User.generate_user_name))
 
-        case Repo.insert(changeset) do
-            {:ok, user} ->
-                TokenAuthentication.provide_token(user)
+        # In all cases, send an email. 
 
-                conn
-                |> put_flash(:info, "You signed up successfully. Please check your email.")
+        # retrieve an existing user
+        Whosthebest.Debug.log "create user. #{inspect user_params}"
+        user = Repo.get_by(Whosthebest.User, email: user_params["email"])
+        Whosthebest.Debug.log "Previous user. #{inspect user}"
+
+        # if the user does not exist, create one
+        if user == nil do
+            changeset = User.changeset(%User{},Map.put(user_params, "username", User.generate_user_name))
+            case Repo.insert(changeset) do
+                {:ok, user} ->
+                    Whosthebest.Debug.log "insert was successful. #{inspect user_params}"
+                    TokenAuthentication.provide_token(user)
+                    conn
+                        |> put_flash(:info, "Welcome! Please check your email for a link to login.")
+                        |> redirect(to: page_path(conn, :index))
+
+                {:error, changeset} ->
+                    Whosthebest.Debug.log "insert was not successful. #{inspect user_params}"
+                    conn
+                        |> put_flash(:error, "Sorry, there was a problem creating the account.")
+                        |> render("new.html", changeset: changeset)
+            end
+        else
+            Whosthebest.Debug.log "user already exists. #{inspect user_params}"
+            TokenAuthentication.provide_token(user)
+            conn
+                |> put_flash(:info, "Welcome back! Please check your email for a link to login.")
                 |> redirect(to: page_path(conn, :index))
-
-            {:error, changeset} ->
-                render(conn, "new.html", changeset: changeset)
         end
     end
 

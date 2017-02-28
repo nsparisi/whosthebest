@@ -30,14 +30,15 @@
                     <nav>
                         <ul>
                             <li><a href="<%= page_path @conn, :index %>">Home</a></li>
-                            <li><a href="<%= login_path @conn, :login %>">Guest Login</a></li>
-                            <li><a href="<%= user_path @conn, :index %>">Users</a></li>
-                            <li><a href="<%= admin_path @conn, :index %>">Admin</a></li>
+                            <li><a href="<%= user_path @conn, :index %>">Leaderboards</a></li>
                             <%= if @current_user do %>
                                 <li><a href="<%= game_path @conn, :index %>">Play!</a></li>
+                                <li><a href="<%= session_path @conn, :delete %>">Log Out</a></li>
                             <%= else %>
+                                <li><a href="<%= guest_login_path @conn, :guest_login %>">Guest Login</a></li>
+                                <li><a href="<%= user_path @conn, :new %>">Join/Log In</a></li>
+                                <li><a href="<%= signin_path @conn, :show, 123 %>">Debug Sign-In</a></li>
                             <%= end %>
-                            <li><a href="<%= game_path @conn, :test %>">Test</a></li>
                         </ul>
                     </nav>
                     <ol class="breadcrumb text-center" style="color: #000;">
@@ -51,7 +52,6 @@
                                 <li style="color: red;">!!</li>
                             <% end %>
                         <% end %>
-                        <%= Whosthebest.Coherence.ViewHelpers.coherence_links(@conn, :layout) %>
                     </ol>
                 </div>
                 <div class="" style="margin:50px auto; min-height: 400px;">

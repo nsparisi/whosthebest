@@ -1,8 +1,0 @@
-<div class="jumbotron">
-    <h2>Welcome to the Lobby!</h2>
-</div>
-
-<div id="messages"></div>
-<input id="chat-input" type="text"></input>
-
-<script> require("chat_socket")</script>
