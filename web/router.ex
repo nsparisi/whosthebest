@@ -9,19 +9,9 @@ defmodule Whosthebest.Router do
         plug :put_secure_browser_headers
         plug Whosthebest.Plugs.UserSession
     end
-    
-    pipeline :protected do
-        plug :accepts, ["html"]
-        plug :fetch_session
-        plug :fetch_flash
-        plug :protect_from_forgery
-        plug :put_secure_browser_headers
-        plug Whosthebest.Plugs.UserSession
-    end
   
     # =========================================
-    # public routes - coherence plugin will not
-    # require a login for these routes
+    # public routes
     scope "/", Whosthebest do
         pipe_through :browser
 
@@ -29,44 +19,50 @@ defmodule Whosthebest.Router do
         # news, faq, etc.
         get "/", PageController, :index
         
-        # PageController handles all user registration + login experience
-        # /login was commented because we want to reduce the number of clicks to play
-        # get "/login", PageController, :login, as: :login
+        # /guest_login will take you straight to the game with a temp guest name
         get "/guest_login", PageController, :guest_login, as: :guest_login
 
         # /game will be the one and only game page
         get "/game", GameController, :index
 
-        # new, todo, comment
+        # the email sent will provide this signing link to log in
         get "/signin/:token", SessionController, :show, as: :signin
-        resources "/sessions", SessionController, only: [:new, :create, :delete]
+
+        # delete session will let you sign out
+        get "/sessions", SessionController, :delete
+        
+        # commented out: sessions new/create are currently handled by the user controller
+        # resources "/sessions", SessionController, only: [:new, :create]
     end
   
     scope "/users", Whosthebest do
         pipe_through :browser
 
-        # This is the landing page for users
-        # will contain game-specific news and data.
+        # /users will provide leaderboards, game info
+        # /users/new will let you do passwordless log in and signup
+        # /users/create is the POST action from /users/new
         resources "/", UserController, only: [:index, :new, :create]
 
         # Will also be able to view user profiles
-        get "/:username", UserController, :show
+        # TODO: disabling until feature is more robust
+        # get "/:username", UserController, :show
     end
 
     # =========================================
-    # private routes - coherence plugin *will*
-    # require a login for these routes
+    # private routes
     scope "/users", Whosthebest do
-        pipe_through :protected
+        pipe_through :browser
 
         # Logged in users will be able to edit their profile
-        resources "/", UserController, only: [:update, :edit], param: "id"
+        # TODO: disabling until feature is more robust
+        # resources "/", UserController, only: [:update, :edit], param: "id"
     end
 
     scope "/admin", Whosthebest do
-        pipe_through :protected
+        pipe_through :browser
 
         # /admin will provide admin functions
+        # TODO this feature is currently disabled in the admin controller
         get "/", AdminController, :index
         resources "/", AdminController, only: [:delete]
     end

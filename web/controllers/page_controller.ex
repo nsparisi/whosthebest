@@ -1,7 +1,7 @@
 defmodule Whosthebest.PageController do
     use Whosthebest.Web, :controller
 
-    alias Whosthebest.{TokenAuthentication, User}
+    alias Whosthebest.User
 
     def index(conn, _params) do
         render conn, "index.html"

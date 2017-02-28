@@ -43,8 +43,4 @@ defmodule Whosthebest.GameController do
                 |> redirect(to: page_path(conn, :index))
         end
     end
-    
-    def test(conn, _params) do
-        render conn, "test.html"
-    end
 end
