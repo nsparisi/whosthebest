@@ -150,7 +150,7 @@ module Whosthebest.Graphics
             this.spritesheets.push(sprite);
 
             sprite = this.add.sprite(40, 80, "images/sprites/ss_pikachu.png", 0);
-            sprite.animations.add("idle",[0, 0, 0, 0, 0, , 0, 0, 0, 0, 1, 2, 3, 4, 5, 6], 10, true);
+            sprite.animations.add("idle",[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5], 10, true);
             this.spritesheets.push(sprite);
 
             sprite = this.add.sprite(120, 80, "images/sprites/ss_poliwhirl.png", 0);

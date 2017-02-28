@@ -34,7 +34,7 @@ module Whosthebest.Graphics
 
             this.load.spritesheet("images/sprites/ss_cloyster.png", "images/sprites/ss_cloyster.png", 68, 68);
             this.load.spritesheet("images/sprites/ss_growlithe.png", "images/sprites/ss_growlithe.png", 47, 49);
-            this.load.spritesheet("images/sprites/ss_pikachu.png", "images/sprites/ss_pikachu.png", 41, 39);
+            this.load.spritesheet("images/sprites/ss_pikachu.png", "images/sprites/ss_pikachu.png", 176, 176);
             this.load.spritesheet("images/sprites/ss_poliwhirl.png", "images/sprites/ss_poliwhirl.png", 58, 46);
             this.load.spritesheet("images/sprites/ss_psyduck.png", "images/sprites/ss_psyduck.png", 36, 45);
             this.load.spritesheet("images/sprites/ss_raichu.png", "images/sprites/ss_raichu.png", 66, 55);
