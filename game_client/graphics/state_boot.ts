@@ -16,9 +16,17 @@ module Whosthebest.Graphics
             // gamepad setup
             this.input.gamepad.start();
             InputEngine.Instance.gamePad1 = this.input.gamepad.pad1;
-
-            // immediately jump to the preloader
-            this.game.state.start("Preloader");
+        }
+        
+        update()
+        {
+            // some assets are not loading correctly.
+            // who knows what's going on with phoenix's hot-reload.
+            // see if waiting a second before loading game assets prevents this problem.
+            if(this.game.time.totalElapsedSeconds() > 1)
+            {
+                this.game.state.start("Preloader");
+            }
         }
     }
 }

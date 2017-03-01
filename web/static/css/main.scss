@@ -73,6 +73,15 @@ nav {
     padding: 5px;
 }
 
+.game-lobby-hidden {
+    display: none;
+    position: absolute;
+}
+
+.game-lobby-visible {
+    position: absolute;
+}
+
 .page-title {
     color: #fff;
     text-decoration: none;

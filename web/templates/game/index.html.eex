@@ -3,9 +3,9 @@
 <script>window.guestToken = "<%= assigns[:guest_token] %>";</script>
 
 <div id="gameDiv" >    
-    <div id="lobbyChat" style="position:absolute;"></div>
-    <div id="lobbyUserList" style="position:absolute;"></div>
-    <input type="text" id="lobbyTextField" style="position:absolute;"></input>
+    <div id="lobbyChat" class="game-lobby-hidden"></div>
+    <div id="lobbyUserList" class="game-lobby-hidden"></div>
+    <input type="text" id="lobbyTextField" class="game-lobby-hidden"></input>
 </div>
 
 <!-- Import the game socket -->

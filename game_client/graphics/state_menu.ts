@@ -137,9 +137,9 @@ module Whosthebest.Graphics
 
         toggleHtmlElements = (toggle) =>
         {
-            this.lobbyTextField.hidden = !toggle;
-            this.lobbyChat.hidden = !toggle;
-            this.lobbyUserList.hidden = !toggle;
+            this.lobbyTextField.className = toggle ? "game-lobby-visible" : "game-lobby-hidden";
+            this.lobbyChat.className = toggle ? "game-lobby-visible" : "game-lobby-hidden";
+            this.lobbyUserList.className = toggle ? "game-lobby-visible" : "game-lobby-hidden";
         }
 
         back_pressed()
