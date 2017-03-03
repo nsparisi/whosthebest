@@ -143,6 +143,11 @@ module Whosthebest.Graphics
 
         playMusic = (filename: string) =>
         {
+            if(this.MUSIC && this.MUSIC.key == filename)
+            {
+                return;
+            }
+
             if(this.MUSIC)
             {
                 this.MUSIC.stop();
