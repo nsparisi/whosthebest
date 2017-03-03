@@ -16,6 +16,10 @@ module Whosthebest.Graphics
             // Load all additional game assets from this screen
             // Can use this option to load all assets up front
             // May consider loading before a game, like starcraft
+
+            // Title menu
+            this.load.image("images/menu/img_logo.png", "images/menu/img_logo.png");
+
             this.load.spritesheet("images/menu/btn_back.png", "images/menu/btn_back.png", 122, 42);
             this.load.spritesheet("images/menu/btn_ready.png", "images/menu/btn_ready.png", 200, 70);
             this.load.spritesheet("images/menu/btn_friend.png", "images/menu/btn_friend.png", 120, 52);
@@ -25,12 +29,11 @@ module Whosthebest.Graphics
             this.load.spritesheet("images/menu/btn_practice.png", "images/menu/btn_practice.png", 200, 70);
             this.load.spritesheet("images/menu/btn_watch.png", "images/menu/btn_watch.png", 200, 70);
             this.load.image("images/menu/img_avatar.png", "images/menu/img_avatar.png");            
-            this.load.image("images/menu/YellowCatAvatar.png", "images/menu/YellowCatAvatar.png");            
-            this.load.image("images/menu/BlueCatAvatar.png", "images/menu/BlueCatAvatar.png");            
-            this.load.image("images/menu/PinkCatAvatar.png", "images/menu/PinkCatAvatar.png");            
-            this.load.image("images/menu/OrangeCatAvatar.png", "images/menu/OrangeCatAvatar.png");        
-            this.load.image("images/menu/GreenCatAvatar.png", "images/menu/GreenCatAvatar.png");
-
+            this.load.image("images/menu/img_YellowCatAvatar.png", "images/menu/img_YellowCatAvatar.png");            
+            this.load.image("images/menu/img_BlueCatAvatar.png", "images/menu/img_BlueCatAvatar.png");            
+            this.load.image("images/menu/img_PinkCatAvatar.png", "images/menu/img_PinkCatAvatar.png");            
+            this.load.image("images/menu/img_OrangeCatAvatar.png", "images/menu/img_OrangeCatAvatar.png");        
+            this.load.image("images/menu/img_GreenCatAvatar.png", "images/menu/img_GreenCatAvatar.png");
 
             this.load.spritesheet("images/sprites/ss_cloyster.png", "images/sprites/ss_cloyster.png", 68, 68);
             this.load.spritesheet("images/sprites/ss_growlithe.png", "images/sprites/ss_growlithe.png", 47, 49);

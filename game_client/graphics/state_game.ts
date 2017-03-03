@@ -41,7 +41,7 @@ module Whosthebest.Graphics
 
         characterIndexes: number[];
 
-        static TILE_SPRITE_KEYS = [
+        static  TILE_SPRITE_KEYS = [
             "images/game/tile_0.png",
             "images/game/tile_1.png",
             "images/game/tile_2.png",
@@ -421,7 +421,6 @@ module Whosthebest.Graphics
             this.tilePools.forEach( 
                 (pool) =>
             {
-                pool.children
                 pool.children.forEach(
                     (tileSprite) =>
                 {

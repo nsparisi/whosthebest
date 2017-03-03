@@ -16,8 +16,8 @@ module Whosthebest.Graphics
 
         create()
         {
-            this.spriteAvatar1 = this.add.sprite(25, 135, "images/menu/YellowCatAvatar.png");
-            this.spriteAvatar2 = this.add.sprite(0, 135, "images/menu/GreenCatAvatar.png");
+            this.spriteAvatar1 = this.add.sprite(25, 135, "images/menu/img_YellowCatAvatar.png");
+            this.spriteAvatar2 = this.add.sprite(0, 135, "images/menu/img_GreenCatAvatar.png");
             this.spriteAvatar2.x = this.game.width - 25 - this.spriteAvatar2.width;
 
             this.buttonBack = this.add.button(

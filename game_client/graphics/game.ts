@@ -10,7 +10,7 @@ module Whosthebest.Graphics
 
         constructor()
         {
-            super(730, 530, Phaser.AUTO, 'gameDiv');
+            super(725, 525, Phaser.AUTO, 'gameDiv');
 
             this.state.add("Boot", State_Boot);
             this.state.add("Preloader", State_Preloader);
@@ -150,7 +150,7 @@ module Whosthebest.Graphics
             }
 
             this.MUSIC = this.add.audio(filename);
-            this.MUSIC.play();
+            this.MUSIC.play(null,null,0.1,true,false);
         }
     }
 }

@@ -2,6 +2,8 @@ module Whosthebest.Graphics
 {
     export class State_Menu extends Phaser.State
     {
+        imageLogo: Phaser.Sprite;
+
         buttonPlay: Phaser.Button;
         buttonPractice: Phaser.Button;
         buttonWatch: Phaser.Button;
@@ -22,6 +24,11 @@ module Whosthebest.Graphics
 
         currentSelectedUserName: string;
         usernameList = new Array<string>();
+        
+        tileWidth = 25;
+        columns: Array<Phaser.Group>;
+        timeSinceLastTile = 0;
+        isTitleMenu = true;
 
         shutdown()
         {
@@ -96,6 +103,50 @@ module Whosthebest.Graphics
                 60 + 60, 
                 "images/menu/btn_friend.png", this.friend_pressed, this, 1, 0, 2);
 
+            this.imageLogo = this.add.sprite(
+                this.game.width / 2, 
+                25, 
+                "images/menu/img_logo.png");
+            this.imageLogo.anchor.x = 0.5;
+
+            // title menu logic for tile effect
+            // create phaser groups as "columns"
+            var numberOfColumns = Math.ceil(this.game.width / 25);
+            this.columns = [];
+            for(var i = 0; i < numberOfColumns; i++)
+            {
+                this.columns.push(this.add.group());
+                this.columns[i].x = i * this.tileWidth;
+            }
+
+            // prepopulate a bunch of columns with tiles
+            var fillColumn = (col: number, count: number) =>
+            {
+                for(var i = 0; i < count; i++)
+                {
+                    this.addTile(col, this.game.height);
+                }
+            }
+
+            fillColumn(0, 5);
+            fillColumn(1, 10);
+            fillColumn(2, 7);
+            fillColumn(3, 4);
+            fillColumn(4, 3);
+            fillColumn(5, 4);
+            fillColumn(6, 8);
+            fillColumn(7, 3);
+            fillColumn(8, 1);
+            fillColumn(numberOfColumns - 9, 1);
+            fillColumn(numberOfColumns - 8, 3);
+            fillColumn(numberOfColumns - 7, 3);
+            fillColumn(numberOfColumns - 6, 11);
+            fillColumn(numberOfColumns - 5, 10);
+            fillColumn(numberOfColumns - 4, 8);
+            fillColumn(numberOfColumns - 3, 5);
+            fillColumn(numberOfColumns - 2, 6);
+            fillColumn(numberOfColumns - 1, 14);
+
             // Example of creating a sprite using graphics tools
             // var graphics = this.add.graphics(0,0);
             // graphics.lineStyle(2, 0x222222, 1);
@@ -112,6 +163,8 @@ module Whosthebest.Graphics
         showTitleMenu = () =>
         {
             ServerTranslator.Instance.disconnectFromLobby();
+            this.isTitleMenu = true;
+            this.imageLogo.exists = true;
             this.buttonPlay.exists = true;
             this.buttonPractice.exists = true;
             this.buttonWatch.exists = true;
@@ -125,14 +178,27 @@ module Whosthebest.Graphics
         showLobbyMenu = () =>
         {
             ServerTranslator.Instance.connectToLobby();
+            this.isTitleMenu = false;
+            this.imageLogo.exists = false;
             this.buttonPlay.exists = false;
             this.buttonPractice.exists = false;
             this.buttonWatch.exists = false;
             this.buttonBack.exists = true;
             this.buttonInvite.exists = true;
             this.buttonFriend.exists = false;
-            
             this.toggleHtmlElements(true);
+
+            this.columns.forEach(
+                (column) =>
+                {
+                    column.children.forEach(
+                        (tile)=>
+                        {
+                            (<TitleTile>tile).kill();
+                        });
+
+                    column.removeChildren();
+                });
         }
 
         toggleHtmlElements = (toggle) =>
@@ -174,6 +240,49 @@ module Whosthebest.Graphics
         friend_pressed()
         {
             // GAME_INSTANCE.switchToGameLobby();
+        }
+        
+        update()
+        {
+            if(!this.isTitleMenu)
+            {
+                return;
+            }
+
+            // every couple of seconds 
+            // drop a tile onto the title menu
+            this.timeSinceLastTile += this.time.elapsedMS;
+            if(this.timeSinceLastTile > 3000)
+            {
+                this.timeSinceLastTile -= 3000;
+
+                var col = 8;
+                while(col > 7 && col < 21)
+                {
+                    col = this.game.rnd.integerInRange(0, this.columns.length - 1);;
+                }
+
+                this.addTile(col, -50);
+            }
+            
+            this.columns.forEach(
+                (column) =>
+                {
+                    column.children.forEach(
+                        (tile)=>
+                        {
+                            (<TitleTile>tile).fall();
+                        });
+                });
+        }
+
+        addTile = (col: number, y: number) =>
+        {
+            var type = this.game.rnd.integerInRange(0, 4);
+            var destinationY = this.game.height - (this.columns[col].length * this.tileWidth) - this.tileWidth;
+            var titleTile = new TitleTile(this.game, 0, y, State_Game.TILE_SPRITE_KEYS[type]);
+            titleTile.initialize(destinationY, 0.7);
+            this.columns[col].add(titleTile);
         }
 
         clearChatMessages = () =>
@@ -267,6 +376,7 @@ module Whosthebest.Graphics
 
             this.usernameList = newUsernameList;
         }
+        
 
         private userNameOnClick = (event: MouseEvent) =>
         {
@@ -307,6 +417,28 @@ module Whosthebest.Graphics
             if(shouldScroll)
             {
                 rowDiv.scrollIntoView();
+            }
+        }
+    }
+    
+
+    class TitleTile extends Phaser.Sprite
+    {
+        destinationY: number;
+        speed: number;
+
+        initialize = (destinationY: number, speed: number) =>
+        {
+            this.destinationY = destinationY;
+            this.speed = speed;
+        }
+
+        fall = () =>
+        {
+            this.y += this.game.time.elapsed * this.speed;
+            if(this.y >= this.destinationY)
+            {
+                this.y = this.destinationY;
             }
         }
     }
