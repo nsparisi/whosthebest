@@ -35,7 +35,7 @@ defmodule Whosthebest.Mixfile do
      {:phoenix_pubsub, "~> 1.0"},
      {:postgrex, ">= 0.0.0"},
      {:phoenix_html, "~> 2.6"},
-     {:phoenix_live_reload, "~> 1.0", only: :dev},
+     {:phoenix_live_reload, "~> 1.0.8", only: :dev},
      {:cowboy, "~> 1.0"},
      {:gettext, "~> 0.9"},
      {:uuid, "~> 1.1"},
