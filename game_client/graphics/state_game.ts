@@ -474,7 +474,6 @@ module Whosthebest.Graphics
                     {
                         sfxLandedAlreadyPlayedThisFrame = true;
                         this.gameState.sfxBlockDrop.play(null,null,1,false,true);
-                        Debug.log(`landed ${tile.x},${tile.y}`);
                     }
 
                     tile.sfxJustLanded = false;
