@@ -61,6 +61,7 @@ module Whosthebest.Graphics
             this.load.audio("audio/weepinbell_intense.mp3","audio/weepinbell_intense.mp3");
             this.load.audio("audio/weepinbell_mild.mp3", "audio/weepinbell_mild.mp3");
             
+            this.load.audio("audio/music/bgm_game_1.mp3", "audio/music/bgm_game_1.mp3");
             this.load.audio("audio/music/bgm_lose_match.mp3", "audio/music/bgm_lose_match.mp3");
             this.load.audio("audio/music/bgm_main_menu.mp3", "audio/music/bgm_main_menu.mp3");
 

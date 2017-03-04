@@ -262,6 +262,8 @@ module Whosthebest.Graphics
             this.networkText8Label = addText(this.game.width - 40, 130, "FIN", 0);
             this.networkText9Label = addText(this.game.width - 40, 145, "GAME", 0);
             this.networkText10Label = addText(this.game.width - 40, 160, "N/A", 0);
+
+            GAME_INSTANCE.playMusic("audio/music/bgm_game_1.mp3");
         }
 
         shutdown()
