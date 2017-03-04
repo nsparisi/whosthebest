@@ -20,7 +20,7 @@ class GameEngine
     basicTileTypeStartIndex = 3;
     attackBlockTypeStartIndex = 10;
 
-    rowCount = 20;
+    rowCount = 30;
     colCount = 6;
     rowCountInBounds = 12;
     attackBlockAllowedHeight = 11;
@@ -1279,7 +1279,7 @@ class Tile
     // visual helpers (is this really that bad?)
     popFrameCount = 0;
     sfxIsPopped = false;
-    popPitch = 1;
+    popPitch = 0;
     sfxJustLanded = false;
     previousFalling = false;
 

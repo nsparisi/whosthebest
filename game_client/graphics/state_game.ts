@@ -36,9 +36,6 @@ module Whosthebest.Graphics
         spritesheets: Phaser.Sprite[];
         sfxChainIntenses: Phaser.Sound[];
         sfxChainMilds: Phaser.Sound[];
-        sfxBlockDrop: Phaser.Sound;
-        sfxBlockPop: Phaser.Sound;
-        sfxCursorMove: Phaser.Sound;
 
         static NUMBER_OF_CHARACTERS = 8;
         static GAME_INSTANCE: GameEngine;
@@ -205,10 +202,6 @@ module Whosthebest.Graphics
             this.sfxChainMilds.push(this.add.audio("audio/squirtle_mild.mp3"));
             this.sfxChainMilds.push(this.add.audio("audio/weepinbell_mild.mp3"));
 
-            this.sfxBlockDrop = this.add.audio("audio/game/sfx_block_drop.mp3");
-            this.sfxBlockPop = this.add.audio("audio/game/sfx_block_pop.mp3");
-            this.sfxCursorMove = this.add.audio("audio/game/sfx_cursor_move.mp3");
-
             this.gameBoards = [];
             var boardWidth = State_Game.GAME_INSTANCE.colCount * TILE_WIDTH;
             var xSpacing = 50;
@@ -348,11 +341,20 @@ module Whosthebest.Graphics
         oldCursorX: number;
         oldCursorY: number;
 
+        sfxBlockDrop: Phaser.Sound;
+        sfxBlockPop: Phaser.Sound;
+        sfxCursorMove: Phaser.Sound;
+
         empty = () =>
         {
         }
 
-        initialize = (gameEngineBoard: Board, characterIndex: number, gameState: State_Game, invert: boolean, playSfx: boolean) =>
+        initialize = (
+            gameEngineBoard: Board, 
+            characterIndex: number,
+            gameState: State_Game, 
+            invert: boolean, 
+            playSfx: boolean) =>
         {
             this.characterIndex = characterIndex;
             this.playSfx = playSfx;
@@ -425,6 +427,11 @@ module Whosthebest.Graphics
                 sprite.y = this.boardHeight + this.y;
                 sprite.scale.x = invert ? 1 : -1;
             }
+
+            // each board will have it's own instance of these sfx
+            this.sfxBlockDrop = this.game.add.audio("audio/game/sfx_block_drop.mp3");
+            this.sfxBlockPop = this.game.add.audio("audio/game/sfx_block_pop.mp3");
+            this.sfxCursorMove = this.game.add.audio("audio/game/sfx_cursor_move.mp3");
         }
 
         updateBoard = () =>
@@ -451,39 +458,50 @@ module Whosthebest.Graphics
             this.gameEngineBoard.tiles.forEach( 
                 (tile) => 
             {
+                // during a combo, each tile will individually make a pop sound
+                // and some tiles will also visually disappear when popping
                 if(tile.popFrameCount <= 0 && tile.isComboing)
                 {
                     if(!tile.sfxIsPopped)
                     {           
                         tile.sfxIsPopped = true;         
-                        this.gameState.sfxBlockPop.play(null,null,1,false,true);
-
-                        if(this.gameState.sfxBlockPop._sound != null)
+                        this.sfxBlockPop.play(null,null,1,false,true);
+                        if(this.sfxBlockPop._sound != null)
                         {
-                            this.gameState.sfxBlockPop._sound.playbackRate.value = tile.popPitch;
+                            this.sfxBlockPop._sound.playbackRate.value = tile.popPitch;
                         }
                     }
 
+                    // these visually disappear when popped
                     if(!tile.persistAfterCombo)
                     {
                         return;
                     }
                 }
 
+                // play a thud sound when tiles land from a fall
                 if(tile.sfxJustLanded)
                 {
                     if(!sfxLandedAlreadyPlayedThisFrame)
                     {
                         sfxLandedAlreadyPlayedThisFrame = true;
-                        this.gameState.sfxBlockDrop.play(null,null,1,false,true);
+                        this.sfxBlockDrop.play(null,null,1,false,true);
                     }
 
                     tile.sfxJustLanded = false;
                 }
 
-                // grab a sprite from the pool, with the tile type index
-                var tileSprite = this.getDeadOrNewTileSprite(
-                    tile.type - State_Game.GAME_INSTANCE.basicTileTypeStartIndex);
+                // grab a sprite from the pool
+                // the tile type index represents the color
+                var tileTypeIndex = tile.type - State_Game.GAME_INSTANCE.basicTileTypeStartIndex;
+
+                // if the tile is an attack tile still comboing, however, it should be garbage color
+                if(tile.isComboing && tile.persistAfterCombo && tile.popFrameCount > 0)
+                {
+                    tileTypeIndex = State_Game.GAME_INSTANCE.attackBlockTypeStartIndex;
+                }
+
+                var tileSprite = this.getDeadOrNewTileSprite(tileTypeIndex);
                 
                 // wake the tile from "dead" state and set x,y
                 var tileX = tile.x * TILE_WIDTH;
@@ -513,7 +531,7 @@ module Whosthebest.Graphics
             // play a sound if the cursor moved since last frame
             if(this.oldCursorX != this.gameEngineBoard.cursor.x || this.oldCursorY != this.gameEngineBoard.cursor.y)
             {
-                this.gameState.sfxCursorMove.play(null,null,1,false,true);
+                this.sfxCursorMove.play(null,null,1,false,true);
             }
 
             this.spriteCursor.x = this.gameEngineBoard.cursor.x * TILE_WIDTH;
@@ -576,10 +594,9 @@ module Whosthebest.Graphics
             }
         }
 
+        
         checkForNewCombos = () =>
         {
-            var pitch = 0.8;
-
             // find all new combos occurring this frame
             for(var i = 0; i <= this.gameEngineBoard.boardSpaces.length -1; i++)
             {
@@ -591,8 +608,12 @@ module Whosthebest.Graphics
                     if(tile && tile.isComboing && !this.isTileAlreadyInCombo(tile))
                     {
                         // for all tiles, make a "pop" sound with increasing pitch
-                        pitch = Math.min(2, pitch + 0.1);
-                        tile.popPitch = pitch;
+                        // pitch is a lerp based on the popFrameCount
+                        if(tile.popPitch == 0)
+                        {
+                            var t = Phaser.Math.clamp((tile.popFrameCount - this.gameEngineBoard.comboDelayReset) / (this.gameEngineBoard.comboDelayResetPerTile * 14), 0, 1);
+                            tile.popPitch = Phaser.Math.linear(0.8, 2, t);
+                        }
 
                         // only for non-attacks (non-garbage)
                         // count as a player-created combo (that we can mark with a popup like x5!)
@@ -600,6 +621,12 @@ module Whosthebest.Graphics
                         {
                             this.newCombo.push(tile);
                         }
+                    }
+
+                    if(tile && !tile.isComboing)
+                    {
+                        tile.popPitch = 0;
+                        tile.sfxIsPopped = false;
                     }
                 }
             }
