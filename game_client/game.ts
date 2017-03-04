@@ -744,18 +744,23 @@ class Board
         // total combo length of both (attack and non attack tiles) and (plain tiles)
         var totalComboDelay = (keys.length + this.allAttackBlocksCombodThisFrame.length) * this.comboDelayResetPerTile + this.comboDelayReset;
         var basicComboDelay = keys.length * this.comboDelayResetPerTile + this.comboDelayReset;
+        var popIndex = 0;
         keys.forEach(
             (key) =>
             {
                 var tile = allComboTiles[key];
-                tile.comboStart(basicComboDelay, false);
+                tile.comboStart(basicComboDelay, false, popIndex * this.comboDelayResetPerTile + this.comboDelayReset);
                 wasChainFormedThisFrame = wasChainFormedThisFrame || tile.isChaining;
+
+                // popindex is a visual helper to "pop" the tiles one at a time
+                popIndex++;
 
                 // hacky, stop growing for one frame
                 this.stopBoardFromGrowing = true;
             });
 
         // go through the attack block and generate tiles for the bottom rows
+        popIndex = keys.length + this.allAttackBlocksCombodThisFrame.length - 1;
         if(this.allAttackBlocksCombodThisFrame.length > 0)
         {
             for(var i = this.boardSpaces.length - 1; i >= 0; i--)
@@ -767,9 +772,15 @@ class Board
 
                     if(tile != null && tile.isComboJustStarted && tile.isAttackBlock)
                     {
-                        tile.comboStart(totalComboDelay, true);
-
-                        if(!tile.isConnectedDown)
+                        // popindex is a visual helper to "pop" the tiles one at a time
+                        var popDelay = popIndex * this.comboDelayResetPerTile + this.comboDelayReset;
+                        popIndex--;
+                        
+                        if(tile.isConnectedDown)
+                        {
+                            tile.comboStart(totalComboDelay, true, popDelay);
+                        }
+                        else if(!tile.isConnectedDown)
                         {
                             if(tile.isConnectedUp)
                             {
@@ -792,7 +803,7 @@ class Board
                             // replace with new basic tile
                             // todo some ignore generation logic
                             var newBasicTile = new Tile(tile.x, tile.y, newType, this);
-                            newBasicTile.comboStart(totalComboDelay, true);
+                            newBasicTile.comboStart(totalComboDelay, true, popDelay);
                             newBasicTile.isChaining = true;
                             boardSpace.addTile(newBasicTile);
                             this.tiles.push(newBasicTile);
@@ -1265,6 +1276,13 @@ class Tile
     comboFrameCount = 0;
     persistAfterCombo = false;
 
+    // visual helpers (is this really that bad?)
+    popFrameCount = 0;
+    sfxIsPopped = false;
+    popPitch = 1;
+    sfxJustLanded = false;
+    previousFalling = false;
+
     isFalling = false;
     isHovering = false;
     hoverFrameCount = 0;
@@ -1290,11 +1308,12 @@ class Tile
         this.isSwapping = true;
     }
 
-    comboStart = (totalDelay: number, persistAfterCombo: boolean) =>
+    comboStart = (totalDelay: number, persistAfterCombo: boolean, popDelay: number = -1) =>
     {
         this.comboFrameCount = totalDelay;
         this.isComboing = true;
         this.persistAfterCombo = persistAfterCombo;
+        this.popFrameCount = popDelay;
     }
 
     hoverStart = () =>
@@ -1330,6 +1349,9 @@ class Tile
             this.isComboing = false;
         }
 
+        // pop --
+        this.popFrameCount = Math.max(-1, this.popFrameCount - 1);
+
         // hover --
         this.hoverFrameCount = Math.max(-1, this.hoverFrameCount - 1);
 
@@ -1339,5 +1361,12 @@ class Tile
             this.isFalling = true;
             this.isHovering = false;
         }
+
+        // keep track of falling
+        if(this.previousFalling && !this.isFalling)
+        {
+            this.sfxJustLanded = true;
+        }
+        this.previousFalling = this.isFalling;
     }
 }

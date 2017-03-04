@@ -64,6 +64,10 @@ module Whosthebest.Graphics
             this.load.audio("audio/music/bgm_lose_match.mp3", "audio/music/bgm_lose_match.mp3");
             this.load.audio("audio/music/bgm_main_menu.mp3", "audio/music/bgm_main_menu.mp3");
 
+            this.load.audio("audio/game/sfx_block_drop.mp3", "audio/game/sfx_block_drop.mp3");
+            this.load.audio("audio/game/sfx_block_pop.mp3", "audio/game/sfx_block_pop.mp3");
+            this.load.audio("audio/game/sfx_cursor_move.mp3", "audio/game/sfx_cursor_move.mp3");
+
             // load all TILE assets
             for(var i = 0; i < State_Game.TILE_SPRITE_KEYS.length; i++)
             {

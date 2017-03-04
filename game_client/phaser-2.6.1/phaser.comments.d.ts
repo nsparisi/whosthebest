@@ -24411,6 +24411,10 @@ declare module Phaser {
         */
         constructor(game: Phaser.Game, key: string, volume?: number, loop?: boolean, connect?: boolean);
 
+        /**
+         * (Nick) Added _sound to avoid compiler errors
+         */
+        _sound: any;
 
         /**
         * Boolean indicating whether the sound should start automatically.
