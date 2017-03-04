@@ -23,7 +23,7 @@ module Whosthebest.Graphics
             // some assets are not loading correctly.
             // who knows what's going on with phoenix's hot-reload.
             // see if waiting a second before loading game assets prevents this problem.
-            if(this.game.time.totalElapsedSeconds() > 1)
+            if(this.game.time.totalElapsedSeconds() > 0)
             {
                 this.game.state.start("Preloader");
             }

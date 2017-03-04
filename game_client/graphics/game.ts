@@ -155,7 +155,7 @@ module Whosthebest.Graphics
             }
 
             this.MUSIC = this.add.audio(filename);
-            this.MUSIC.play(null,null,0.1,true,false);
+            this.MUSIC.play(null,null,0.01,true,false);
         }
     }
 }

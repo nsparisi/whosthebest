@@ -18,9 +18,12 @@ config :whosthebest, Whosthebest.Endpoint,
 config :whosthebest, Whosthebest.Endpoint,
   live_reload: [
     patterns: [
-      ~r{priv/static/.*(js|css|png|jpeg|jpg|gif|svg|mp3)$},
-      ~r{web/views/.*(ex)$},
-      ~r{web/templates/.*(eex)$}
+      # I removed all of these watchers as a workaround for a bug where static assets were 404-ing.
+      # **You can still see changes "live" by refreshing manually**
+      # An error was being thrown in Phoenix.CodeReloader.Server at lib/phoenix/code_reloader/server.ex:112.
+      # I noticed this code path was being hit 3-times in total for a single page refresh on the /game page.
+      # 2 times is expected (dont know why), but the 3rd instance was happening in-between and causing 
+      # a race condition for file write permissions.
     ]
   ]
 
