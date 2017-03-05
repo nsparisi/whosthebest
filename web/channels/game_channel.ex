@@ -103,7 +103,7 @@ defmodule Whosthebest.GameChannel do
 
         # the game is over, kill the game server
         kill_game(socket)
-        broadcast! socket, "game:end", %{}
+        broadcast! socket, "game:end", %{:winner_index => winner_index}
         {:noreply, socket}
     end
     

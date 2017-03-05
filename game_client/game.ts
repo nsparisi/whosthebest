@@ -59,6 +59,9 @@ class GameEngine
     // e.g. an 8-combo will attack with a 3-size and a 4-size block
     comboAttackPatterns = [[0], [0], [0], [0], [3], [4], [5], [6], [3, 4], [4, 4], [5, 5], [6, 6]];
     attackBlockQueue: AttackBlockData[] = [];
+
+    // winner
+    winnerIndex = 0;
     
     initialize = (randomSeed) =>
     {
@@ -140,6 +143,13 @@ class GameEngine
 
     gameHasEnded = (winnerIndex) =>
     {
+        // TODO, sorry, a tie means player 0 wins
+        if(winnerIndex == -1)
+        {
+            winnerIndex = 0;
+        }
+        this.winnerIndex = winnerIndex;
+        
         if(winnerIndex >= 0)
         {
             Debug.log("Congratulations player " + winnerIndex);

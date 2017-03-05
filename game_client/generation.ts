@@ -120,7 +120,7 @@ class GenerationEngine
                 if( SERVER_GAME_ENGINE.currentGameState == 
                     SERVER_GAME_ENGINE.gameStateTypes.Ended)
                 {
-                    GAME_INSTANCE.switchToMenu();
+                    GAME_INSTANCE.switchToGameOver(SERVER_GAME_ENGINE.winnerIndex);
                 }
 
                 this.sendFrameToServer();

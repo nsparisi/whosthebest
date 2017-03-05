@@ -141,6 +141,12 @@ module Whosthebest.Graphics
             this.state.start("Menu");
         }
 
+        switchToGameOver = (winner: number) =>
+        {
+            var gameState = <State_Game>this.state.getCurrentState();
+            gameState.switchToGameOver(winner);
+        }
+
         playMusic = (filename: string) =>
         {
             if(this.MUSIC && this.MUSIC.key == filename)

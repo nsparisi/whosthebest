@@ -21,13 +21,13 @@ module Whosthebest.Graphics
             this.load.image("images/menu/img_logo.png", "images/menu/img_logo.png");
 
             this.load.spritesheet("images/menu/btn_back.png", "images/menu/btn_back.png", 122, 42);
-            this.load.spritesheet("images/menu/btn_ready.png", "images/menu/btn_ready.png", 200, 70);
-            this.load.spritesheet("images/menu/btn_friend.png", "images/menu/btn_friend.png", 120, 52);
-            this.load.spritesheet("images/menu/btn_play.png", "images/menu/btn_play.png", 200, 70);
-            this.load.spritesheet("images/menu/btn_quick.png", "images/menu/btn_quick.png", 120, 52);
             this.load.spritesheet("images/menu/btn_invite.png", "images/menu/btn_invite.png", 122, 42);
+            this.load.spritesheet("images/menu/btn_quit.png", "images/menu/btn_quit.png", 122, 42);
+            this.load.spritesheet("images/menu/btn_ready.png", "images/menu/btn_ready.png", 200, 70);
+            this.load.spritesheet("images/menu/btn_play.png", "images/menu/btn_play.png", 200, 70);
             this.load.spritesheet("images/menu/btn_practice.png", "images/menu/btn_practice.png", 200, 70);
             this.load.spritesheet("images/menu/btn_watch.png", "images/menu/btn_watch.png", 200, 70);
+
             this.load.image("images/menu/img_avatar.png", "images/menu/img_avatar.png");            
             this.load.image("images/menu/img_YellowCatAvatar.png", "images/menu/img_YellowCatAvatar.png");            
             this.load.image("images/menu/img_BlueCatAvatar.png", "images/menu/img_BlueCatAvatar.png");            

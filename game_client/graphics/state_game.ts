@@ -36,6 +36,8 @@ module Whosthebest.Graphics
         spritesheets: Phaser.Sprite[];
         sfxChainIntenses: Phaser.Sound[];
         sfxChainMilds: Phaser.Sound[];
+        
+        buttonQuit: Phaser.Button;
 
         static NUMBER_OF_CHARACTERS = 8;
         static GAME_INSTANCE: GameEngine;
@@ -255,8 +257,18 @@ module Whosthebest.Graphics
             this.networkText8Label = addText(this.game.width - 40, 130, "FIN", 0);
             this.networkText9Label = addText(this.game.width - 40, 145, "GAME", 0);
             this.networkText10Label = addText(this.game.width - 40, 160, "N/A", 0);
+            
+            this.buttonQuit  = this.add.button(
+                TILE_WIDTH, 
+                TILE_WIDTH, 
+                "images/menu/btn_quit.png", this.quit_pressed, this, 1, 0, 2);
 
             GAME_INSTANCE.playMusic("audio/music/bgm_game_1.mp3");
+        }
+        
+        quit_pressed()
+        {
+            GAME_INSTANCE.switchToMenu();
         }
 
         shutdown()
@@ -314,6 +326,22 @@ module Whosthebest.Graphics
             this.networkText8.text = GenerationEngine.Instance.expectedFrame.toString();
             this.networkText9.text = GenerationEngine.Instance.currentFrameInGame.toString();
         }
+
+        switchToGameOver = (winner: number) =>
+        {
+            for(var i = 0; i < this.gameBoards.length; i++)
+            {
+                this.gameBoards[i].switchToGameOver(i == winner)
+            }
+
+            if(GAME_INSTANCE.USER_INDEX == winner)
+            {
+            }
+            else
+            {
+                GAME_INSTANCE.playMusic("audio/music/bgm_lose_match.mp3");
+            }
+        }
     }
     
     class GameBoard extends Phaser.Group
@@ -329,6 +357,7 @@ module Whosthebest.Graphics
         spriteCursor: Phaser.Sprite;
         
         textGameOverCounter: Phaser.Text;
+        winnerLabel: Phaser.Text;
 
         gameEngineBoard: Board;
 
@@ -345,6 +374,9 @@ module Whosthebest.Graphics
         sfxBlockPop: Phaser.Sound;
         sfxCursorMove: Phaser.Sound;
 
+        isGameRunning: boolean;
+        isWinner: boolean;
+
         empty = () =>
         {
         }
@@ -360,6 +392,9 @@ module Whosthebest.Graphics
             this.playSfx = playSfx;
             this.gameEngineBoard = gameEngineBoard;
             this.gameState = gameState;
+
+            this.isGameRunning = true;
+            this.isWinner = false;
 
             this.boardWidth = State_Game.GAME_INSTANCE.colCount * TILE_WIDTH;
             this.boardHeight = State_Game.GAME_INSTANCE.rowCountInBounds * TILE_HEIGHT;
@@ -416,6 +451,12 @@ module Whosthebest.Graphics
                     0, 0, "GameOver", 
                     {font: "10pt Arial", fill: "#fff"}));
             this.textGameOverCounter.anchor.set(1, 0);
+            
+            this.winnerLabel = this.add(
+                this.game.add.text(
+                    this.boardWidth * 0.5, -25, "???", 
+                    {font: "20pt Arial", fill: "#fff"}));
+            this.textGameOverCounter.anchor.set(0.5, 1);
 
             // put the character sprite in position
             var sprite = gameState.spritesheets[this.characterIndex];
@@ -434,8 +475,19 @@ module Whosthebest.Graphics
             this.sfxCursorMove = this.game.add.audio("audio/game/sfx_cursor_move.mp3");
         }
 
+        switchToGameOver = (isWinner: boolean) =>
+        {
+            this.winnerLabel.text = isWinner ? "WIN" : "LOSE";
+            this.isGameRunning = false;
+        }
+
         updateBoard = () =>
         {
+            if(!this.isGameRunning)
+            {
+                return;
+            }
+
             // soft-kill every single tile sprite each frame, returning it to the pool.
             // other solution is to maintain a map between board tiles and sprite tiles
             this.tilePools.forEach( 

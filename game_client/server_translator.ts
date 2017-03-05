@@ -253,8 +253,8 @@ class GameConnection
         });
           
         this.channel.on("game:end", payload => {
-            Debug.log("IN game:end");
-            ServerTranslator.Instance.toClientMatchEnd();
+            Debug.log(`IN game:end ${payload.winner_index}`);
+            ServerTranslator.Instance.toClientMatchEnd(payload.winner_index);
         });
     }
 
@@ -452,10 +452,10 @@ class ServerTranslator
         }
     }
 
-    toClientMatchEnd = () =>
+    toClientMatchEnd = (winner: number) =>
     {
         Debug.log("received message: toClientMatchEnd");
-        GAME_INSTANCE.switchToMenu();
+        GAME_INSTANCE.switchToGameOver(winner);
     }
 
     // ************************************

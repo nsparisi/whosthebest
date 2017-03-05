@@ -98,11 +98,6 @@ module Whosthebest.Graphics
                 463, 
                 "images/menu/btn_invite.png", this.invite_pressed, this, 1, 0, 2);
 
-            this.buttonFriend = this.add.button(
-                this.game.width / 2 - 60, 
-                60 + 60, 
-                "images/menu/btn_friend.png", this.friend_pressed, this, 1, 0, 2);
-
             this.imageLogo = this.add.sprite(
                 this.game.width / 2, 
                 25, 
@@ -140,12 +135,12 @@ module Whosthebest.Graphics
             fillColumn(numberOfColumns - 9, 1);
             fillColumn(numberOfColumns - 8, 3);
             fillColumn(numberOfColumns - 7, 3);
-            fillColumn(numberOfColumns - 6, 11);
-            fillColumn(numberOfColumns - 5, 10);
-            fillColumn(numberOfColumns - 4, 8);
-            fillColumn(numberOfColumns - 3, 5);
-            fillColumn(numberOfColumns - 2, 6);
-            fillColumn(numberOfColumns - 1, 14);
+            fillColumn(numberOfColumns - 6, 5);
+            fillColumn(numberOfColumns - 5, 8);
+            fillColumn(numberOfColumns - 4, 6);
+            fillColumn(numberOfColumns - 3, 3);
+            fillColumn(numberOfColumns - 2, 10);
+            fillColumn(numberOfColumns - 1, 7);
 
             // Example of creating a sprite using graphics tools
             // var graphics = this.add.graphics(0,0);
@@ -170,7 +165,6 @@ module Whosthebest.Graphics
             this.buttonWatch.exists = true;
             this.buttonBack.exists = false;
             this.buttonInvite.exists = false;
-            this.buttonFriend.exists = false;
 
             this.toggleHtmlElements(false);
         }
@@ -185,7 +179,6 @@ module Whosthebest.Graphics
             this.buttonWatch.exists = false;
             this.buttonBack.exists = true;
             this.buttonInvite.exists = true;
-            this.buttonFriend.exists = false;
             this.toggleHtmlElements(true);
 
             this.columns.forEach(
@@ -235,11 +228,6 @@ module Whosthebest.Graphics
             {
                 ServerTranslator.Instance.toServerAskUser(this.currentSelectedUserName);
             }
-        }
-
-        friend_pressed()
-        {
-            // GAME_INSTANCE.switchToGameLobby();
         }
         
         update()
