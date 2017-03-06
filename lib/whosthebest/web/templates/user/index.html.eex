@@ -4,15 +4,11 @@
     <tr>
         <th>Name</th>
         <th>Total Time</th>
-        <th>Total Wins</th>
-        <th>Total Games</th>
     </tr>
-    <%= for {username, total_time, total_wins, total_games} <- @users_by_times do %>
+    <%= for {username, user_id, total_time} <- @users_by_times do %>
         <tr>
             <td><%= username %></td>
             <td><%= total_time %></td>
-            <td><%= total_wins %></td>
-            <td><%= total_games %></td>
         </tr>
     <% end %>
 </table>
@@ -21,16 +17,12 @@
 <table class = "table-striped">
     <tr>
         <th>Name</th>
-        <th>Total Time</th>
         <th>Total Wins</th>
-        <th>Total Games</th>
     </tr>
-    <%= for {username, total_time, total_wins, total_games} <- @users_by_wins do %>
+    <%= for {username, user_id, total_wins} <- @users_by_wins do %>
         <tr>
             <td><%= username %></td>
-            <td><%= total_time %></td>
             <td><%= total_wins %></td>
-            <td><%= total_games %></td>
         </tr>
     <% end %>
 </table>
@@ -39,15 +31,11 @@
 <table class = "table-striped">
     <tr>
         <th>Name</th>
-        <th>Total Time</th>
-        <th>Total Wins</th>
         <th>Total Games</th>
     </tr>
-    <%= for {username, total_time, total_wins, total_games} <- @users_by_games do %>
+    <%= for {username, user_id, total_games} <- @users_by_games do %>
         <tr>
             <td><%= username %></td>
-            <td><%= total_time %></td>
-            <td><%= total_wins %></td>
             <td><%= total_games %></td>
         </tr>
     <% end %>

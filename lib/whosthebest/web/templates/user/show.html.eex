@@ -17,6 +17,26 @@
 
 </ul>
 
+<h3>Match History</h3>
+<table class = "table-striped">
+    <tr>
+        <th>Total Time</th>
+        <th>Result</th>
+        <th>Player 1</th>
+        <th>Player 2</th>
+        <th>Date</th>
+    </tr>
+    <%= for {total_time, winner_id, user_id_0, username_0, user_id_1, username_1, timestamp} <- @match_history do %>
+        <tr>
+            <td><%= total_time %>s</td>
+            <td><%= if winner_id == @user.id do "Win" else "Loss" end %></td>
+            <td><%= username_0 %></td>
+            <td><%= username_1 %></td>
+            <td><%= timestamp %></td>
+        </tr>
+    <% end %>
+</table>
+
 <%= if @current_user && @current_user.id == @user.id do %>
     <%= link "Edit", to: user_path(@conn, :edit, @user) %>
 <%= end %>

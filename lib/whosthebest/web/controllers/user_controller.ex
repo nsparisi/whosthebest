@@ -9,44 +9,46 @@ defmodule Whosthebest.Web.UserController do
     def index(conn, _params) do
         #match_query = from u in Match, select: {u.total_time, u.winner_id, u.user_id_0, u.user_id_1, u.user_id_2, u.user_id_3}
             
-        match_winner_query = 
-            from m in Match,
-            select: {m.winner_id, count(m.winner_id)},
-            group_by: m.winner_id,
+        #match_winner_query = 
+        #    from m in Match,
+        #    select: {m.winner_id, count(m.winner_id)},
+        #    group_by: m.winner_id,
+        #    order_by: [desc: :count]
+
+        joined_winner_query =
+            from u in User,
+            inner_join: m in Match, on: u.id == m.winner_id,
+            select: {u.username, u.id, count(m.winner_id)},
+            group_by: [u.username, u.id],
             order_by: [desc: :count]
 
-        #joined_winner_query =
-        #    from u in User,
-        #    inner_join: m in match_winner_query, on: u.id == m.winner_id,
-        #    select: {u.username, u.id}
-
-        top_winners = Repo.all(match_winner_query)
+        top_winners = Repo.all(joined_winner_query)
         Whosthebest.Debug.log "top_winners #{inspect top_winners}"
 
-        leaderboard_query = 
-            from u in User, select: {u.username, u.total_time, u.total_wins, u.total_games}
-            
-        leaderboard_order_by_games =     
-             from u in leaderboard_query,
-             order_by: u.total_games
-             
-        leaderboard_order_by_wins =     
-             from u in leaderboard_query,
-             order_by: u.total_wins
-             
-        leaderboard_order_by_times =     
-             from u in leaderboard_query,
-             order_by: u.total_time
+        joined_total_games_query =
+            from u in User,
+            inner_join: m in Match, on: u.id == m.user_id_0 or u.id == m.user_id_1 or u.id == m.user_id_2 or u.id == m.user_id_3,
+            select: {u.username, u.id, count(u.username)},
+            group_by: [u.username, u.id],
+            order_by: [desc: :count]
 
-        users_by_games = Repo.all(leaderboard_order_by_games)
-        users_by_wins = Repo.all(leaderboard_order_by_wins)
-        users_by_times = Repo.all(leaderboard_order_by_times)
+        top_gamers = Repo.all(joined_total_games_query)
+        Whosthebest.Debug.log "top_gamers #{inspect top_gamers}"
+
+        joined_total_times_query =
+            from u in User,
+            inner_join: m in Match, on: u.id == m.user_id_0 or u.id == m.user_id_1 or u.id == m.user_id_2 or u.id == m.user_id_3,
+            select: {u.username, u.id, sum(m.total_time)},
+            group_by: [u.username, u.id]
+
+        top_times = Repo.all(joined_total_times_query)
+        Whosthebest.Debug.log "top_times #{inspect top_times}"
 
         render(
             conn, "index.html", 
-            users_by_games: users_by_games, 
-            users_by_wins: users_by_wins, 
-            users_by_times: users_by_times)
+            users_by_games: top_gamers, 
+            users_by_wins: top_winners, 
+            users_by_times: top_times)
     end
 
     def show(conn, %{"username" => username}) do
@@ -56,7 +58,23 @@ defmodule Whosthebest.Web.UserController do
                 |> put_flash(:error, "You don't have permission to view that page.")
                 |> redirect(to: page_path(conn, :index))
         else
-            render(conn, "show.html", user: user)
+            # TODO this is only querying user0 and user1, seems buggy for 3 and 4.
+            current_user_id = user.id
+            match_history_query =
+                from m in Match,
+                inner_join: u0 in User, on: u0.id == m.user_id_0,
+                inner_join: u1 in User, on: u1.id == m.user_id_1,
+                select: {m.total_time, m.winner_id, m.user_id_0, u0.username, m.user_id_1, u1.username, m.inserted_at},
+                where: m.user_id_0 == ^current_user_id or m.user_id_1 == ^current_user_id,
+                order_by: [desc: m.inserted_at]
+
+            match_history = Repo.all(match_history_query)
+            Whosthebest.Debug.log "match_history #{inspect match_history}"
+
+            render(
+                conn, "show.html", 
+                user: user,
+                match_history: match_history)
         end
     end
     
