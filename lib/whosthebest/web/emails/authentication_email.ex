@@ -1,4 +1,4 @@
-defmodule Whosthebest.AuthenticationEmail do
+defmodule Whosthebest.Web.AuthenticationEmail do
   use Bamboo.Phoenix, view: Whosthebest.Web.EmailView
 
   import Bamboo.Email
