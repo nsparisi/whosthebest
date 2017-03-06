@@ -1,3 +1,3 @@
 defmodule Email do
-  use Bamboo.Phoenix, view: Whosthebest.EmailView
+  use Bamboo.Phoenix, view: Whosthebest.Web.EmailView
 end
