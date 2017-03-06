@@ -33,6 +33,7 @@
                             <li><a href="<%= user_path @conn, :index %>">Leaderboards</a></li>
                             <%= if @current_user do %>
                                 <li><a href="<%= game_path @conn, :index %>">Play!</a></li>
+                                <li><a href="<%= user_path @conn, :show, @current_user.username %>">Account</a></li>
                                 <li><a href="<%= session_path @conn, :delete %>">Log Out</a></li>
                             <%= else %>
                                 <li><a href="<%= guest_login_path @conn, :guest_login %>">Guest Login</a></li>

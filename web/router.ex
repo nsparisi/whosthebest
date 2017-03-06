@@ -43,19 +43,20 @@ defmodule Whosthebest.Router do
         # /users/create is the POST action from /users/new
         resources "/", UserController, only: [:index, :new, :create]
 
-        # Will also be able to view user profiles
-        # TODO: disabling until feature is more robust
-        # get "/:username", UserController, :show
+        # /users/:username will show a public profile for the username
+        get "/:username", UserController, :show
     end
 
     # =========================================
     # private routes
+    # for now, there is no difference between public v private routes. the plugs are identical.
     scope "/users", Whosthebest do
         pipe_through :browser
 
-        # Logged in users will be able to edit their profile
-        # TODO: disabling until feature is more robust
-        # resources "/", UserController, only: [:update, :edit], param: "id"
+        # Logged in users will be able to edit their profile/username
+        # /users/:id/edit is the GET for the edit page, authorized against current user
+        # /users/:id/update is the POST action from /users/edit
+        resources "/", UserController, only: [:update, :edit], param: "id"
     end
 
     scope "/admin", Whosthebest do

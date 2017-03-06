@@ -37,12 +37,6 @@ defmodule Whosthebest.UserController do
         user = Repo.get_by(Whosthebest.User, username: username)
         render(conn, "show.html", user: user)
     end
-
-    def edit(conn, %{"id" => id}) do
-        user = Repo.get!(User, id)
-        changeset = User.changeset(user)
-        render(conn, "edit.html", user: user, changeset: changeset)
-    end
     
     @doc """
     Login page with email form.
@@ -59,29 +53,24 @@ defmodule Whosthebest.UserController do
         # In all cases, send an email. 
 
         # retrieve an existing user
-        Whosthebest.Debug.log "create user. #{inspect user_params}"
         user = Repo.get_by(Whosthebest.User, email: user_params["email"])
-        Whosthebest.Debug.log "Previous user. #{inspect user}"
 
         # if the user does not exist, create one
         if user == nil do
             changeset = User.changeset(%User{},Map.put(user_params, "username", User.generate_user_name))
             case Repo.insert(changeset) do
                 {:ok, user} ->
-                    Whosthebest.Debug.log "insert was successful. #{inspect user_params}"
                     TokenAuthentication.provide_token(user)
                     conn
                         |> put_flash(:info, "Welcome! Please check your email for a link to login.")
                         |> redirect(to: page_path(conn, :index))
 
                 {:error, changeset} ->
-                    Whosthebest.Debug.log "insert was not successful. #{inspect user_params}"
                     conn
                         |> put_flash(:error, "Sorry, there was a problem creating the account.")
                         |> render("new.html", changeset: changeset)
             end
         else
-            Whosthebest.Debug.log "user already exists. #{inspect user_params}"
             TokenAuthentication.provide_token(user)
             conn
                 |> put_flash(:info, "Welcome back! Please check your email for a link to login.")
@@ -89,18 +78,41 @@ defmodule Whosthebest.UserController do
         end
     end
 
-    def update(conn, %{"id" => id, "user" => user_params}) do
-        user = Repo.get!(User, id)
-        changeset = User.changeset(user, user_params)
+    def edit(conn, %{"id" => id}) do
+        user_id = get_session(conn, :user_id)
 
-        # TODO
-        case Repo.update(changeset) do
-        {:ok, user} ->
+        # not allowed to edit other users
+        if(id != to_string(user_id)) do
             conn
-            |> put_flash(:info, "Profile updated successfully.")
-            |> redirect(to: user_path(conn, :show, user.username))
-        {:error, changeset} ->
+                |> put_flash(:error, "You don't have permission to view that page.")
+                |> redirect(to: page_path(conn, :index))
+        else
+            user = Repo.get!(User, id)
+            changeset = User.changeset(user, %{})
             render(conn, "edit.html", user: user, changeset: changeset)
+        end
+    end
+
+    def update(conn, %{"id" => id, "user" => user_params}) do
+        user_id = get_session(conn, :user_id)
+
+        # not allowed to edit other users
+        if(id != to_string(user_id)) do
+            conn
+                |> put_flash(:error, "You don't have permission to view that page.")
+                |> redirect(to: page_path(conn, :index))
+        else
+            user = Repo.get!(User, id)
+            changeset = User.changeset(user, user_params)
+
+            case Repo.update(changeset) do
+                {:ok, user} ->
+                    conn
+                    |> put_flash(:info, "Profile updated successfully.")
+                    |> redirect(to: user_path(conn, :show, user.username))
+                {:error, changeset} ->
+                    render(conn, "edit.html", user: user, changeset: changeset)
+            end
         end
     end
 end
