@@ -1,5 +1,5 @@
 defmodule Whosthebest.GameTest do
-    use Whosthebest.ConnCase
+    use Whosthebest.Web.ConnCase
 
     alias Whosthebest.GameManager
     alias Whosthebest.GameServer

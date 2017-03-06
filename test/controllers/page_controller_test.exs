@@ -1,5 +1,5 @@
 defmodule Whosthebest.PageControllerTest do
-  use Whosthebest.ConnCase
+  use Whosthebest.Web.ConnCase
 
   test "GET /" do
     conn = get conn(), "/"

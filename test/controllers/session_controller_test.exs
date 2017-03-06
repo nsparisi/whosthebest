@@ -1,5 +1,5 @@
 defmodule Whosthebest.SessionControllerTest do
-  use Whosthebest.ConnCase
+  use Whosthebest.Web.ConnCase
 
   alias Whosthebest.Session
   @valid_attrs %{email: "some content"}

@@ -13,7 +13,7 @@
 	"command": "node",
 	"isShellCommand": true,
 	"showOutput": "always",
-	"args": ["${workspaceRoot}/node_modules/typescript/bin/tsc", "-p", "./game_client/"],
+	"args": ["${workspaceRoot}/assets/node_modules/typescript/bin/tsc", "-p", "./game_client/"],
 	"problemMatcher": "$tsc"
 }
 

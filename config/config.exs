@@ -6,7 +6,7 @@
 use Mix.Config
 
 # Configures the endpoint
-config :whosthebest, Whosthebest.Endpoint,
+config :whosthebest, Whosthebest.Web.Endpoint,
   url: [host: "localhost"],
   root: Path.dirname(__DIR__),
   secret_key_base: "ywwiA+aZchK68s3jLWrS7u9Cw6RChvOCZcL7kNPO+hM90a3OawEhR2JjB3o3cBxa",

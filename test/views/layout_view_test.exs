@@ -1,3 +1,3 @@
 defmodule Whosthebest.LayoutViewTest do
-  use Whosthebest.ConnCase, async: true
+  use Whosthebest.Web.ConnCase, async: true
 end

@@ -1,4 +1,4 @@
-defmodule Whosthebest.ConnCase do
+defmodule Whosthebest.Web.ConnCase do
   @moduledoc """
   This module defines the test case to be used by
   tests that require setting up a connection.
@@ -24,10 +24,10 @@ defmodule Whosthebest.ConnCase do
       import Ecto.Model
       import Ecto.Query, only: [from: 2]
 
-      import Whosthebest.Router.Helpers
+      import Whosthebest.Web.Router.Helpers
 
       # The default endpoint for testing
-      @endpoint Whosthebest.Endpoint
+      @endpoint Whosthebest.Web.Endpoint
     end
   end
 

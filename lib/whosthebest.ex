@@ -8,7 +8,7 @@ defmodule Whosthebest do
 
     children = [
       # Start the endpoint when the application starts
-      supervisor(Whosthebest.Endpoint, []),
+      supervisor(Whosthebest.Web.Endpoint, []),
 
       # Start the Ecto repository
       worker(Whosthebest.Repo, []),
@@ -19,19 +19,12 @@ defmodule Whosthebest do
 
       # Following the Phoenix.Presence documentation,
       # adding a supervisor for this
-      supervisor(Whosthebest.Presence, []),
+      supervisor(Whosthebest.Web.Presence, []),
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Whosthebest.Supervisor]
     Supervisor.start_link(children, opts)
-  end
-
-  # Tell Phoenix to update the endpoint configuration
-  # whenever the application is updated.
-  def config_change(changed, _new, removed) do
-    Whosthebest.Endpoint.config_change(changed, removed)
-    :ok
   end
 end

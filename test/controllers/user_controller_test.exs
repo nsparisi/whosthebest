@@ -1,5 +1,5 @@
 defmodule Whosthebest.UserControllerTest do
-  use Whosthebest.ConnCase
+  use Whosthebest.Web.ConnCase
 
   alias Whosthebest.User
   @valid_attrs %{email: "some@content", name: "some content", password: "some content"}

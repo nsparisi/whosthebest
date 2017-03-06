@@ -1,4 +1,4 @@
-defmodule Whosthebest.ChannelCase do
+defmodule Whosthebest.Web.ChannelCase do
   @moduledoc """
   This module defines the test case to be used by
   channel tests.
@@ -26,7 +26,7 @@ defmodule Whosthebest.ChannelCase do
 
 
       # The default endpoint for testing
-      @endpoint Whosthebest.Endpoint
+      @endpoint Whosthebest.Web.Endpoint
     end
   end
 
