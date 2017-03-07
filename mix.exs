@@ -19,7 +19,7 @@ defmodule Whosthebest.Mixfile do
   def application do
     [mod: {Whosthebest, []},
      applications: [:bamboo, :phoenix, :phoenix_pubsub, :phoenix_html, :cowboy, :logger, :gettext,
-                    :phoenix_ecto, :postgrex, :message_pack]]
+                    :phoenix_ecto, :postgrex, :message_pack, :recaptcha]]
   end
 
   # Specifies which paths to compile per environment.
@@ -42,7 +42,9 @@ defmodule Whosthebest.Mixfile do
      {:distillery, "~> 1.0.0"},
      {:message_pack, "~> 0.2.0"},
      {:bamboo, "~> 0.7"},
-     {:bamboo_smtp, "~> 1.2.1"}]
+     {:bamboo_smtp, "~> 1.2.1"},
+     {:recaptcha, "~> 2.1.1"},
+     {:poison, "~> 2.2"}]
   end
 
   # Aliases are shortcut or tasks specific to the current project.

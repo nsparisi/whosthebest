@@ -7,6 +7,8 @@
     <%= error_tag f, :email %>
   </div>
 
+  <%= raw Recaptcha.Template.display %>
+
   <div class="form-group">
     <%= submit "Request login link", class: "btn btn-primary" %>
   </div>

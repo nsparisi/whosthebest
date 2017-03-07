@@ -89,32 +89,38 @@ defmodule Whosthebest.Web.UserController do
     Sign up action, most likely UserController#create
     """
     def create(conn, %{"user" => user_params}) do
+        # verify the captcha
+        case Recaptcha.verify(user_params["g-recaptcha-response"]) do
+            {:error, errors} -> 
+                conn
+                    |> put_flash(:error, "Sorry, there was a problem creating the account.")
+                    |> render("new.html")
+            {:ok, response} -> 
+                # In all cases, send an email. 
+                # retrieve an existing user
+                user = Repo.get_by(Whosthebest.User, email: user_params["email"])
 
-        # In all cases, send an email. 
+                # if the user does not exist, create one
+                if user == nil do
+                    changeset = User.changeset(%User{},Map.put(user_params, "username", User.generate_user_name))
+                    case Repo.insert(changeset) do
+                        {:ok, user} ->
+                            TokenAuthentication.provide_token(user)
+                            conn
+                                |> put_flash(:info, "Welcome! Please check your email for a link to login.")
+                                |> redirect(to: page_path(conn, :index))
 
-        # retrieve an existing user
-        user = Repo.get_by(Whosthebest.User, email: user_params["email"])
-
-        # if the user does not exist, create one
-        if user == nil do
-            changeset = User.changeset(%User{},Map.put(user_params, "username", User.generate_user_name))
-            case Repo.insert(changeset) do
-                {:ok, user} ->
+                        {:error, changeset} ->
+                            conn
+                                |> put_flash(:error, "Sorry, there was a problem creating the account.")
+                                |> render("new.html", changeset: changeset)
+                    end
+                else
                     TokenAuthentication.provide_token(user)
                     conn
-                        |> put_flash(:info, "Welcome! Please check your email for a link to login.")
+                        |> put_flash(:info, "Welcome back! Please check your email for a link to login.")
                         |> redirect(to: page_path(conn, :index))
-
-                {:error, changeset} ->
-                    conn
-                        |> put_flash(:error, "Sorry, there was a problem creating the account.")
-                        |> render("new.html", changeset: changeset)
-            end
-        else
-            TokenAuthentication.provide_token(user)
-            conn
-                |> put_flash(:info, "Welcome back! Please check your email for a link to login.")
-                |> redirect(to: page_path(conn, :index))
+                end
         end
     end
 
