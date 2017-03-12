@@ -3,6 +3,7 @@
 /// <reference path="util.ts" />
 
 /// <reference path="graphics/game.ts" />
+/// <reference path="graphics/sound_manager.ts" />
 /// <reference path="graphics/state_boot.ts" />
 /// <reference path="graphics/state_game.ts" />
 /// <reference path="graphics/state_gamelobby.ts" />

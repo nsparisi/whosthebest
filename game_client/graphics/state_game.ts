@@ -263,7 +263,7 @@ module Whosthebest.Graphics
                 TILE_WIDTH, 
                 "images/menu/btn_quit.png", this.quit_pressed, this, 1, 0, 2);
 
-            GAME_INSTANCE.playMusic("audio/music/bgm_game_1.mp3");
+            SOUND_MANAGER.playMusic("audio/music/bgm_game_1.mp3");
         }
         
         quit_pressed()
@@ -339,7 +339,7 @@ module Whosthebest.Graphics
             }
             else
             {
-                GAME_INSTANCE.playMusic("audio/music/bgm_lose_match.mp3");
+                SOUND_MANAGER.playMusic("audio/music/bgm_lose_match.mp3");
             }
         }
     }
@@ -363,7 +363,7 @@ module Whosthebest.Graphics
 
         tilePools: Phaser.Group[];
 
-        playSfx: boolean = true;
+        sfxEnabledForBoard: boolean = true;
         characterIndex: number;
         gameState: State_Game;
         
@@ -386,10 +386,10 @@ module Whosthebest.Graphics
             characterIndex: number,
             gameState: State_Game, 
             invert: boolean, 
-            playSfx: boolean) =>
+            sfxEnabledForBoard: boolean) =>
         {
             this.characterIndex = characterIndex;
-            this.playSfx = playSfx;
+            this.sfxEnabledForBoard = sfxEnabledForBoard;
             this.gameEngineBoard = gameEngineBoard;
             this.gameState = gameState;
 
@@ -517,7 +517,7 @@ module Whosthebest.Graphics
                     if(!tile.sfxIsPopped)
                     {           
                         tile.sfxIsPopped = true;         
-                        this.sfxBlockPop.play(null,null,1,false,true);
+                        this.playSfx(this.sfxBlockPop);
                         if(this.sfxBlockPop._sound != null)
                         {
                             this.sfxBlockPop._sound.playbackRate.value = tile.popPitch;
@@ -537,7 +537,7 @@ module Whosthebest.Graphics
                     if(!sfxLandedAlreadyPlayedThisFrame)
                     {
                         sfxLandedAlreadyPlayedThisFrame = true;
-                        this.sfxBlockDrop.play(null,null,1,false,true);
+                        this.playSfx(this.sfxBlockDrop);
                     }
 
                     tile.sfxJustLanded = false;
@@ -583,7 +583,7 @@ module Whosthebest.Graphics
             // play a sound if the cursor moved since last frame
             if(this.oldCursorX != this.gameEngineBoard.cursor.x || this.oldCursorY != this.gameEngineBoard.cursor.y)
             {
-                this.sfxCursorMove.play(null,null,1,false,true);
+                this.playSfx(this.sfxCursorMove);
             }
 
             this.spriteCursor.x = this.gameEngineBoard.cursor.x * TILE_WIDTH;
@@ -744,18 +744,21 @@ module Whosthebest.Graphics
                 popup.y = realY;
             this.add(popup);
 
-            if(!this.playSfx)
-            {
-                return;
-            }
-
             if(falseComboTrueChain && count <= 3)
             {
-               this.gameState.sfxChainMilds[this.characterIndex].play();
+                this.playSfx(this.gameState.sfxChainMilds[this.characterIndex]);
             }
             else if(falseComboTrueChain && count > 3)
             {
-               this.gameState.sfxChainIntenses[this.characterIndex].play();
+                this.playSfx(this.gameState.sfxChainIntenses[this.characterIndex]);
+            }
+        }
+
+        playSfx = (sfxHandle: Phaser.Sound) =>
+        {
+            if(this.sfxEnabledForBoard)
+            {
+                SOUND_MANAGER.playSfx(sfxHandle);
             }
         }
 

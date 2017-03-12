@@ -28,6 +28,10 @@ module Whosthebest.Graphics
             this.load.spritesheet("images/menu/btn_practice.png", "images/menu/btn_practice.png", 200, 70);
             this.load.spritesheet("images/menu/btn_watch.png", "images/menu/btn_watch.png", 200, 70);
 
+            this.load.spritesheet("images/menu/btn_sfx.png", "images/menu/btn_sfx.png", 25, 25);
+            this.load.spritesheet("images/menu/btn_music.png", "images/menu/btn_music.png", 25, 25);
+            this.load.spritesheet("images/menu/btn_controller.png", "images/menu/btn_controller.png", 25, 25);
+
             this.load.image("images/menu/img_avatar.png", "images/menu/img_avatar.png");            
             this.load.image("images/menu/img_YellowCatAvatar.png", "images/menu/img_YellowCatAvatar.png");            
             this.load.image("images/menu/img_BlueCatAvatar.png", "images/menu/img_BlueCatAvatar.png");            
@@ -79,9 +83,71 @@ module Whosthebest.Graphics
             }
         }
 
+        sfxMuted = false;
+        bgmMuted = false;
+
+        buttonSfxMute: Phaser.Button;
+        buttonBgmMute: Phaser.Button;
+        spriteGamePad: Phaser.Sprite;
+
         create()
         {
+            // create upper-corner buttons which persist across game states
+            // persistence is kept by adding to the game.stage
+            this.buttonBgmMute = this.game.make.button(
+                this.game.width - 25, 
+                25, 
+                "images/menu/btn_music.png", this.bgm_pressed, this, 1, 0, 2)
+            this.buttonBgmMute.anchor.x = 1;
+            this.game.stage.addChild(this.buttonBgmMute);
+
+            this.buttonSfxMute = this.game.make.button(
+                this.buttonBgmMute.x - 25 - 12, 
+                25, 
+                "images/menu/btn_sfx.png", this.sfx_pressed, this, 1, 0, 2)
+            this.buttonSfxMute.anchor.x = 1;
+            this.game.stage.addChild(this.buttonSfxMute);
+
+            this.spriteGamePad = this.game.make.sprite(
+                this.buttonSfxMute.x - 25 - 12, 
+                25,
+                "images/menu/btn_controller.png");
+            this.spriteGamePad.anchor.x = 1;
+            this.game.stage.addChild(this.spriteGamePad);
+            this.spriteGamePad.frame =  this.input.gamepad.pad1.connected ? 0 : 2;
+
+            // done with preloader, switch to splash screen
             GAME_INSTANCE.switchToMenu();
+        }
+
+        sfx_pressed()
+        {
+            this.sfxMuted = !this.sfxMuted;
+            SOUND_MANAGER.muteSfx(this.sfxMuted);
+
+            if(this.sfxMuted)
+            {
+                this.buttonSfxMute.setFrames(2, 2, 0);
+            }
+            else 
+            {
+                this.buttonSfxMute.setFrames(1, 0, 2);
+            }
+        }
+
+        bgm_pressed()
+        {
+            this.bgmMuted = !this.bgmMuted;
+            SOUND_MANAGER.muteBgm(this.bgmMuted);
+
+            if(this.bgmMuted)
+            {
+                this.buttonBgmMute.setFrames(2, 2, 0);
+            }
+            else 
+            {
+                this.buttonBgmMute.setFrames(1, 0, 2);
+            }
         }
     }
 }

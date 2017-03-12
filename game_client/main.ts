@@ -65,6 +65,9 @@ class Main {
 var bodyElement = document.getElementsByTagName("body")[0];
 var deltaTimeMs = 0;
 
+// create the sound manager
+const SOUND_MANAGER = new Whosthebest.Graphics.SoundManager();
+
 // create the Phaser game instance
 const GAME_INSTANCE = new Whosthebest.Graphics.Game_WhosTheBest();
 
