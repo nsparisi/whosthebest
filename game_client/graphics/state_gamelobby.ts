@@ -1,5 +1,14 @@
 module Whosthebest.Graphics
 {
+    /**
+     * This is the state "GameLobby" which inherits from Phaser.State.
+     * This state is the staging area for players in a game to ready-up, choose avatars, add friends etc.
+     * For now the functionality is very limited, the only option is to ready for the game.
+     * 
+     * @export
+     * @class State_GameLobby
+     * @extends {Phaser.State}
+     */
     export class State_GameLobby extends Phaser.State
     {
         buttonBack: Phaser.Button;
@@ -70,9 +79,15 @@ module Whosthebest.Graphics
             this.textCountdown.anchor.set(0.5, 0.5);
         }
 
+        shutdown()
+        {
+            // need to handle any non-phaser-controlled 
+            // state which may persist between game states.
+            ServerTranslator.Instance.disconnectFromGame();
+        }
+
         back_pressed()
         {
-            ServerTranslator.Instance.disconnectFromGame();
             GAME_INSTANCE.switchToMenu();
         }
 

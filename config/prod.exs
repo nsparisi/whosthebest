@@ -13,7 +13,7 @@ use Mix.Config
 # which you typically run after static files are built.
 config :whosthebest, Whosthebest.Web.Endpoint,
   http: [port: {:system, "PORT"}],
-  url: [host: "wtb03.westus.cloudapp.azure.com", port: 80],
+  url: [host: "blockgame.website", port: 80],
   cache_static_manifest: "priv/static/manifest.json",
   check_origin: false
 

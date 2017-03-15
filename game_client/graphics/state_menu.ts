@@ -1,12 +1,15 @@
 module Whosthebest.Graphics
 {
+    /**
+     * This is the state "Menu" which inherits from Phaser.State.
+     * Here we have the splash screen for the game or the title menu, as well as the chat lobby. 
+     * 
+     * @export
+     * @class State_Menu
+     * @extends {Phaser.State}
+     */
     export class State_Menu extends Phaser.State
     {
-        imageLogo: Phaser.Sprite;
-
-        buttonPlay: Phaser.Button;
-        buttonPractice: Phaser.Button;
-        buttonWatch: Phaser.Button;
         buttonInvite: Phaser.Button;
         buttonFriend: Phaser.Button;
         buttonBack: Phaser.Button;
@@ -24,28 +27,32 @@ module Whosthebest.Graphics
 
         currentSelectedUserName: string;
         usernameList = new Array<string>();
-        
-        tileWidth = 25;
-        columns: Array<Phaser.Group>;
-        timeSinceLastTile = 0;
-        isTitleMenu = true;
-
-        shutdown()
-        {
-            ServerTranslator.Instance.disconnectFromLobby();
-            
-            this.toggleHtmlElements(false);
-        }
 
         create()
         {
-            // TODO create this div here instead of keeping in html
+            // the back button will go back to the splash menu
+            this.buttonBack = this.add.button(
+                25, 
+                25, 
+                "images/menu/btn_back.png", this.back_pressed, this, 1, 0, 2);
+
+            // the invite button will send an invite request to the selected online player.
+            this.buttonInvite = this.add.button(
+                583, 
+                463, 
+                "images/menu/btn_invite.png", this.invite_pressed, this, 1, 0, 2);
+
+            // The chat lobby contains a few HTML elements which are created as part of the page's template.
+            // Here, we are manipulating the style and function of these elements.
             this.lobbyTextField =  <HTMLInputElement>document.getElementById("lobbyTextField");
             this.lobbyTextField.style.position = "absolute";
             this.lobbyTextField.style.marginLeft = "25px";
             this.lobbyTextField.style.marginTop = "463px";
             this.lobbyTextField.style.width = "533px";
             this.lobbyTextField.style.height = "42px";
+
+            // check for when the enter key is pressed in the text field.
+            // this will send the message to the server
             this.lobbyTextField.onkeyup = (event) => 
             {
                 event.preventDefault();
@@ -56,6 +63,7 @@ module Whosthebest.Graphics
                 }
             }
 
+            // lobbyChat is the chat history pane
             this.lobbyChat =  document.getElementById("lobbyChat");
             this.lobbyChat.style.position = "absolute";
             this.lobbyChat.style.marginLeft = "25px";
@@ -65,6 +73,7 @@ module Whosthebest.Graphics
             this.lobbyChat.style.backgroundColor = "#ffffff";
             this.lobbyChat.style.overflowY = "auto";
 
+            // lobbyUserList contains a list of online users
             this.lobbyUserList =  document.getElementById("lobbyUserList");
             this.lobbyUserList.style.position = "absolute";
             this.lobbyUserList.style.marginLeft = "583px";
@@ -73,127 +82,29 @@ module Whosthebest.Graphics
             this.lobbyUserList.style.height = "346px";
             this.lobbyUserList.style.backgroundColor = "#ffffff";
 
-            this.buttonPlay = this.add.button(
-                this.game.width / 2 - 100, 
-                254, 
-                "images/menu/btn_play.png", this.play_pressed, this, 1, 0, 2);
+            // connect to the server lobby channel
+            ServerTranslator.Instance.connectToLobby();
 
-            this.buttonPractice = this.add.button(
-                this.game.width / 2 - 100, 
-                334, 
-                "images/menu/btn_practice.png", this.practice_pressed, this, 1, 0, 2);
+            // show the HTML elements
+            this.toggleHtmlElements(true);
 
-            this.buttonWatch = this.add.button(
-                this.game.width / 2 - 100, 
-                414, 
-                "images/menu/btn_watch.png", this.watch_pressed, this, 1, 0, 2);
-
-            this.buttonBack = this.add.button(
-                25, 
-                25, 
-                "images/menu/btn_back.png", this.back_pressed, this, 1, 0, 2);
-
-            this.buttonInvite = this.add.button(
-                583, 
-                463, 
-                "images/menu/btn_invite.png", this.invite_pressed, this, 1, 0, 2);
-
-            this.imageLogo = this.add.sprite(
-                this.game.width / 2, 
-                25, 
-                "images/menu/img_logo.png");
-            this.imageLogo.anchor.x = 0.5;
-
-            // title menu logic for tile effect
-            // create phaser groups as "columns"
-            var numberOfColumns = Math.ceil(this.game.width / 25);
-            this.columns = [];
-            for(var i = 0; i < numberOfColumns; i++)
-            {
-                this.columns.push(this.add.group());
-                this.columns[i].x = i * this.tileWidth;
-            }
-
-            // prepopulate a bunch of columns with tiles
-            var fillColumn = (col: number, count: number) =>
-            {
-                for(var i = 0; i < count; i++)
-                {
-                    this.addTile(col, this.game.height);
-                }
-            }
-
-            fillColumn(0, 5);
-            fillColumn(1, 10);
-            fillColumn(2, 7);
-            fillColumn(3, 4);
-            fillColumn(4, 3);
-            fillColumn(5, 4);
-            fillColumn(6, 8);
-            fillColumn(7, 3);
-            fillColumn(8, 1);
-            fillColumn(numberOfColumns - 9, 1);
-            fillColumn(numberOfColumns - 8, 3);
-            fillColumn(numberOfColumns - 7, 3);
-            fillColumn(numberOfColumns - 6, 5);
-            fillColumn(numberOfColumns - 5, 8);
-            fillColumn(numberOfColumns - 4, 6);
-            fillColumn(numberOfColumns - 3, 3);
-            fillColumn(numberOfColumns - 2, 10);
-            fillColumn(numberOfColumns - 1, 7);
-
-            // Example of creating a sprite using graphics tools
-            // var graphics = this.add.graphics(0,0);
-            // graphics.lineStyle(2, 0x222222, 1);
-            // graphics.beginFill(0xFFFFFF, 1);
-            // graphics.drawRect(0,0,290,300);
-            // graphics.endFill();
-            // this.chatWindow =  this.add.sprite(10,10, graphics.generateTexture());
-            // graphics.destroy();
-
-            this.showTitleMenu();
+            // play the menu music BGM
             SOUND_MANAGER.playMusic("audio/music/bgm_main_menu.mp3");
         }
 
-        showTitleMenu = () =>
+        shutdown()
         {
+            // need to handle any non-phaser-controlled 
+            // state which may persist between game states.
             ServerTranslator.Instance.disconnectFromLobby();
-            this.isTitleMenu = true;
-            this.imageLogo.exists = true;
-            this.buttonPlay.exists = true;
-            this.buttonPractice.exists = true;
-            this.buttonWatch.exists = true;
-            this.buttonBack.exists = false;
-            this.buttonInvite.exists = false;
-
             this.toggleHtmlElements(false);
         }
 
-        showLobbyMenu = () =>
-        {
-            ServerTranslator.Instance.connectToLobby();
-            this.isTitleMenu = false;
-            this.imageLogo.exists = false;
-            this.buttonPlay.exists = false;
-            this.buttonPractice.exists = false;
-            this.buttonWatch.exists = false;
-            this.buttonBack.exists = true;
-            this.buttonInvite.exists = true;
-            this.toggleHtmlElements(true);
-
-            this.columns.forEach(
-                (column) =>
-                {
-                    column.children.forEach(
-                        (tile)=>
-                        {
-                            (<TitleTile>tile).kill();
-                        });
-
-                    column.removeChildren();
-                });
-        }
-
+        /**
+         * Enables or disables HTML the elements on the page by altering the class and CSS styling.
+         * 
+         * @memberOf State_Menu
+         */
         toggleHtmlElements = (toggle) =>
         {
             this.lobbyTextField.className = toggle ? "game-lobby-visible" : "game-lobby-hidden";
@@ -201,26 +112,25 @@ module Whosthebest.Graphics
             this.lobbyUserList.className = toggle ? "game-lobby-visible" : "game-lobby-hidden";
         }
 
+        /**
+         * Callback for the back button. Navigates to the splash screen.
+         * 
+         * @memberOf State_Menu
+         */
         back_pressed()
         {
-            this.showTitleMenu();
+            this.game.state.start("Splash");
         }
 
-        play_pressed()
-        {
-            this.showLobbyMenu();
-        }
 
-        practice_pressed()
-        {
-            GAME_INSTANCE.switchToPractice();
-        }
-
-        watch_pressed()
-        {
-            GAME_INSTANCE.switchToWatch();
-        }
-
+        /**
+         * Callback for the invite button. 
+         * Sends an invite request to the server for the selected user. 
+         * Users are selected in the user panel.
+         * 
+         * 
+         * @memberOf State_Menu
+         */
         invite_pressed()
         {
             if( this.currentSelectedUserName != null &&
@@ -229,59 +139,14 @@ module Whosthebest.Graphics
                 ServerTranslator.Instance.toServerAskUser(this.currentSelectedUserName);
             }
         }
-        
-        update()
-        {
-            if(!this.isTitleMenu)
-            {
-                return;
-            }
 
-            // every couple of seconds 
-            // drop a tile onto the title menu
-            this.timeSinceLastTile += this.time.elapsedMS;
-            if(this.timeSinceLastTile > 3000)
-            {
-                this.timeSinceLastTile -= 3000;
-
-                var col = 8;
-                while(col > 7 && col < 21)
-                {
-                    col = this.game.rnd.integerInRange(0, this.columns.length - 1);;
-                }
-
-                this.addTile(col, -50);
-            }
-            
-            this.columns.forEach(
-                (column) =>
-                {
-                    column.children.forEach(
-                        (tile)=>
-                        {
-                            (<TitleTile>tile).fall();
-                        });
-                });
-        }
-
-        addTile = (col: number, y: number) =>
-        {
-            var type = this.game.rnd.integerInRange(0, 4);
-            var destinationY = this.game.height - (this.columns[col].length * this.tileWidth) - this.tileWidth;
-            var titleTile = new TitleTile(this.game, 0, y, State_Game.TILE_SPRITE_KEYS[type]);
-            titleTile.initialize(destinationY, 0.7);
-            this.columns[col].add(titleTile);
-        }
-
-        clearChatMessages = () =>
-        {
-            // clear list
-            while(this.lobbyChat.firstChild)
-            {
-                this.lobbyChat.removeChild(this.lobbyChat.firstChild);
-            }
-        }
-
+        /**
+         * Adds a system message to the chat window. 
+         * System events are things like users leaving and joining the channel.
+         * 
+         * 
+         * @memberOf State_Menu
+         */
         addSystemMessage = (message: string) =>
         {
             var usernameDiv = document.createElement("div");
@@ -302,6 +167,12 @@ module Whosthebest.Graphics
             this.internalAddMessage([usernameDiv, messageDiv]);
         }
 
+        /**
+         * Adds a user chat message to the chat window.
+         * 
+         * 
+         * @memberOf State_Menu
+         */
         addChatMessage = (username: string, message: string) =>
         {
             var usernameDiv = document.createElement("div");
@@ -319,6 +190,12 @@ module Whosthebest.Graphics
             this.internalAddMessage([usernameDiv, messageDiv]);
         }
 
+        /**
+         * Refreshes the user list and prints system messages in the chat window.
+         * 
+         * 
+         * @memberOf State_Menu
+         */
         refreshUsers = (usernames: Array<Array<string>>) =>
         {
             // clear list
@@ -365,7 +242,6 @@ module Whosthebest.Graphics
             this.usernameList = newUsernameList;
         }
         
-
         private userNameOnClick = (event: MouseEvent) =>
         {
             for(var i = 0; i < this.lobbyUserList.children.length; i++)
@@ -405,28 +281,6 @@ module Whosthebest.Graphics
             if(shouldScroll)
             {
                 rowDiv.scrollIntoView();
-            }
-        }
-    }
-    
-
-    class TitleTile extends Phaser.Sprite
-    {
-        destinationY: number;
-        speed: number;
-
-        initialize = (destinationY: number, speed: number) =>
-        {
-            this.destinationY = destinationY;
-            this.speed = speed;
-        }
-
-        fall = () =>
-        {
-            this.y += this.game.time.elapsed * this.speed;
-            if(this.y >= this.destinationY)
-            {
-                this.y = this.destinationY;
             }
         }
     }

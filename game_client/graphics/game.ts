@@ -1,5 +1,15 @@
 module Whosthebest.Graphics
 {
+    
+    /**
+     * This is the main entry point for the game which extends Phaser.Game.
+     * This class is responsible for letting Phaser know about the html canvas to render in, 
+     * all of the possible States which can be loaded and which State to start first.
+     * 
+     * @export
+     * @class Game_WhosTheBest
+     * @extends {Phaser.Game}
+     */
     export class Game_WhosTheBest extends Phaser.Game
     {
         LOGGED_IN_USERNAME: string;
@@ -13,6 +23,7 @@ module Whosthebest.Graphics
 
             this.state.add("Boot", State_Boot);
             this.state.add("Preloader", State_Preloader);
+            this.state.add("Splash", State_Splash);
             this.state.add("GameLobby", State_GameLobby);
             this.state.add("Game", State_Game);
             this.state.add("Menu", State_Menu);
@@ -122,8 +133,6 @@ module Whosthebest.Graphics
                 player2 = (player2 + 1) % State_Game.NUMBER_OF_CHARACTERS; 
             } 
 
-            // TODO investigate 2-attack bug 
-            // this seed is 333811.83127122704 found a bug on the first swap
             this.USER_INDEX = userIndex;
             this.state.start(
                 "Game",
@@ -137,7 +146,7 @@ module Whosthebest.Graphics
 
         switchToMenu = () =>
         {
-            this.state.start("Menu");
+            this.state.start("Splash");
         }
 
         switchToGameOver = (winner: number) =>

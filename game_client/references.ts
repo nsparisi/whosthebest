@@ -8,6 +8,7 @@
 /// <reference path="graphics/state_game.ts" />
 /// <reference path="graphics/state_gamelobby.ts" />
 /// <reference path="graphics/state_menu.ts" />
+/// <reference path="graphics/state_splash.ts" />
 /// <reference path="graphics/state_preloader.ts" />
 
 /// <reference path="input.ts" />

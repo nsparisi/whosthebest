@@ -2,6 +2,12 @@
 
 interface AIPoint {x: number, y: number}
 
+/**
+ * A thought represents some sort of goal that the AI is trying to achieve. 
+ * The AI will continue to think about a thought until the goal is finalized.
+ * 
+ * @class AIThought
+ */
 class AIThought
 {
     static types = { 
@@ -54,6 +60,17 @@ class AIThought
     }
 }
 
+/**
+ * Intelligence engine manages the AI for one board.
+ * The AI will perform think() and act() each frame. 
+ * 
+ * think() produces new thoughts about what to do next.
+ * act() will perform the associated actions for the current thought.
+ * 
+ * The AI will return the action to take for the current frame. Only one call is made per frame.
+ * 
+ * @class IntelligenceEngine
+ */
 class IntelligenceEngine
 {
     name = "AI";
@@ -71,11 +88,6 @@ class IntelligenceEngine
         this.thoughts = [];
 
         this.getLostInThought(30);
-    }
-
-    empty = () =>
-    {
-    
     }
 
     log = (message) =>
@@ -234,6 +246,7 @@ class IntelligenceEngine
         }
 
         // don't do anything if something interesting is happening
+        // disabled for now.
         // this.thinkAboutSomethingInteresting();
         if(this.thoughts.length > 0)
         {

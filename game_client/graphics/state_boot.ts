@@ -1,5 +1,13 @@
 module Whosthebest.Graphics
 {
+    /**
+     * This is the state "Boot" which inherits from Phaser.State.
+     * Here we set a number of Phaser properties for initialization and immediately start the Preloader state.
+     * 
+     * @export
+     * @class State_Boot
+     * @extends {Phaser.State}
+     */
     export class State_Boot extends Phaser.State
     {
         create()

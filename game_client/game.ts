@@ -1,10 +1,12 @@
 /// <reference path="references.ts" />
 
 /**
-* GameEngine Object
-* This is a singleton class that handles the game state.
-* update is called to advance the game state by one frame.
-*/
+ * GameEngine Object
+ * This is a singleton class that handles the game state.
+ * update is called to advance the game state by one frame.
+ * 
+ * @class GameEngine
+ */
 class GameEngine
 {   
     // for client-side predictions
@@ -88,7 +90,11 @@ class GameEngine
             });
     }
     
-    // updates the engine by one frame
+    /**
+     * Updates the game engine by one frame.
+     * 
+     * @memberOf GameEngine
+     */
     update = (inputs) =>
     {
         if(this.currentGameState == this.gameStateTypes.Starting)
@@ -172,11 +178,6 @@ class GameEngine
         this.currentGameState = this.gameStateTypes.Ended;
     }
 
-    pressedRestartButton = (inputs) =>
-    {
-        return inputs && inputs.indexOf(this.inputTypes.Swap) != -1;
-    }
-
     attackOtherPlayer = (fromBoardIndex: number, attackBlock: AttackBlock) =>
     {
         // client-side prediction changes
@@ -227,10 +228,12 @@ class GameEngine
     }
 }
 
-// ************************************************
-// AttackBlockData object.
-// Representsinfo about the type of attack that was made to a player
-// ************************************************
+/**
+ * AttackBlockData object.
+ * Represents info about the type of attack that was made to a player
+ * 
+ * @interface AttackBlockData
+ */
 interface AttackBlockData
 {
     fromBoardIndex: number;
@@ -238,11 +241,13 @@ interface AttackBlockData
     targetBoardIndex: number;
 }
 
-/*
-BoardSpace object.
-Represents a static coordinate on the board.
-Keeps track of a contained tile.
-*/
+/**
+ * BoardSpace object
+ * Represents a static coordinate on the board.
+ * Keeps track of a contained tile.
+ * 
+ * @class BoardSpace
+ */
 class BoardSpace
 {
     contents: Tile[] = [];
@@ -275,10 +280,12 @@ class BoardSpace
     }
 }
 
-/*
-Board object.
-A player's board. Contains all board-related operations.
-*/
+/**
+ * Board object.
+ * A player's board. Contains all board-related operations.
+ * 
+ * @class Board
+ */
 class Board 
 {
     constructor(
@@ -301,7 +308,6 @@ class Board
     lastRowOfTileTypes = [];
     attackBlocksInWait = [];
     allAttackBlocksCombodThisFrame = [];
-    
     lastTileId = 0;
 
     // game clock
@@ -317,18 +323,19 @@ class Board
     // yOffset represents the tiles slowly ticking upward
     yOffset = 0; 
     yOffsetMax = 16;
-    yOffsetFrameCount = 30; //todo frames
+    yOffsetFrameCount = 30;
     yOffsetFrameReset = 30;
     yOffsetFrameResetValues = [30, 25, 20, 17, 15, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
     speedLengthInSeconds = 20;
 
     // how long the swap animation lasts
     // -1 means it's not swapping
-    swapDelayReset = 3; //todo frames
+    swapDelayReset = 3;
     swapDelayCount = -1;
     queuedUpSwapAction = false;
 
     // how long a combo lasts (44 + 25 - 9) / 60fps
+    // a combo will be longer if more tiles are involved
     comboDelayReset = 30;
     comboDelayResetPerTile = 4;
 
@@ -346,8 +353,10 @@ class Board
     globalChainCounter = 1;
 
     // game over
+    // although the tiles can reach the ceiling, 
+    // the game doesn't end until this time has passed.
     isGameOver = false;
-    gameOverLeewayReset = 60; // todo frames
+    gameOverLeewayReset = 60;
     gameOverLeewayCount = 60; // how long until we really die
 
     highestTileHeight = 0;
@@ -444,6 +453,8 @@ class Board
 
     setGameSpeed = (speed: number) =>
     {
+        // the game speed affects the yOffsetFrameReset value.
+        // in other words the game will tick upwards at a quicker rate.
         this.gameSpeed = Math.min(
                 speed, 
                 this.yOffsetFrameResetValues.length - 1);
@@ -1239,10 +1250,12 @@ class Board
     }
 }
 
-/*
-* AttackBlock object.
-* Represents an attack block that is waiting to fall
-*/
+/**
+ * AttackBlock object.
+ * presents an attack block that is waiting to fall
+ * 
+ * @class AttackBlock
+ */
 class AttackBlock
 {
     framesLeftUntilDrop : number;
@@ -1256,10 +1269,12 @@ class AttackBlock
     }
 }
 
-/*
-* Tile object.
-* Represents a tile on the board.
-*/
+/**
+ * Tile object.
+ * Represents a tile on the board.
+ * 
+ * @class Tile
+ */
 class Tile
 {
     constructor(
@@ -1359,9 +1374,6 @@ class Tile
             this.isComboing = false;
         }
 
-        // pop --
-        this.popFrameCount = Math.max(-1, this.popFrameCount - 1);
-
         // hover --
         this.hoverFrameCount = Math.max(-1, this.hoverFrameCount - 1);
 
@@ -1371,6 +1383,10 @@ class Tile
             this.isFalling = true;
             this.isHovering = false;
         }
+
+        // these values are used by the graphics renderer
+        // pop --
+        this.popFrameCount = Math.max(-1, this.popFrameCount - 1);
 
         // keep track of falling
         if(this.previousFalling && !this.isFalling)

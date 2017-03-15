@@ -3,6 +3,18 @@ module Whosthebest.Graphics
     var TILE_WIDTH: number;
     var TILE_HEIGHT: number;
 
+    /**
+     * This is the state "Game" which inherits from Phaser.State.
+     * Here is all of the visual and sound logic for the game.
+     * 
+     * Although there is no game logic here, there is logic for control flow. Various systems are initialized when this state is loaded.
+     * 
+     * Graphics rendered here are inferred by peeking into the game boards for all players and making assumptions based on what's happening.
+     * 
+     * @export
+     * @class State_Game
+     * @extends {Phaser.State}
+     */
     export class State_Game extends Phaser.State
     {
         fpsText: Phaser.Text;
@@ -44,7 +56,7 @@ module Whosthebest.Graphics
 
         characterIndexes: number[];
 
-        static  TILE_SPRITE_KEYS = [
+        static TILE_SPRITE_KEYS = [
             "images/game/tile_0.png",
             "images/game/tile_1.png",
             "images/game/tile_2.png",
@@ -63,11 +75,16 @@ module Whosthebest.Graphics
             "images/game/tile_6.png"
             ];
 
-        empty = () => 
-        {
-
-        }
-
+        /**
+         * init() is inherited from Phaser state. 
+         * When navigating to this state, the caller can pass in parameters which we define here.
+         * 
+         * @param {number} randomSeed 
+         * @param {boolean} isPracticeGame 
+         * @param {number[]} characterIndexes 
+         * 
+         * @memberOf State_Game
+         */
         init(randomSeed: number, isPracticeGame: boolean, characterIndexes: number[])
         {
             Debug.log("state_game init: " + randomSeed + ":" + isPracticeGame);
@@ -89,30 +106,6 @@ module Whosthebest.Graphics
 
             // TILE_WIDTH = Math.round(this.game.width * 0.05625);
             // TILE_HEIGHT = Math.round(this.game.height * 0.0667);
-
-            // NETWORK_DEBUG
-            /*
-            // player 1
-            var serverBoard1 = new GameBoard(this.game, null, "serverBoard1", true);
-            serverBoard1.x = board2.x + boardWidth + 100;
-            serverBoard1.y = this.game.height / 2;
-            serverBoard1.y -= LOCAL_GAME_ENGINE.rowCountInBounds * TILE_HEIGHT / 2;
-            serverBoard1.initialize(SERVER_GAME_ENGINE.boards[0], false);
-            this.gameBoards.push(serverBoard1);
-            this.add.existing(serverBoard1);
-
-            // player 2
-            if(SERVER_GAME_ENGINE.boards.length > 1)
-            {
-                var serverBoard2 = new GameBoard(this.game, null, "serverBoard2", true);
-                serverBoard2.x = serverBoard1.x + boardWidth + 20;
-                serverBoard2.y = this.game.height / 2
-                serverBoard2.y -= LOCAL_GAME_ENGINE.rowCountInBounds * TILE_HEIGHT / 2;
-                serverBoard2.initialize(SERVER_GAME_ENGINE.boards[1], false);
-                this.gameBoards.push(serverBoard2);
-                this.add.existing(serverBoard2);
-            }
-            */
 
             this.fpsText = this.add.text(
                 this.game.width / 2, 
@@ -225,6 +218,30 @@ module Whosthebest.Graphics
 
                 x += boardWidth + xSpacing;
             }
+
+            // NETWORK_DEBUG
+            /*
+            // player 1
+            var serverBoard1 = new GameBoard(this.game, null, "serverBoard1", true);
+            serverBoard1.x = board2.x + boardWidth + 100;
+            serverBoard1.y = this.game.height / 2;
+            serverBoard1.y -= LOCAL_GAME_ENGINE.rowCountInBounds * TILE_HEIGHT / 2;
+            serverBoard1.initialize(SERVER_GAME_ENGINE.boards[0], false);
+            this.gameBoards.push(serverBoard1);
+            this.add.existing(serverBoard1);
+
+            // player 2
+            if(SERVER_GAME_ENGINE.boards.length > 1)
+            {
+                var serverBoard2 = new GameBoard(this.game, null, "serverBoard2", true);
+                serverBoard2.x = serverBoard1.x + boardWidth + 20;
+                serverBoard2.y = this.game.height / 2
+                serverBoard2.y -= LOCAL_GAME_ENGINE.rowCountInBounds * TILE_HEIGHT / 2;
+                serverBoard2.initialize(SERVER_GAME_ENGINE.boards[1], false);
+                this.gameBoards.push(serverBoard2);
+                this.add.existing(serverBoard2);
+            }
+            */
 
             var addText = (x, y, label, xAnchor) =>
             {

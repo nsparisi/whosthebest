@@ -91,11 +91,11 @@ defmodule Whosthebest.Web.UserController do
     def create(conn, %{"user" => user_params}) do
         # verify the captcha
         case Recaptcha.verify(user_params["g-recaptcha-response"]) do
-            {:error, errors} -> 
+            {:error, _errors} -> 
                 conn
                     |> put_flash(:error, "Sorry, there was a problem creating the account.")
                     |> render("new.html")
-            {:ok, response} -> 
+            {:ok, _response} -> 
                 # In all cases, send an email. 
                 # retrieve an existing user
                 user = Repo.get_by(Whosthebest.User, email: user_params["email"])

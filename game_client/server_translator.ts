@@ -4,6 +4,12 @@
 // window.Socket = new Socket(..)
 declare var SOCKET: any;
 
+/**
+ * Represents the connection to the server Lobby channel. Responsible for setting up a channel 
+ * and sending and receiving messages across the channel.
+ * 
+ * @class LobbyConnection
+ */
 class LobbyConnection
 {
     channel: any;
@@ -194,7 +200,7 @@ class LobbyConnection
 }
 
 /**
- * Represents the connection to the server. Responsible for setting up a channel 
+ * Represents the connection to the server Game channel. Responsible for setting up a channel 
  * and sending and receiving messages across the channel. 
  */
 class GameConnection

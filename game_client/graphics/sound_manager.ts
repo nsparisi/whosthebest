@@ -1,5 +1,12 @@
 module Whosthebest.Graphics
 {
+    /**
+     * SoundManager controls and maintains sound properties and effects (such as volume) statically across the game. 
+     * All sounds should make use of this class when being played.
+     * 
+     * @export
+     * @class SoundManager
+     */
     export class SoundManager
     {
         MUSIC: Phaser.Sound;

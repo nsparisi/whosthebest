@@ -5,7 +5,7 @@
         <th>Name</th>
         <th>Total Time</th>
     </tr>
-    <%= for {username, user_id, total_time} <- @users_by_times do %>
+    <%= for {username, _user_id, total_time} <- @users_by_times do %>
         <tr>
             <td><%= username %></td>
             <td><%= total_time %></td>
@@ -19,7 +19,7 @@
         <th>Name</th>
         <th>Total Wins</th>
     </tr>
-    <%= for {username, user_id, total_wins} <- @users_by_wins do %>
+    <%= for {username, _user_id, total_wins} <- @users_by_wins do %>
         <tr>
             <td><%= username %></td>
             <td><%= total_wins %></td>
@@ -33,7 +33,7 @@
         <th>Name</th>
         <th>Total Games</th>
     </tr>
-    <%= for {username, user_id, total_games} <- @users_by_games do %>
+    <%= for {username, _user_id, total_games} <- @users_by_games do %>
         <tr>
             <td><%= username %></td>
             <td><%= total_games %></td>
