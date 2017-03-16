@@ -12,9 +12,9 @@ defmodule Whosthebest.Web.GameSocket do
       serializer: Whosthebest.Web.Transports.MessagePackSerializer
     # transport :longpoll, Phoenix.Transports.LongPoll
 
-    # TODO, remove some 0's here
-    # max_age: 1209600 is equivalent to two weeks in seconds
-    @max_token_age 120960000
+    # max_age: This token is acquired on page load, 
+    # so it should be consumed in less than a few seconds.
+    @max_token_age 60
 
     # Socket params are passed from the client and can
     # be used to verify and authenticate a user. After

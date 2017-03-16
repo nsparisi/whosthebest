@@ -43,7 +43,7 @@ defmodule Whosthebest.Web.Router do
         # /users/create is the POST action from /users/new
         resources "/", UserController, only: [:index, :new, :create]
 
-        # /users/:username will show a public profile for the username
+        # /users/:username will show a public profile for the user with this username
         get "/:username", UserController, :show
     end
 

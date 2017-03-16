@@ -4,17 +4,18 @@ defmodule Whosthebest.Web.UserController do
     import Ecto.Query, only: [from: 2]
     alias Whosthebest.{TokenAuthentication, User, Match}
 
-    #plug :scrub_params, "user" when action in [:update]
+    plug :scrub_params, "user" when action in [:update]
   
-    def index(conn, _params) do
-        #match_query = from u in Match, select: {u.total_time, u.winner_id, u.user_id_0, u.user_id_1, u.user_id_2, u.user_id_3}
-            
-        #match_winner_query = 
-        #    from m in Match,
-        #    select: {m.winner_id, count(m.winner_id)},
-        #    group_by: m.winner_id,
-        #    order_by: [desc: :count]
+    @doc """
+    The landing page for /users. 
+    Here we are running a couple of queries to set up a leaderboard of notable users.
 
+    Considerations: The queries may be slow or inpractical, would need further testing to know.
+    """
+    def index(conn, _params) do
+
+        # joins the User and Match tables based on winner id.
+        # provides a count of wins each user has, and sorts by most wins.
         joined_winner_query =
             from u in User,
             inner_join: m in Match, on: u.id == m.winner_id,
@@ -25,6 +26,8 @@ defmodule Whosthebest.Web.UserController do
         top_winners = Repo.all(joined_winner_query)
         Whosthebest.Debug.log "top_winners #{inspect top_winners}"
 
+        # joins the User and Match tables based on user id in any of the player positions.
+        # counts up the number of games each user has participated in, and sorts by most games.
         joined_total_games_query =
             from u in User,
             inner_join: m in Match, on: u.id == m.user_id_0 or u.id == m.user_id_1 or u.id == m.user_id_2 or u.id == m.user_id_3,
@@ -35,6 +38,8 @@ defmodule Whosthebest.Web.UserController do
         top_gamers = Repo.all(joined_total_games_query)
         Whosthebest.Debug.log "top_gamers #{inspect top_gamers}"
 
+        # joins the User and Match tables based on user id in any of the player positions.
+        # sums up the total time for each user, and sorts by most time spent in matches.
         joined_total_times_query =
             from u in User,
             inner_join: m in Match, on: u.id == m.user_id_0 or u.id == m.user_id_1 or u.id == m.user_id_2 or u.id == m.user_id_3,
@@ -51,6 +56,11 @@ defmodule Whosthebest.Web.UserController do
             users_by_times: top_times)
     end
 
+    @doc """
+    A user's profile page viewable publically. 
+    We can display info about the user, their bio, avatar, or whatever.
+    For now we have recent match history of the player, which is pretty neat.
+    """
     def show(conn, %{"username" => username}) do
         user = Repo.get_by(Whosthebest.User, username: username)
         if user == nil do
@@ -58,6 +68,8 @@ defmodule Whosthebest.Web.UserController do
                 |> put_flash(:error, "You don't have permission to view that page.")
                 |> redirect(to: page_path(conn, :index))
         else
+            # joins the User and Match tables to provide info, per match,
+            # about this user's position, win/loss, and other remaining match data.
             # TODO this is only querying user0 and user1, seems buggy for 3 and 4.
             current_user_id = user.id
             match_history_query =
@@ -79,16 +91,23 @@ defmodule Whosthebest.Web.UserController do
     end
     
     @doc """
-    Login page with email form.
+    This is the "Register" page for new users. 
+    However, both new and pre-existing users can use this page.
     """
     def new(conn, _params) do
         render(conn, "new.html")
     end
 
     @doc """
-    Sign up action, most likely UserController#create
+    This is the POST action from the "new" user page. 
+    
+    Create a new account if it does not exist for this user and send an email which 
+    contains the magic-url that will log in the client to their account.
+
+    In all cases, we will send an email to avoid any sort of snooping.
     """
     def create(conn, %{"user" => user_params}) do
+
         # verify the captcha
         case Recaptcha.verify(user_params["g-recaptcha-response"]) do
             {:error, _errors} -> 
@@ -96,7 +115,7 @@ defmodule Whosthebest.Web.UserController do
                     |> put_flash(:error, "Sorry, there was a problem creating the account.")
                     |> render("new.html")
             {:ok, _response} -> 
-                # In all cases, send an email. 
+
                 # retrieve an existing user
                 user = Repo.get_by(Whosthebest.User, email: user_params["email"])
 
@@ -118,12 +137,15 @@ defmodule Whosthebest.Web.UserController do
                 else
                     TokenAuthentication.provide_token(user)
                     conn
-                        |> put_flash(:info, "Welcome back! Please check your email for a link to login.")
+                        |> put_flash(:info, "Welcome! Please check your email for a link to login.")
                         |> redirect(to: page_path(conn, :index))
                 end
         end
     end
 
+    @doc """
+    The edit page to let a user change their profile.
+    """
     def edit(conn, %{"id" => id}) do
         user_id = get_session(conn, :user_id)
 
@@ -139,6 +161,9 @@ defmodule Whosthebest.Web.UserController do
         end
     end
 
+    @doc """
+    This is the POST action called from the edit page.
+    """
     def update(conn, %{"id" => id, "user" => user_params}) do
         user_id = get_session(conn, :user_id)
 

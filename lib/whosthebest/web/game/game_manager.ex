@@ -15,7 +15,7 @@ defmodule Whosthebest.GameManager do
     Gets or creates a game instance base on the provided key.
     """
     def get_or_create_game(server, key) do
-        Debug.log("GameManager get_or_create_game " <> key)
+        Debug.log("GameManager get_or_create_game #{key}")
         GenServer.call(server, {:get, key})
     end
     
@@ -23,7 +23,7 @@ defmodule Whosthebest.GameManager do
     Kills the game with the provided key.
     """
     def kill_game(server, key) do
-        Debug.log("GameManager  kill_game " <> key)
+        Debug.log("GameManager  kill_game #{key}")
         GenServer.call(server, {:kill, key})
     end
     
@@ -36,7 +36,7 @@ defmodule Whosthebest.GameManager do
     end
     
     def handle_call({:get, key}, _from, state) do
-        Debug.log("GameManager  handle_call get " <> key)
+        Debug.log("GameManager  handle_call get #{key}")
         
         # create a new game server 
         # if it does not exist
@@ -53,7 +53,7 @@ defmodule Whosthebest.GameManager do
     end
     
     def handle_call({:kill, key}, _from, state) do
-        Debug.log("GameManager  handle_cast kill " <> key)
+        Debug.log("GameManager  handle_cast kill #{key}")
         
         # kill the server process 
         # and remove from the map

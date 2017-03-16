@@ -19,6 +19,7 @@ defmodule Whosthebest.Web.AdminController do
         user = Repo.get(User, id)
         admin = Repo.get(User, get_session(conn, :user_id))
 
+        # disabling admin controller for now
         # TODO add RBAC for admin role
         if true do
             conn

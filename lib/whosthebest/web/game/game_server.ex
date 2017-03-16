@@ -189,14 +189,10 @@ defmodule Whosthebest.GameServer do
     # Payload structure is as follows.
     #
     # from server:
-    # <payload>
-    # when type = StartMatch, payload = random seed
-    # when type = Frame, payload = 
     #   frame~,player,1,inputs|in_timestamp~player,2,inputs|in_timestamp
     #
     # from client:
-    # <payload>
-    # payload = <frame>~,<input>,<input>
+    #  frame~,input,input
     
     @time_delimiter "|"
     @frame_delimiter "~"
@@ -226,6 +222,7 @@ defmodule Whosthebest.GameServer do
                 length(queue) > 0 && acc 
             end)
     end
+
     def dequeue_and_form_payload(state) do
         # dequeue once for each user, and formulate a broadcast payload.
         # TODO someday have an ordering here, sort is bad.
@@ -259,6 +256,7 @@ defmodule Whosthebest.GameServer do
         List.first(Map.fetch!(state[:user_frames], user))
     end
     
+    # this is completely unnecessary after I learned about #{inspect "blah"} :)
     def to_pretty_string(state) do
         user_frames = state[:user_frames]
         Enum.reduce(Map.keys(user_frames), "",

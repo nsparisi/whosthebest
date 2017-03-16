@@ -1,7 +1,18 @@
-//  file: web/static/js/msgpack_socket.js
+// msgpack_socket.js intercepts the phoenix socket implementations for onConnOpen, onConnMessage, push,
+// in order to encode/decode the packet data into the msgpack format.
+// msgpack is a compressed form of json that helps us reduce the network traffic load we will be using during the game.
+// http://msgpack.org/index.html
 
+// import the msgpack library.
 var msgpack = require("./msgpack.min");
 
+/**
+ * Converts the provided socket to encode/decode all sent and received packet data into msgpack format. 
+ * The socket's onConnOpen, onConnMessage, and push functions are overridden.
+ * 
+ * @param {any} socket A Phoenix socket.
+ * @returns The provided socket with updated msgpack capabilities.
+ */
 function convertToMsgPack(socket) 
 {
   let parentOnConnOpen = socket.onConnOpen;
@@ -10,14 +21,15 @@ function convertToMsgPack(socket)
     this.conn.binaryType = 'arraybuffer';
     parentOnConnOpen.apply(this, arguments);
   }
-
-  //we also need to override the onConnMessage function, where we'll be checking
-  //for binary data, and delegate to the default implementation if it's not what we expected
+  
   let parentOnConnMessage = socket.onConnMessage;
 
   // This callback is defined in phoenix.js
-  // this implementation is a direct copy from phoenix.js, but using msgpack to decode the message.
+  // this implementation is a direct copy from phoenix.js, 
+  // but using msgpack to decode the message instead of json.
   socket.onConnMessage = function (rawMessage) {
+
+    // run instead the default implementation if the payload is not what is expected.
     if (!(rawMessage.data instanceof window.ArrayBuffer)) {
       return parentOnConnMessage.apply(this, arguments);
     }
@@ -39,7 +51,8 @@ function convertToMsgPack(socket)
   }
 
   // This callback is defined in phoenix.js
-  // this implementation is a direct copy from phoenix.js, but using msgpack to encode the message.
+  // this implementation is a direct copy from phoenix.js, 
+  // but using msgpack to encode the message instead of json.
   socket.push = function (data) {
     let _this7 = this;
 
@@ -57,6 +70,12 @@ function convertToMsgPack(socket)
   return socket;
 }
 
+/**
+ * Decodes the packet payload from msgpack format.
+ * 
+ * @param {any} data 
+ * @returns 
+ */
 function decodeMessage(data) {
   if (!data) {
     return;
@@ -66,6 +85,13 @@ function decodeMessage(data) {
   return msgpack.decode(binary);
 }
 
+
+/**
+ * Encodes the packet payload into msgpack format.
+ * 
+ * @param {any} data 
+ * @returns 
+ */
 function encodeMessage(data) {
   if (!data) {
     return;
@@ -74,6 +100,7 @@ function encodeMessage(data) {
   return msgpack.encode(data);
 }
 
+// export this function to be called from game.js
 export default {
   convertToMsgPack
 }

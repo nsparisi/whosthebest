@@ -6,6 +6,7 @@ defmodule Whosthebest.Debug do
     def log(message) do         
         do_log message
     end
+    
     @doc """
     Logs a message with an inspected object.
     very common to debug the contents of an object.

@@ -36,7 +36,7 @@ defmodule Whosthebest.Web.GameController do
                 # get the user's game_id, so they can join the correct game room
                 render conn, "index.html"
 
-             # if they are not logged in, redirect to login page
+            # if they are not logged in, redirect to login page
             true ->
                 conn
                 |> put_flash(:error, "Must be logged in to play.")
