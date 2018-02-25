@@ -107,6 +107,7 @@ defmodule Whosthebest.Web.UserController do
     In all cases, we will send an email to avoid any sort of snooping.
     """
     def create(conn, %{"user" => user_params}) do
+        Whosthebest.Debug.log "user_controller create user_params #{inspect user_params}"
 
         # verify the captcha
         case Recaptcha.verify(user_params["g-recaptcha-response"]) do
