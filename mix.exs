@@ -18,8 +18,20 @@ defmodule Whosthebest.Mixfile do
   # Type `mix help compile.app` for more information.
   def application do
     [mod: {Whosthebest, []},
-     applications: [:bamboo, :phoenix, :phoenix_pubsub, :phoenix_html, :cowboy, :logger, :gettext,
-                    :phoenix_ecto, :postgrex, :message_pack, :recaptcha]]
+     applications: 
+      [:phoenix, 
+       :phoenix_ecto, 
+       :phoenix_pubsub, 
+       :phoenix_html, 
+       :postgrex, 
+       :cowboy, 
+       :gettext,
+       :uuid, 
+       :message_pack, 
+       :bamboo, 
+       :bamboo_smtp, 
+       :recaptcha,
+       :logger ]]
   end
 
   # Specifies which paths to compile per environment.
@@ -33,9 +45,9 @@ defmodule Whosthebest.Mixfile do
     [{:phoenix, "~> 1.3.0-rc"},
      {:phoenix_ecto, "~> 3.2.2"},
      {:phoenix_pubsub, "~> 1.0"},
-     {:postgrex, ">= 0.0.0"},
      {:phoenix_html, "~> 2.6"},
      {:phoenix_live_reload, "~> 1.0.8", only: :dev},
+     {:postgrex, ">= 0.0.0"},
      {:cowboy, "~> 1.0"},
      {:gettext, "~> 0.9"},
      {:uuid, "~> 1.1"},
