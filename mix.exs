@@ -51,7 +51,7 @@ defmodule Whosthebest.Mixfile do
      {:cowboy, "~> 1.0"},
      {:gettext, "~> 0.9"},
      {:uuid, "~> 1.1"},
-     {:distillery, "~> 1.0.0"},
+     {:distillery, "~> 1.5.2"},
      {:message_pack, "~> 0.2.0"},
      {:bamboo, "~> 0.7"},
      {:bamboo_smtp, "~> 1.2.1"},

@@ -4,7 +4,7 @@ defmodule Whosthebest.Web.SessionController do
   """
   use Whosthebest.Web, :controller
 
-  alias Whosthebest.{TokenAuthentication, User}
+  alias Whosthebest.{TokenAuthentication}
 
   @doc """
     Login page with email form.
