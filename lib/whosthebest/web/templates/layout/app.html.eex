@@ -38,7 +38,7 @@
                             <%= else %>
                                 <li><a href="<%= guest_login_path @conn, :guest_login %>">Guest Login</a></li>
                                 <li><a href="<%= user_path @conn, :new %>">Join/Log In</a></li>
-                                <li><a href="<%= signin_path @conn, :show, 123 %>">Debug Sign-In</a></li>
+                                <!--<li><a href="<%= signin_path @conn, :show, 123 %>">Debug Sign-In</a></li>-->
                             <%= end %>
                         </ul>
                     </nav>

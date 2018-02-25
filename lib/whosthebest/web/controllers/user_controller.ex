@@ -110,11 +110,13 @@ defmodule Whosthebest.Web.UserController do
 
         # verify the captcha
         case Recaptcha.verify(user_params["g-recaptcha-response"]) do
-            {:error, _errors} -> 
+            {:error, errors} -> 
+                Whosthebest.Debug.log "Recaptcha errors #{inspect errors}"
                 conn
-                    |> put_flash(:error, "Sorry, there was a problem creating the account.")
+                    |> put_flash(:error, "Sorry, there was a problem creating the account. Please try again.")
                     |> render("new.html")
-            {:ok, _response} -> 
+            {:ok, response} -> 
+                Whosthebest.Debug.log "Recaptcha response #{inspect response}"
 
                 # retrieve an existing user
                 user = Repo.get_by(Whosthebest.User, email: user_params["email"])
@@ -130,6 +132,7 @@ defmodule Whosthebest.Web.UserController do
                                 |> redirect(to: page_path(conn, :index))
 
                         {:error, changeset} ->
+                            Whosthebest.Debug.log "Repo.insert changeset #{inspect changeset}"
                             conn
                                 |> put_flash(:error, "Sorry, there was a problem creating the account.")
                                 |> render("new.html", changeset: changeset)
