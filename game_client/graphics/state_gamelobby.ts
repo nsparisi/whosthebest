@@ -81,13 +81,13 @@ module Whosthebest.Graphics
 
         shutdown()
         {
-            // need to handle any non-phaser-controlled 
-            // state which may persist between game states.
-            ServerTranslator.Instance.disconnectFromGame();
+            // TODO(nick) consider letting the server know if this player disconnected
+            // but that logic should probably be done via some heartbeat
         }
 
         back_pressed()
         {
+            ServerTranslator.Instance.disconnectFromGame();
             GAME_INSTANCE.switchToMenu();
         }
 
