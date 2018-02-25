@@ -9,7 +9,7 @@ defmodule Whosthebest.Web.GameSocket do
 
     ## Transports
     transport :websocket, Phoenix.Transports.WebSocket,
-      serializer: Whosthebest.Web.Transports.MessagePackSerializer
+      serializer: [{Whosthebest.Web.Transports.MessagePackSerializer, "~> 1.0.0"}]
     # transport :longpoll, Phoenix.Transports.LongPoll
 
     # max_age: This token is acquired on page load, 

@@ -8,7 +8,7 @@ defmodule Whosthebest.Match do
     field :user_id_1, :integer
     field :user_id_2, :integer
     field :user_id_3, :integer
-    timestamps
+    timestamps()
   end
 
   @required_fields ~w(total_time winner_id user_id_0 user_id_1)

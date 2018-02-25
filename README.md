@@ -1,6 +1,6 @@
 # Prerequisites
 
-  1. Elixir 1.3.4 with Erlang OTP 18
+  1. Elixir 1.4.5 with Erlang OTP 19
   2. Node JS 6.10.0
   3. PostgreSQL 9.6.0
   4. Python 2.7.12
@@ -12,7 +12,7 @@ To start the Phoenix server:
   1. Install node dependencies with `npm install`
   2. Install elixir dependencies with `mix deps.get`
   3. Create and migrate your database with `mix ecto.create && mix ecto.migrate`
-  4. Build typescript game with `node node_modules/typescript/bin/tsc -p game_client/` or download VSCode and run ctrl+shift+b
+  4. Build typescript game with `node assets/node_modules/typescript/bin/tsc -p game_client/` or download VSCode and run ctrl+shift+b
   5. Start Phoenix endpoint with `mix phx.server`
 
 For Windows Users:

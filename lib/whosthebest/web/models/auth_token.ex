@@ -7,7 +7,7 @@ defmodule Whosthebest.AuthToken do
     field :value, :string
     belongs_to :user, Whosthebest.User
 
-    timestamps
+    timestamps()
   end
 
   @doc """

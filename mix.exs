@@ -42,21 +42,21 @@ defmodule Whosthebest.Mixfile do
   #
   # Type `mix help deps` for examples and options.
   defp deps do
-    [{:phoenix, "~> 1.3.0-rc"},
+    [{:phoenix, "~> 1.3.0"},
      {:phoenix_ecto, "~> 3.2.2"},
      {:phoenix_pubsub, "~> 1.0"},
-     {:phoenix_html, "~> 2.6"},
+     {:phoenix_html, "~> 2.10"},
      {:phoenix_live_reload, "~> 1.0.8", only: :dev},
      {:postgrex, ">= 0.0.0"},
      {:cowboy, "~> 1.0"},
-     {:gettext, "~> 0.9"},
+     {:gettext, "~> 0.11"},
      {:uuid, "~> 1.1"},
      {:distillery, "~> 1.5.2"},
      {:message_pack, "~> 0.2.0"},
-     {:bamboo, "~> 0.7"},
-     {:bamboo_smtp, "~> 1.2.1"},
-     {:recaptcha, "~> 2.1.1"},
-     {:poison, "~> 2.2"}]
+     {:bamboo, "~> 0.8"},
+     {:bamboo_smtp, "~> 1.4.0"},
+     {:recaptcha, "~> 2.2.1"},
+     {:poison, "~> 3.0"}]
   end
 
   # Aliases are shortcut or tasks specific to the current project.

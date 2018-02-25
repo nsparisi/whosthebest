@@ -17,8 +17,8 @@ defmodule Whosthebest.Web.LobbyChannel do
 
         # After joining (leave the function) 
         # broadcast to the channel you're online.
-        #send(self, {:setup_presence, %{user: user.username, from: user_id}})
-        send self, :setup_presence
+        #send(self(), {:setup_presence, %{user: user.username, from: user_id}})
+        send self(), :setup_presence
 
         # Always return OK
         {:ok, %{user_id: user_id, username: username}, socket}
@@ -42,7 +42,7 @@ defmodule Whosthebest.Web.LobbyChannel do
         push socket,"presence_state", Presence.list(socket)
 
         #broadcast_from! socket, "lobby:online", message
-        #Process.send_after(self, :update_presence, 5000)
+        #Process.send_after(self(), :update_presence, 5000)
         {:noreply, socket}
     end
 
@@ -55,7 +55,7 @@ defmodule Whosthebest.Web.LobbyChannel do
         Debug.log ":update_presence #{user_id} | #{online_at}"
         
         Presence.update(socket, user_id, %{online_at: online_at, username: username})
-        Process.send_after(self, :update_presence, 5000)
+        Process.send_after(self(), :update_presence, 5000)
         {:noreply, socket}
     end
     

@@ -8,7 +8,7 @@ defmodule Whosthebest.User do
     field :total_games, :integer 
     field :total_wins, :integer 
     
-    timestamps
+    timestamps()
 
     # add the association among the rest of the schema
     has_many :auth_tokens, Whosthebest.AuthToken
@@ -70,11 +70,11 @@ defmodule Whosthebest.User do
   end
 
   def generate_user_name() do
-    "user" <> generate_random_name
+    "user" <> generate_random_name()
   end
 
   def generate_guest_name() do
-    generate_random_name
+    generate_random_name()
   end
 
   defp generate_random_name() do

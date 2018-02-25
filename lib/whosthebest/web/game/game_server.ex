@@ -92,7 +92,7 @@ defmodule Whosthebest.GameServer do
     def init(:ok) do
         Debug.log("GameServer  init")
         :timer.send_interval(5000, :refresh)
-        {:ok, new_state }
+        {:ok, new_state() }
     end
     
     def new_state do
@@ -145,7 +145,7 @@ defmodule Whosthebest.GameServer do
     end
     
     def handle_call(:reset, _from, _state) do
-        {:reply, nil, new_state}
+        {:reply, nil, new_state()}
     end
     
     def handle_call(:clear_frames, _from, state) do
