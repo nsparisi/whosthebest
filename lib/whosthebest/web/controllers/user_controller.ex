@@ -10,7 +10,7 @@ defmodule Whosthebest.Web.UserController do
     The landing page for /users. 
     Here we are running a couple of queries to set up a leaderboard of notable users.
 
-    Considerations: The queries may be slow or inpractical, would need further testing to know.
+    Considerations: The queries may be slow or impractical, would need further testing to know.
     """
     def index(conn, _params) do
 
@@ -57,7 +57,7 @@ defmodule Whosthebest.Web.UserController do
     end
 
     @doc """
-    A user's profile page viewable publically. 
+    A user's profile page viewable publicly. 
     We can display info about the user, their bio, avatar, or whatever.
     For now we have recent match history of the player, which is pretty neat.
     """

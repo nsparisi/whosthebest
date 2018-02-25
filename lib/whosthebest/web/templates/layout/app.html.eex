@@ -48,11 +48,6 @@
                     <% else %>
                         You are not logged in.
                     <% end %>
-                        <%= if @current_user do %>
-                            <%= if @conn.assigns[:remembered] do %>
-                                <li style="color: red;">!!</li>
-                            <% end %>
-                        <% end %>
                     </ol>
                 </div>
                 <div class="" style="margin:50px auto; min-height: 400px;">

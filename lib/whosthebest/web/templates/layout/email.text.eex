@@ -2,4 +2,4 @@ Hello!
 
 <%= render @view_module, @view_template, assigns %>
 
-- The MyApp Team.
+- The Block Game Team.
