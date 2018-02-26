@@ -19,6 +19,7 @@ class GenerationEngine
         GenerationEngine.Instance = this;
     }
 
+    allowDebugControls = false;
     isPracticeGame = false;
 
     frameRate = 30;
@@ -340,24 +341,27 @@ class GenerationEngine
         }
 
         // debugging frame control
-        if(InputEngine.Instance.justPressed("P"))
+        if(this.allowDebugControls)
         {
-            this.isPaused = !this.isPaused;
-        }
-        if(InputEngine.Instance.justPressed("k")) // +
-        {
-            this.frameRate = Math.min(this.frameRate + 3, 60);
-            this.frameLengthInMs = 1000 / this.frameRate;
-        }
-        if(InputEngine.Instance.justPressed("m")) // -
-        {
-            this.frameRate = Math.max(this.frameRate - 3, 1);
-            this.frameLengthInMs = 1000 / this.frameRate;
-        }
-        if(InputEngine.Instance.justPressed("Ü")) // '\'
-        {
-            this.isPaused = true;
-            this.frameAdvance = true;
+            if(InputEngine.Instance.justPressed("P"))
+            {
+                this.isPaused = !this.isPaused;
+            }
+            if(InputEngine.Instance.justPressed("k")) // +
+            {
+                this.frameRate = Math.min(this.frameRate + 3, 60);
+                this.frameLengthInMs = 1000 / this.frameRate;
+            }
+            if(InputEngine.Instance.justPressed("m")) // -
+            {
+                this.frameRate = Math.max(this.frameRate - 3, 1);
+                this.frameLengthInMs = 1000 / this.frameRate;
+            }
+            if(InputEngine.Instance.justPressed("Ü")) // '\'
+            {
+                this.isPaused = true;
+                this.frameAdvance = true;
+            }
         }
     }
     
