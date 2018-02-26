@@ -33,7 +33,8 @@ defmodule Whosthebest.Web.Endpoint do
   plug Plug.Session,
     store: :cookie,
     key: "_whosthebest_key",
-    signing_salt: "XUOIFLXr"
+    signing_salt: "XUOIFLXr",
+    max_age: 2592000
 
   plug Whosthebest.Web.Router
 end
