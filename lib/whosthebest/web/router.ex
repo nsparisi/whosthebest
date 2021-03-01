@@ -66,5 +66,7 @@ defmodule Whosthebest.Web.Router do
         # TODO this feature is currently disabled in the admin controller
         get "/", AdminController, :index
         resources "/", AdminController, only: [:delete]
+        # TODO import Phoenix.LiveDashboard.Router
+        # TODO live_dashboard "/dashboard", metrics: HelloWeb.Telemetry
     end
 end

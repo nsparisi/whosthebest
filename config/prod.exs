@@ -14,8 +14,8 @@ use Mix.Config
 config :whosthebest, Whosthebest.Web.Endpoint,
   http: [port: {:system, "PORT"}],
   url: [host: "blockgame.website", port: 80],
-  cache_static_manifest: "priv/static/manifest.json",
-  check_origin: false
+  cache_static_manifest: "priv/static/cache_manifest.json",
+  # check_origin: false
 
 # Do not print debug messages in production
 config :logger, level: :info

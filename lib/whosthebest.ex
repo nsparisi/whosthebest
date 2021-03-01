@@ -1,4 +1,4 @@
-defmodule Whosthebest do
+defmodule Whosthebest.Application do
   use Application
 
   # See http://elixir-lang.org/docs/stable/elixir/Application.html
@@ -7,19 +7,12 @@ defmodule Whosthebest do
     import Supervisor.Spec, warn: false
 
     children = [
-      # Start the endpoint when the application starts
-      supervisor(Whosthebest.Web.Endpoint, []),
-
-      # Start the Ecto repository
-      worker(Whosthebest.Repo, []),
-
-      # Here you could define other workers and supervisors as children
-      # worker(Whosthebest.Worker, [arg1, arg2, arg3]),
-      worker(Whosthebest.GameManager, [[name: Whosthebest.GameManager]]),
-
-      # Following the Phoenix.Presence documentation,
-      # adding a supervisor for this
-      supervisor(Whosthebest.Web.Presence, []),
+      Whosthebest.Repo,
+      Whosthebest.GameManager,
+      {Phoenix.PubSub, name: Whosthebest.PubSub},
+      Whosthebest.Web.Presence,
+      Whosthebest.Web.Telemetry,
+      Whosthebest.Web.Endpoint
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html

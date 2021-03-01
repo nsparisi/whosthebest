@@ -5,26 +5,25 @@
 # is restricted to this project.
 use Mix.Config
 
+config :whosthebest, 
+  ecto_repos: [Whosthebest.Repo]
+
 # Configures the endpoint
 config :whosthebest, Whosthebest.Web.Endpoint,
   url: [host: "localhost"],
   root: Path.dirname(__DIR__),
   secret_key_base: "ywwiA+aZchK68s3jLWrS7u9Cw6RChvOCZcL7kNPO+hM90a3OawEhR2JjB3o3cBxa",
-  render_errors: [accepts: ~w(html json)],
-  pubsub: [name: Whosthebest.PubSub,
-           adapter: Phoenix.PubSub.PG2]
-
-config :whosthebest, ecto_repos: [Whosthebest.Repo]
+  render_errors: [view: HelloWeb.ErrorView, accepts: ~w(html json), layout: false],
+  pubsub_server: Whosthebest.PubSub,
+  live_view: [signing_salt: "UCkf3we4"]
 
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
-# Configure phoenix generators
-config :phoenix, :generators,
-  migration: true,
-  binary_id: false
+# Use Jason for JSON parsing in Phoenix
+config :phoenix, :json_library, Jason
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

@@ -11,7 +11,6 @@ config :logger, level: :warn
 
 # Configure your database
 config :whosthebest, Whosthebest.Repo,
-  adapter: Ecto.Adapters.Postgres,
   username: "postgres",
   password: "postgres",
   database: "whosthebest_test",
