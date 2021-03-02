@@ -9,6 +9,7 @@
 
         <title>BLOCK GAME</title>
         <link rel="stylesheet" href="<%= static_path(@conn, "/css/app.css") %>">
+        <script src="<%= static_path(@conn, "/js/phaser.js") %>"></script>
         <script src="<%= static_path(@conn, "/js/app.js") %>"></script>
         <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
         <link href="https://fonts.googleapis.com/css?family=Righteous" rel="stylesheet">
@@ -35,15 +36,15 @@
                                 <li><a href="<%= game_path @conn, :index %>">Play!</a></li>
                                 <li><a href="<%= user_path @conn, :show, @current_user.username %>">Account</a></li>
                                 <li><a href="<%= session_path @conn, :delete %>">Log Out</a></li>
-                            <%= else %>
+                            <% else %>
                                 <li><a href="<%= guest_login_path @conn, :guest_login %>">Guest Login</a></li>
                                 <li><a href="<%= user_path @conn, :new %>">Join/Log In</a></li>
                                 <!--<li><a href="<%= signin_path @conn, :show, 123 %>">Debug Sign-In</a></li>-->
-                            <%= end %>
+                            <% end %>
                         </ul>
                     </nav>
                     <ol class="breadcrumb text-center" style="color: #000;">
-                                        <%= if @current_user do %>
+                    <%= if @current_user do %>
                         You are logged in!
                     <% else %>
                         You are not logged in.
@@ -51,7 +52,7 @@
                     </ol>
                 </div>
                 <div class="" style="margin:50px auto; min-height: 400px;">
-                    <%= render @view_module, @view_template, assigns %>
+                    <%= @inner_content %>
                 </div>
             </div>
         </div>
