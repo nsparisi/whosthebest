@@ -8,7 +8,7 @@ defmodule Whosthebest.Application do
 
     children = [
       Whosthebest.Repo,
-      Whosthebest.GameManager,
+      {Whosthebest.GameManager, name: Whosthebest.GameManager},
       {Phoenix.PubSub, name: Whosthebest.PubSub},
       Whosthebest.Web.Presence,
       Whosthebest.Web.Telemetry,

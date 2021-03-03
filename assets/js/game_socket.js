@@ -25,7 +25,8 @@ window.SOCKET = new Socket(
 
 // We override the send and receive callbacks to serialize/deserialize 
 // packet data into msgpack format.
-window.SOCKET = msgpack_socket.convertToMsgPack(window.SOCKET);
+// TODO(nick) latest phoenix server isn't able to decode these messages.
+//window.SOCKET = msgpack_socket.convertToMsgPack(window.SOCKET);
 
 // Make the connetion to the phoenix socket.
 window.SOCKET.connect();
