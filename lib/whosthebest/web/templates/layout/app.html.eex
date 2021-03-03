@@ -8,9 +8,9 @@
         <meta name="author" content="">
 
         <title>BLOCK GAME</title>
-        <link rel="stylesheet" href="<%= static_path(@conn, "/css/app.css") %>">
-        <script src="<%= static_path(@conn, "/js/phaser.js") %>"></script>
-        <script src="<%= static_path(@conn, "/js/app.js") %>"></script>
+        <link rel="stylesheet" href='<%= static_path(@conn, "/css/app.css") %>'>
+        <script src='<%= static_path(@conn, "/js/phaser.js") %>'></script>
+        <script src='<%= static_path(@conn, "/js/app.js") %>'></script>
         <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
         <link href="https://fonts.googleapis.com/css?family=Righteous" rel="stylesheet">
     </head>

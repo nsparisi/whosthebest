@@ -9,8 +9,8 @@
 </div>
 
 <!-- Import the game socket -->
-<script> require("js/msgpack_socket")</script>
-<script> require("js/game_socket")</script>
+<script src='<%= static_path(@conn, "/js/msgpack_socket.js") %>'></script>
+<script src='<%= static_path(@conn, "/js/game_socket.js") %>'></script>
 
 <!-- Import the game --> 
 <script src='<%= static_path(@conn, "/js/game.js") %>'></script>

@@ -17,7 +17,10 @@ module.exports = (env, options) => {
       ]
     },
     entry: {
-      'app': glob.sync('./vendor/**/*.js').concat(['./js/app.js'])
+      'app': glob.sync('./vendor/**/*.js').concat(['./js/app.js']),
+      'msgpack.min': './js/msgpack.min.js',
+      'msgpack_socket': './js/msgpack_socket.js',
+      'game_socket': './js/game_socket.js',
     },
     output: {
       filename: '[name].js',
