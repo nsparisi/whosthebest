@@ -32,7 +32,7 @@ defmodule Whosthebest.TokenAuthentication do
   def verify_token_value(value) do
     AuthToken
     |> where([t], t.value == ^value)
-    |> where([t], t.inserted_at > datetime_add(^Ecto.DateTime.utc, ^(@token_max_age * -1), "second"))
+    |> where([t], t.inserted_at > datetime_add(^DateTime.utc_now(), ^(@token_max_age * -1), "second"))
     |> Repo.one()
     |> verify_token()
   end

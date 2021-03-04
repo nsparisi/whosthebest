@@ -46,12 +46,12 @@ defmodule Whosthebest.Mixfile do
       {:gettext, "~> 0.11"},
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
-      {:uuid, "~> 1.1"},
+      {:uuid, "~> 1.1.8"},
       {:distillery, "~> 1.5.2"},
       {:message_pack, "~> 0.2.0"},
-      {:bamboo, "~> 0.8"},
-      {:bamboo_smtp, "~> 1.4.0"},
-      {:recaptcha, "~> 2.2.1"}
+      {:bamboo, "~> 2.0.0"},
+      {:bamboo_phoenix, "~> 1.0.0"},
+      {:recaptcha, "~> 3.0"}
     ]
   end
 

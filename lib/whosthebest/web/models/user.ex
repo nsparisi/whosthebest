@@ -14,8 +14,8 @@ defmodule Whosthebest.User do
     has_many :auth_tokens, Whosthebest.AuthToken
   end
 
-  @required_fields ~w(email)
-  @optional_fields ~w(username total_time total_games total_wins)
+  @required_fields ~w(email)a
+  @optional_fields ~w(username total_time total_games total_wins)a
 
   @doc """
   Creates a changeset based on the `model` and `params`.

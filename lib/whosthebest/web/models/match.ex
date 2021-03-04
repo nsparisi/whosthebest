@@ -11,8 +11,8 @@ defmodule Whosthebest.Match do
     timestamps()
   end
 
-  @required_fields ~w(total_time winner_id user_id_0 user_id_1)
-  @optional_fields ~w(user_id_2 user_id_3)
+  @required_fields ~w(total_time winner_id user_id_0 user_id_1)a
+  @optional_fields ~w(user_id_2 user_id_3)a
 
   @doc """
   Creates a changeset based on the `model` and `params`.

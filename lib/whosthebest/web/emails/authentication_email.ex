@@ -1,8 +1,6 @@
 defmodule Whosthebest.Web.AuthenticationEmail do
   use Bamboo.Phoenix, view: Whosthebest.Web.EmailView
 
-  import Bamboo.Email
-
   @doc """
     The sign in email containing the login link.
   """
