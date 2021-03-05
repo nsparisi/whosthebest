@@ -1,56 +1,22 @@
-Erlang OTP 19 (8.3)
-Elixir 1.5.3
+Notes as of 3/5/2021:
+ 
+Erlang OTP 21 (10.3)
+Elixir 1.11.3
+NodeJS 14.16.0 
+NPM 6.14.11
 
-[{:phoenix, "~> 1.3.0"},
- {:phoenix_ecto, "~> 3.2.2"},
- {:phoenix_pubsub, "~> 1.0"},
- {:phoenix_html, "~> 2.10"},
- {:phoenix_live_reload, "~> 1.0.8", only: :dev},
- {:postgrex, ">= 0.0.0"},
- {:cowboy, "~> 1.0"},
- {:gettext, "~> 0.11"},
- {:uuid, "~> 1.1"},
- {:distillery, "~> 1.5.2"},
- {:message_pack, "~> 0.2.0"},
- {:bamboo, "~> 0.8"},
- {:bamboo_smtp, "~> 1.4.0"},
- {:recaptcha, "~> 2.2.1"},
- {:poison, "~> 3.0"}]
+How to Install:
+uninstall elixir + erlang 
+   - make sure PATH and c:\program files\erl folders are removed completely
+download and install elixir package
+   - it will prompt for correct erlang install (but only if erlang is uninstalled)
  
- =============
- 
- Trying out:
- 
- Erlang OTP 21 (10.3)
- Elixir 1.11.3
- NodeJS 14.16.0 
- NPM 6.14.11
- 
- uninstall elixir + erlang 
-    - make sure PATH and c:\program files\erl folders are removed completely
- download and install elixir package
-    - it will prompt for correct erlang install (but only if erlang is uninstalled)
- 
- TODO:
- - fix all warnings
- - fix runtime errors (in view)
- - update vscode compile & webpack it over to priv/static
- - test website functionality 
-    - recaptcha 
-    - leaderboards
-    - guest login
-    - join and login / sessions
-    - mailer
- - test game handoff
-    - presence
-    - user id / guest id
-    - lobby socket
-    - game socket
- - update deps like recaptcha etc.
- - learn and test new functionality
-    - telemetry
-    - live dashboard
- - publish
-    - setup docker on toaster
-    - publish app
-    - run app
+TODO:
+- fix all warnings
+- learn and test new functionality
+   - telemetry
+   - live dashboard
+- publish
+   - setup docker on toaster
+   - publish app
+   - run app
